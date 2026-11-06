@@ -60,6 +60,12 @@ import {
   Zap,
 } from "lucide-react";
 
+// Deterministic Number Formatter to guarantee 100% hydration matching across Node & Browser
+function formatNumber(val: number): string {
+  if (typeof val !== "number" || isNaN(val)) return "0";
+  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 // ==========================================
 // DATASET DEFINITIONS (3 RICH INDIAN STARTUP FUNNELS)
 // ==========================================
@@ -1183,7 +1189,7 @@ export default function FunnelDoctorApp() {
                   <div>
                     <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
                       <span>Monthly Funnel Visitors</span>
-                      <span className="text-indigo-400 font-mono">{calcVisitors.toLocaleString()}</span>
+                      <span className="text-indigo-400 font-mono" suppressHydrationWarning>{formatNumber(calcVisitors)}</span>
                     </div>
                     <input
                       type="range"
@@ -1215,7 +1221,7 @@ export default function FunnelDoctorApp() {
                   <div>
                     <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
                       <span>Average Order Value (₹)</span>
-                      <span className="text-emerald-400 font-mono">₹{calcAov.toLocaleString()}</span>
+                      <span className="text-emerald-400 font-mono" suppressHydrationWarning>₹{formatNumber(calcAov)}</span>
                     </div>
                     <input
                       type="range"
@@ -1558,8 +1564,8 @@ export default function FunnelDoctorApp() {
                         <TrendingDown className="w-4 h-4 text-rose-400" />
                         <span>Step-by-Step Conversion Funnel Drop-off Velocity</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {dataset.monthlyVisitors.toLocaleString()} Total Funnel Sessions Analyzed via Cloud SQL
+                      <p className="text-xs text-slate-400 mt-0.5" suppressHydrationWarning>
+                        {formatNumber(dataset.monthlyVisitors)} Total Funnel Sessions Analyzed via Cloud SQL
                       </p>
                     </div>
                   </div>
@@ -1589,8 +1595,8 @@ export default function FunnelDoctorApp() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              <span className="text-slate-400 font-mono font-medium">
-                                {st.visitors.toLocaleString()} users
+                              <span className="text-slate-400 font-mono font-medium" suppressHydrationWarning>
+                                {formatNumber(st.visitors)} users
                               </span>
                               {i < dataset.steps.length - 1 && (
                                 <span
@@ -1618,8 +1624,8 @@ export default function FunnelDoctorApp() {
 
                           {st.isBleedingBottleneck && (
                             <div className="mt-3 pt-2.5 border-t border-rose-500/20 flex items-center justify-between">
-                              <span className="text-[11px] text-rose-300">
-                                🚨 <strong>{st.dropoffCount.toLocaleString()} dropped users</strong> at this single step!
+                              <span className="text-[11px] text-rose-300" suppressHydrationWarning>
+                                🚨 <strong>{formatNumber(st.dropoffCount)} dropped users</strong> at this single step!
                               </span>
                               <button
                                 onClick={() => setActiveTab("vision")}
