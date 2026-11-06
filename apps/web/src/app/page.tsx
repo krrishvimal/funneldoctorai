@@ -56,6 +56,7 @@ import {
   TrendingUp,
   Users,
   Volume2,
+  VolumeX,
   Wand2,
   X,
   Zap,
@@ -138,19 +139,20 @@ const DATASETS: Record<DatasetId, DatasetDetails> = {
       { id: "s2", name: "2. Product Details (PDP)", visitors: 42000, conversionFromPrev: 0.42, dropoffRate: 0.571, dropoffCount: 24000 },
       { id: "s3", name: "3. Bag & Cart Drawer", visitors: 18000, conversionFromPrev: 0.428, dropoffRate: 0.717, dropoffCount: 12900 },
       { id: "s4", name: "4. Checkout & Address Wall", visitors: 5100, conversionFromPrev: 0.283, dropoffRate: 0.717, dropoffCount: 3657, isBleedingBottleneck: true },
-      { id: "s5", name: "5. Payment & Order Confirmed", visitors: 2800, conversionFromPrev: 0.549, dropoffRate: 0, dropoffCount: 0 },
+      { id: "s5", name: "5. UPI Payment Screen", visitors: 1443, conversionFromPrev: 0.283, dropoffRate: 0.35, dropoffCount: 505 },
+      { id: "s6", name: "6. Order Confirmation", visitors: 938, conversionFromPrev: 0.65, dropoffRate: 0.0, dropoffCount: 0 },
     ],
     retentionMatrix: [
-      { cohort: "Oct 2026", w0: 100, w1: 42, w2: 28, w3: 21, w4: 18, w5: 16 },
-      { cohort: "Sep 2026", w0: 100, w1: 39, w2: 25, w3: 19, w4: 17, w5: 15 },
-      { cohort: "Aug 2026", w0: 100, w1: 36, w2: 24, w3: 18, w4: 15, w5: 14 },
-      { cohort: "Jul 2026", w0: 100, w1: 33, w2: 22, w3: 16, w4: 14, w5: 12 },
+      { cohort: "Oct 01 - 07", w0: 100, w1: 34, w2: 24, w3: 18, w4: 15, w5: 12 },
+      { cohort: "Oct 08 - 14", w0: 100, w1: 38, w2: 26, w3: 21, w4: 17, w5: 14 },
+      { cohort: "Oct 15 - 21", w0: 100, w1: 32, w2: 22, w3: 17, w4: 14, w5: 11 },
+      { cohort: "Oct 22 - 28", w0: 100, w1: 41, w2: 29, w3: 24, w4: 19, w5: 16 },
     ],
     hotspots: [
       {
         id: 1,
         label: "#1",
-        title: "Forced 6-Field Account Login Wall",
+        title: "Forced Sign-In Wall Blocks Guest Checkout",
         xPercent: 50,
         yPercent: 32,
         severity: "CRITICAL",
@@ -162,14 +164,14 @@ const DATASETS: Record<DatasetId, DatasetDetails> = {
       {
         id: 2,
         label: "#2",
-        title: "Surprise ₹149 Delivery & Convenience Fee Surge",
+        title: "Unexpected ₹99 Delivery Surcharge Revealed at Final Step",
         xPercent: 78,
         yPercent: 62,
         severity: "HIGH",
-        telemetryEvidence: "Rage-click rate spikes to 38.4% on the order breakdown summary.",
-        heuristicViolated: "Pricing Transparency & Trust Anxiety",
-        geminiVisionFinding: "Free shipping promise on PDP is contradicted by a hidden ₹149 convenience fee injected at the final payment step.",
-        prescribedFix: "Display an interactive 'Free Shipping Progress Meter' on the cart drawer and calculate taxes early.",
+        telemetryEvidence: "42.1% drop-off coincides with the dynamic calculation of delivery fee after pin-code entry.",
+        heuristicViolated: "Nielsen #1: Visibility of System Status & Pricing Transparency",
+        geminiVisionFinding: "Price escalated from ₹1,499 in bag drawer to ₹1,648 at payment step without itemized explanation.",
+        prescribedFix: "Display a 'Add ₹150 for Free Shipping' progress meter directly on the bag drawer.",
       },
       {
         id: 3,
@@ -178,70 +180,67 @@ const DATASETS: Record<DatasetId, DatasetDetails> = {
         xPercent: 50,
         yPercent: 88,
         severity: "CRITICAL",
-        telemetryEvidence: "Mobile conversion is 4.1x worse than desktop (1.8% vs 7.4%).",
-        heuristicViolated: "Fitts's Law & Mobile Viewport Ergonomics",
-        geminiVisionFinding: "When Android virtual keyboard opens for PIN entry, the primary green CTA is pushed 260px below the viewport scroll boundary.",
-        prescribedFix: "Implement a persistent, CSS fixed-bottom sticky CTA bar with 1-Tap Google Pay & PhonePe.",
+        telemetryEvidence: "Average dwell time on address form is 48s, followed by browser back button click (82% mobile bounce).",
+        heuristicViolated: "Nielsen #8: Aesthetic and Minimalist Design (Excessive Form Clutter)",
+        geminiVisionFinding: "On Android viewports with virtual keyboard active, the primary 'Pay with UPI' CTA is pushed 240px below the viewport fold.",
+        prescribedFix: "Pin a sticky bottom bar with 1-Tap GPay/PhonePe button above the keyboard fold.",
       },
     ],
     weightedRca: [
-      { pillar: "UI/UX & Visual Friction", weight: 45, color: "bg-rose-500", explanation: "Forced login modal & below-the-fold CTA account for nearly half of checkout abandonment." },
-      { pillar: "Hidden Fee Shock", weight: 30, color: "bg-amber-500", explanation: "Surprise ₹149 fee injected at the final commitment step triggers immediate sticker shock." },
-      { pillar: "Mobile Android Latency", weight: 18, color: "bg-indigo-500", explanation: "P95 payment gateway redirect latency is 4.8 seconds on 4G networks." },
-      { pillar: "Traffic Intent Mismatch", weight: 7, color: "bg-emerald-500", explanation: "Meta ad creative targeting mismatched sizes resulting in dead inventory clicks." },
+      { pillar: "Mobile UX Friction & Keyboard Occlusion", weight: 42, color: "bg-rose-500", explanation: "42% of mobile shoppers cannot see the payment CTA while keyboard is active." },
+      { pillar: "Forced Account Creation Wall", weight: 34, color: "bg-amber-500", explanation: "34% of first-time shoppers abandon upon seeing mandatory password creation." },
+      { pillar: "Hidden Shipping Fee Shock", weight: 24, color: "bg-indigo-500", explanation: "24% bounce after ₹99 delivery fee is added post pin-code entry." },
     ],
     sqlPresets: [
       {
-        prompt: "Compare Step 4 checkout drop-off by Device OS & App Version",
-        sql: `SELECT device_os, app_version,
-       COUNT(DISTINCT session_id) as total_sessions,
-       ROUND(AVG(is_dropoff) * 100, 1) as dropoff_pct,
-       ROUND(AVG(p95_api_latency_ms), 0) as avg_latency_ms
-FROM checkout_telemetry_events
-WHERE step_name = 'checkout_address'
+        prompt: "Find drop-off rate by device viewport width during Step 4",
+        sql: `SELECT 
+  device_category,
+  screen_width_bucket,
+  COUNT(DISTINCT session_id) AS sessions,
+  COUNT(DISTINCT CASE WHEN step_4_reached = 1 THEN session_id END) AS step_4_users,
+  COUNT(DISTINCT CASE WHEN step_5_reached = 1 THEN session_id END) AS step_5_users,
+  ROUND((1 - COUNT(DISTINCT CASE WHEN step_5_reached = 1 THEN session_id END) * 1.0 / 
+    COUNT(DISTINCT CASE WHEN step_4_reached = 1 THEN session_id END)) * 100, 1) AS dropoff_pct
+FROM \`funnel_telemetry.d2c_checkout_events\`
+WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
 GROUP BY 1, 2
 ORDER BY dropoff_pct DESC;`,
         resultRows: [
-          { device_os: "Android 13/14", app_version: "v4.2.1", total_sessions: "34,200", dropoff_pct: "78.4%", avg_latency_ms: "4,820ms" },
-          { device_os: "iOS 17/18", app_version: "v4.2.1", total_sessions: "11,800", dropoff_pct: "52.1%", avg_latency_ms: "1,240ms" },
-          { device_os: "Desktop Web", app_version: "Chrome/Safari", total_sessions: "5,000", dropoff_pct: "41.6%", avg_latency_ms: "820ms" },
+          { device: "Mobile (Android 390px)", sessions: 42100, step4: 3120, step5: 642, dropoff: "79.4%" },
+          { device: "Mobile (iOS 393px)", sessions: 31400, step4: 1420, step5: 512, dropoff: "63.9%" },
+          { device: "Desktop (1440px+)", sessions: 26500, step4: 560, step5: 289, dropoff: "48.4%" },
         ],
-        geminiTakeaway: "Android sessions experience 3.8x higher API latency and an acute 78.4% drop-off compared to iOS, directly tied to the unoptimized WebView input container.",
+        geminiTakeaway: "Android 390px viewports experience a catastrophic 79.4% drop-off compared to 48.4% on desktop, confirming mobile keyboard occlusion.",
       },
       {
-        prompt: "Correlate Payment Gateway Latency with Cart Abandonment",
-        sql: `SELECT latency_bucket,
-       COUNT(user_id) as attempts,
-       ROUND(SUM(CASE WHEN status = 'SUCCESS' THEN 1 ELSE 0 END)::numeric / COUNT(*) * 100, 2) as success_rate
-FROM upi_gateway_transactions
-GROUP BY 1
-ORDER BY 1 ASC;`,
+        prompt: "Correlate drop-off with cart value vs free shipping threshold (₹1,500)",
+        sql: `SELECT 
+  CASE WHEN cart_value < 1500 THEN 'Below Free Shipping (< ₹1500)'
+       ELSE 'Above Free Shipping (>= ₹1500)' END AS cart_segment,
+  COUNT(DISTINCT session_id) AS step_4_users,
+  ROUND(AVG(CASE WHEN step_5_reached = 0 THEN 1.0 ELSE 0.0 END) * 100, 1) AS abandonment_pct
+FROM \`funnel_telemetry.d2c_checkout_events\`
+GROUP BY 1;`,
         resultRows: [
-          { latency_bucket: "< 1.5s", attempts: "14,200", success_rate: "89.4%" },
-          { latency_bucket: "1.5s - 3.0s", attempts: "8,900", success_rate: "74.1%" },
-          { latency_bucket: "> 3.0s (Spike)", attempts: "3,100", success_rate: "28.6%" },
+          { segment: "Below Free Shipping (< ₹1500)", step4: 3410, abandonment: "81.2%" },
+          { segment: "Above Free Shipping (>= ₹1500)", step4: 1690, abandonment: "52.4%" },
         ],
-        geminiTakeaway: "Transactions exceeding 3.0 seconds suffer a catastrophic 71.4% failure rate as users reflexively press back or cancel UPI intent.",
+        geminiTakeaway: "Shoppers below ₹1,500 abandon at 81.2% due to ₹99 shipping shock, while those with free shipping abandon at only 52.4%.",
       },
     ],
-    prdMarkdown: `# Product Requirements Document (PRD): Checkout Friction Elimination & UPI Acceleration
-**Target Release:** Sprint 42 • **Author:** FunnelDoctor Autonomous AI PM
-**Status:** Approved for Engineering Implementation • **Priority:** P0
+    prdMarkdown: `# Product Requirements Document (PRD)
+**Feature:** Express 1-Tap Checkout Bar & Transparent Bag Drawer  
+**Target:** QuickStyle D2C Fashion • **Priority:** P0 • **Expected Recovery:** ₹26.0 Lakhs/mo
 
 ## 1. Executive Summary & Root Cause
-QuickStyle D2C loses ₹68.4 Lakhs/mo at Step 4 (Checkout & Address Wall) due to a 71.7% drop-off rate. 
-Gemini Multimodal inspection identifies:
-1. Forced 6-field account creation modal blocking guest users.
-2. Undisclosed ₹149 delivery fee injected on final payment screen.
-3. UPI intent CTA rendered below the fold on mobile devices.
+Funnel telemetry identifies a catastrophic **71.7% drop-off** at Step 4 (Checkout & Address Wall). Gemini Multimodal inspection identifies:
+1. Virtual keyboard on 390px mobile viewports occludes the primary 'Pay' button by 240px.
+2. Unannounced ₹99 delivery fee triggers pricing shock.
+3. Forced account creation creates Nielsen #3 violation.
 
-## 2. Core Metrics & Expected Impact
-- **Primary Metric:** Step 4 to 5 Conversion Rate (Target: 28.3% ➔ 45.0%).
-- **Secondary Metric:** Mobile P95 Checkout Latency (< 1,800ms).
-- **Financial Projection:** Recover ₹26.0 Lakhs/mo (+38% relative conversion lift).
-
-## 3. RICE-Scored Engineering Backlog
-| Rank | Feature / Task | Reach | Impact | Confidence | Effort | RICE Score |
+## 2. RICE Prioritization Matrix
+| Priority | Proposed Solution | Reach | Impact | Confidence | Effort | RICE Score |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **P0** | Sticky Bottom Bar with 1-Tap UPI (GPay/PhonePe) | 5,100/mo | 3.0 (Huge) | 90% | 1.0 wk | **13,770** |
 | **P0** | Free Shipping Progress Meter on Bag Drawer | 18,000/mo | 2.0 (High) | 85% | 0.5 wk | **61,200** |
@@ -249,18 +248,18 @@ Gemini Multimodal inspection identifies:
     brokenUiWireframeTitle: "Current Broken UI (Step 4)",
     brokenUiItems: [
       "❌ Mandatory 6-Field Account Creation Form",
-      "❌ No Guest Checkout Option",
-      "❌ Hidden ₹149 Surcharge Added at Final Click",
-      "❌ CTA Hidden 260px Below Keyboard Fold",
+      "❌ Primary CTA Pushed 240px Below Mobile Virtual Keyboard",
+      "❌ Hidden ₹99 Shipping Fee Surcharge at Final Step",
+      "❌ No Direct UPI Intent Deep-Links (GPay/PhonePe/Paytm)",
     ],
-    redesignedUiTitle: "Gemini Redesigned High-Converting UI (+38% Lift)",
+    redesignedUiTitle: "FunnelDoctor AI Fixed Component",
     redesignedUiFeatures: [
-      "⚡ 1-Tap Google Pay & PhonePe Sticky Bottom Bar",
-      "🚚 Upfront Free-Shipping Eligibility Bar",
-      "🔑 1-Click WhatsApp OTP Verification",
-      "🛡️ Verified 256-Bit SSL Trust Badges",
+      "⚡ Sticky Bottom Bar Locked Above Keyboard (`z-50 bottom-0`)",
+      "⚡ 1-Tap Instant UPI Intent Flow (Zero Manual Form Filling)",
+      "⚡ Dynamic Free Shipping Progress Meter Unlocked in Bag Drawer",
+      "⚡ 1-Click Guest Checkout with SMS Live Delivery Tracking",
     ],
-    codeDiff: `// Redesigned High-Converting Sticky Checkout Component
+    codeDiff: `// ExpressCheckoutBar.tsx — Production Component Generated by FunnelDoctor AI
 import React from 'react';
 import { Zap, ShieldCheck } from 'lucide-react';
 
@@ -277,103 +276,107 @@ export function ExpressCheckoutBar({ cartTotal = 1850, onPay }: { cartTotal?: nu
 
       <button 
         onClick={onPay}
-        className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
+        className="px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-xl flex items-center gap-2 transition active:scale-95"
       >
-        <Zap className="w-4 h-4 fill-slate-950" />
-        <span>1-TAP UPI FAST-PAY</span>
+        <Zap className="w-4 h-4 fill-current" />
+        <span>1-Tap UPI Pay</span>
       </button>
     </div>
   );
 }`,
   },
+
   kyc: {
     id: "kyc",
-    name: "FinPulse Neo Bank (Video-KYC)",
-    tagline: "Digital Savings & Credit Line Onboarding",
+    name: "FinPulse Neo-Bank Video-KYC",
+    tagline: "Instant Digital Savings Account Onboarding",
     companyCategory: "Fintech / Banking",
-    overallConversion: 10.1,
+    overallConversion: 3.4,
     monthlyVisitors: 80000,
-    aov: 4200,
-    monthlyLeakedRevenue: "₹1.12 Cr/mo",
-    recoverableRevenue: "₹42.8 Lakhs/mo (+38% Lift)",
-    bleedingStepName: "Aadhaar Video-KYC (Step 4)",
+    aov: 2400,
+    monthlyLeakedRevenue: "₹42.8 Lakhs/mo",
+    recoverableRevenue: "₹18.4 Lakhs/mo (+43% Lift)",
+    bleedingStepName: "Live Agent Video-KYC (Step 4)",
     bleedingDropRate: 74.8,
     steps: [
-      { id: "s1", name: "1. App Install & Open", visitors: 80000, conversionFromPrev: 1.0, dropoffRate: 0.15, dropoffCount: 12000 },
-      { id: "s2", name: "2. Mobile OTP Verification", visitors: 68000, conversionFromPrev: 0.85, dropoffRate: 0.338, dropoffCount: 23000 },
-      { id: "s3", name: "3. PAN & Credit Check", visitors: 45000, conversionFromPrev: 0.662, dropoffRate: 0.748, dropoffCount: 33700 },
-      { id: "s4", name: "4. Live Aadhaar Video-KYC", visitors: 11300, conversionFromPrev: 0.251, dropoffRate: 0.748, dropoffCount: 8452, isBleedingBottleneck: true },
-      { id: "s5", name: "5. Active Credit Account", visitors: 8100, conversionFromPrev: 0.716, dropoffRate: 0, dropoffCount: 0 },
+      { id: "k1", name: "1. Phone Number & OTP", visitors: 80000, conversionFromPrev: 1.0, dropoffRate: 0.22, dropoffCount: 17600 },
+      { id: "k2", name: "2. PAN & Aadhaar OCR Verification", visitors: 62400, conversionFromPrev: 0.78, dropoffRate: 0.38, dropoffCount: 23712 },
+      { id: "k3", name: "3. Address & Nominee Details", visitors: 38688, conversionFromPrev: 0.62, dropoffRate: 0.44, dropoffCount: 17022 },
+      { id: "k4", name: "4. Live Agent Video-KYC Queue", visitors: 21665, conversionFromPrev: 0.56, dropoffRate: 0.748, dropoffCount: 16205, isBleedingBottleneck: true },
+      { id: "k5", name: "5. Digital Signature & VPA Setup", visitors: 5460, conversionFromPrev: 0.252, dropoffRate: 0.28, dropoffCount: 1528 },
+      { id: "k6", name: "6. Account Active & Funded", visitors: 3932, conversionFromPrev: 0.72, dropoffRate: 0.0, dropoffCount: 0 },
     ],
     retentionMatrix: [
-      { cohort: "Oct 2026", w0: 100, w1: 68, w2: 54, w3: 48, w4: 42, w5: 39 },
-      { cohort: "Sep 2026", w0: 100, w1: 65, w2: 51, w3: 45, w4: 40, w5: 37 },
-      { cohort: "Aug 2026", w0: 100, w1: 61, w2: 48, w3: 42, w4: 38, w5: 35 },
-      { cohort: "Jul 2026", w0: 100, w1: 58, w2: 46, w3: 39, w4: 36, w5: 33 },
+      { cohort: "Oct 01 - 07", w0: 100, w1: 48, w2: 38, w3: 32, w4: 28, w5: 25 },
+      { cohort: "Oct 08 - 14", w0: 100, w1: 52, w2: 41, w3: 35, w4: 31, w5: 28 },
+      { cohort: "Oct 15 - 21", w0: 100, w1: 45, w2: 36, w3: 30, w4: 26, w5: 23 },
+      { cohort: "Oct 22 - 28", w0: 100, w1: 55, w2: 44, w3: 39, w4: 34, w5: 31 },
     ],
     hotspots: [
       {
         id: 1,
         label: "#1",
-        title: "Front-Camera Permission Denial with Zero Recovery UX",
+        title: "Silent Browser Camera/Microphone Permission Failure",
         xPercent: 50,
-        yPercent: 30,
+        yPercent: 28,
         severity: "CRITICAL",
-        telemetryEvidence: "42% of mobile drop-offs trigger an unhandled 'CAMERA_DENIED' JavaScript error.",
+        telemetryEvidence: "54.8% of users terminate session within 12 seconds of queue screen mount.",
         heuristicViolated: "Nielsen #9: Help Users Recognize, Diagnose, and Recover from Errors",
-        geminiVisionFinding: "When Android denies system camera prompt, the app displays a blank dark grey box without an 'Open Settings' deep-link button.",
-        prescribedFix: "Implement a warm-up permissions preview screen with an OS deep-link recovery modal.",
+        geminiVisionFinding: "Viewport displays a blank grey placeholder when WebRTC camera permission is denied, with zero troubleshooting instructions.",
+        prescribedFix: "Inject an animated pre-call device permission diagnostic wizard with 1-tap browser settings deep-link.",
       },
       {
         id: 2,
         label: "#2",
-        title: "15-Second Hard Timeout on 4G Video Stream",
-        xPercent: 80,
-        yPercent: 58,
-        severity: "HIGH",
-        telemetryEvidence: "Drop-off spikes in Tier 2/3 cities where latency exceeds 800ms.",
-        heuristicViolated: "System Status Visibility & Reliability",
-        geminiVisionFinding: "The WebRTC stream kills the connection abruptly without attempting packet downscaling or fallback audio verification.",
-        prescribedFix: "Implement adaptive WebRTC bitrate degradation and 45s fallback buffer.",
+        title: "Undefined Queue Time Induces Anxiety Bounce",
+        xPercent: 50,
+        yPercent: 54,
+        severity: "CRITICAL",
+        telemetryEvidence: "Median abandonment time is 3m 42s while waiting in queue with no audio or visual feedback.",
+        heuristicViolated: "Nielsen #1: Visibility of System Status",
+        geminiVisionFinding: "Screen displays an indefinite spinning circle with ambiguous text 'Connecting to banking officer shortly...'",
+        prescribedFix: "Display real-time queue position ('You are #3 in line • ~2 mins') with option to 'Schedule for Tomorrow'.",
       },
       {
         id: 3,
         label: "#3",
-        title: "Ambiguous 'Waiting for Agent' Queue Counter",
-        xPercent: 50,
+        title: "Zero Asynchronous Callback Fallback",
+        xPercent: 74,
         yPercent: 82,
         severity: "HIGH",
-        telemetryEvidence: "Average wait time is 4m 12s, but users exit after 45 seconds.",
-        heuristicViolated: "Expectation Management & Cognitive Load",
-        geminiVisionFinding: "The screen shows a static spinner with zero indication of queue position or estimated wait minutes.",
-        prescribedFix: "Add a live queue counter ('Position #2 - ~1m wait') and offer scheduled callback appointments.",
+        telemetryEvidence: "78% of abandoned users never return to complete KYC unless re-targeted via expensive WhatsApp API.",
+        heuristicViolated: "Nielsen #3: User Control & Freedom",
+        geminiVisionFinding: "No button exists to pause onboarding or schedule an appointment for when the user has stable Wi-Fi.",
+        prescribedFix: "Provide 1-tap WhatsApp slot booking for asynchronous assisted verification.",
       },
     ],
     weightedRca: [
-      { pillar: "Technical Video-WebRTC Latency", weight: 42, color: "bg-indigo-500", explanation: "Camera permission drops and WebRTC socket disconnects drive the bulk of failed calls." },
-      { pillar: "Queue Anxiety & Expectation Mismatch", weight: 32, color: "bg-rose-500", explanation: "Indefinite spinner with no estimated wait time causes panic abandonment." },
-      { pillar: "Form Re-entry Friction", weight: 16, color: "bg-amber-500", explanation: "Requiring manual typing of 12-digit Aadhaar instead of DigiLocker XML fetch." },
-      { pillar: "Branch Opening Reluctance", weight: 10, color: "bg-emerald-500", explanation: "Older demographics preferring in-person branch assistance." },
+      { pillar: "Silent Camera/Mic WebRTC Permissions Denials", weight: 46, color: "bg-rose-500", explanation: "46% fail camera initialization without clear recovery prompts." },
+      { pillar: "Ambiguous Queue Wait Time & Officer Shortage", weight: 36, color: "bg-amber-500", explanation: "36% leave after waiting >3 minutes with zero queue status indication." },
+      { pillar: "Mobile Bandwidth Fluctuations on 4G", weight: 18, color: "bg-indigo-500", explanation: "18% suffer WebRTC connection drops during agent handover." },
     ],
     sqlPresets: [
       {
-        prompt: "Check WebRTC Video-KYC Drop-off by Network Speed Bucket",
-        sql: `SELECT network_type, 
-       COUNT(*) as kyc_sessions,
-       ROUND(AVG(webrtc_latency_ms), 0) as avg_latency,
-       ROUND(SUM(CASE WHEN kyc_status = 'ABANDONED' THEN 1 ELSE 0 END)::numeric / COUNT(*) * 100, 1) as dropoff_pct
-FROM kyc_telemetry_logs
-GROUP BY 1
-ORDER BY dropoff_pct DESC;`,
+        prompt: "Analyze KYC drop-off by browser WebRTC permission status",
+        sql: `SELECT 
+  browser_family,
+  webrtc_permission_state,
+  COUNT(DISTINCT applicant_id) AS total_applicants,
+  ROUND(AVG(CASE WHEN kyc_completed = 1 THEN 1.0 ELSE 0.0 END) * 100, 1) AS completion_rate,
+  ROUND(AVG(CASE WHEN drop_step = 'video_queue' THEN 1.0 ELSE 0.0 END) * 100, 1) AS queue_abandon_pct
+FROM \`finpulse_kyc.telemetry_stream\`
+GROUP BY 1, 2
+ORDER BY queue_abandon_pct DESC;`,
         resultRows: [
-          { network_type: "Cellular 4G (Tier 2/3)", kyc_sessions: "38,400", avg_latency: "1,420ms", dropoff_pct: "81.2%" },
-          { network_type: "Cellular 5G", kyc_sessions: "28,100", avg_latency: "280ms", dropoff_pct: "54.0%" },
-          { network_type: "Broadband Wi-Fi", kyc_sessions: "13,500", avg_latency: "140ms", dropoff_pct: "36.8%" },
+          { browser: "Chrome Mobile (Permission Denied)", applicants: 11200, completion: "8.2%", abandon: "84.6%" },
+          { browser: "Safari Mobile (Permission Denied)", applicants: 4800, completion: "6.1%", abandon: "89.2%" },
+          { browser: "Chrome Mobile (Permission Granted)", applicants: 32400, completion: "68.4%", abandon: "21.1%" },
         ],
-        geminiTakeaway: "Over 81% of Tier-2 4G users fail video verification due to rigid WebRTC bitrate locks. Adding dynamic downscaling will instantly recover 22% of dropouts.",
+        geminiTakeaway: "Denied WebRTC permissions result in an 84-89% abandonment rate, proving that failure to recover permissions is the primary bottleneck.",
       },
     ],
-    prdMarkdown: `# Product Requirements Document (PRD): Video-KYC Friction Removal
+    prdMarkdown: `# Product Requirements Document (PRD)
+**Feature:** Pre-Call Device Warmup & Live Queue Status System  
 **Target:** FinPulse Neo-Bank • **Priority:** P0 • **Expected Recovery:** ₹42.8 Lakhs/mo
 
 ## 1. Objective
@@ -381,160 +384,182 @@ Reduce Aadhaar Video-KYC drop-off from 74.8% to 42.0% within 30 days by resolvin
     brokenUiWireframeTitle: "Current Broken Video-KYC Screen",
     brokenUiItems: [
       "❌ Blank Grey Box on Camera Permission Denial",
-      "❌ Indefinite Spinner with No Queue Position",
-      "❌ Abrupt 15s Disconnect on Low Bandwidth",
-      "❌ No Scheduled Callback Option",
+      "❌ Indefinite Spinning Indicator with Ambiguous 'Please Wait'",
+      "❌ No Audio Ringtone or Queue Position Counter",
+      "❌ Zero Option to Schedule Video KYC for Later",
     ],
-    redesignedUiTitle: "Gemini Adaptive KYC Room (+42% Lift)",
+    redesignedUiTitle: "FunnelDoctor AI Fixed Component",
     redesignedUiFeatures: [
-      "⚡ Pre-Call Camera & Mic Warmup Check",
-      "🕒 Live Queue Counter ('Position #2 • ~1 min')",
-      "📶 Adaptive 360p WebRTC Auto-Downscaling",
-      "📅 1-Tap 'Schedule Video Call for Tomorrow' Button",
+      "⚡ Pre-Call Device Diagnostic Check (Camera, Mic, Network 4G)",
+      "⚡ Real-Time Live Queue Counter ('You are #3 in queue • ~90s')",
+      "⚡ 1-Tap 'Schedule Video Call for Tomorrow' Button",
     ],
     codeDiff: `// Adaptive WebRTC Warmup & Queue Status Component
 import React from 'react';
-import { Camera, Calendar } from 'lucide-react';
+import { Camera, Clock, Calendar } from 'lucide-react';
 
-export function KYCQueueRoom({ queuePosition = 2, estMinutes = 1 }) {
+export function VideoKycQueueCard({ queuePosition = 3, waitTimeSeconds = 90 }) {
   return (
-    <div className="bg-[#090D16] border border-white/10 rounded-3xl p-6 text-center max-w-sm mx-auto shadow-2xl">
-      <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl mx-auto flex items-center justify-center mb-4">
-        <Camera className="w-8 h-8 animate-pulse" />
+    <div className="bg-[#090D16] p-6 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+          <Clock className="w-5 h-5 animate-pulse" />
+        </div>
+        <div>
+          <h4 className="font-extrabold text-white text-sm">Next Agent Ready Shortly</h4>
+          <p className="text-xs text-slate-400">Position #{queuePosition} in line • Est. {waitTimeSeconds}s</p>
+        </div>
       </div>
-      <h3 className="font-extrabold text-white text-base">Bank Officer Connecting</h3>
-      <p className="text-xs text-slate-400 mt-1">Queue Position: #{queuePosition} • ~{estMinutes} min wait</p>
-      
-      <button className="mt-5 w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
-        <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-        <span>Schedule for Later</span>
+
+      <button className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg">
+        Keep Screen On & Ring Me
+      </button>
+
+      <button className="w-full py-2.5 rounded-xl border border-white/10 text-slate-300 font-bold text-xs hover:bg-slate-800/60 flex items-center justify-center gap-1.5">
+        <Calendar className="w-3.5 h-3.5" />
+        <span>Schedule for Tomorrow</span>
       </button>
     </div>
   );
 }`,
   },
+
   edtech: {
     id: "edtech",
-    name: "PrepMate IIT-JEE Prep",
-    tagline: "Test Prep & Rank Predictor Paywall",
+    name: "PrepMate IIT-JEE Paywall",
+    tagline: "Freemium Mock Tests to Premium Annual Pass",
     companyCategory: "EdTech / SaaS",
-    overallConversion: 1.33,
-    monthlyVisitors: 120000,
-    aov: 5200,
-    monthlyLeakedRevenue: "₹84.0 Lakhs/mo",
-    recoverableRevenue: "₹31.9 Lakhs/mo (+38% Lift)",
-    bleedingStepName: "Annual Pro Paywall (Step 4)",
+    overallConversion: 1.1,
+    monthlyVisitors: 150000,
+    aov: 4999,
+    monthlyLeakedRevenue: "₹84.2 Lakhs/mo",
+    recoverableRevenue: "₹38.5 Lakhs/mo (+45% Lift)",
+    bleedingStepName: "Annual Pass Paywall (Step 3)",
     bleedingDropRate: 96.5,
     steps: [
-      { id: "s1", name: "1. Free Mock Test", visitors: 120000, conversionFromPrev: 1.0, dropoffRate: 0.183, dropoffCount: 22000 },
-      { id: "s2", name: "2. Detailed Scorecard", visitors: 98000, conversionFromPrev: 0.816, dropoffRate: 0.448, dropoffCount: 44000 },
-      { id: "s3", name: "3. AIR Rank Predictor", visitors: 54000, conversionFromPrev: 0.551, dropoffRate: 0.965, dropoffCount: 52100 },
-      { id: "s4", name: "4. Annual Pro Paywall", visitors: 1900, conversionFromPrev: 0.035, dropoffRate: 0.965, dropoffCount: 300, isBleedingBottleneck: true },
-      { id: "s5", name: "5. Enrolled Paid Subscriber", visitors: 1600, conversionFromPrev: 0.842, dropoffRate: 0, dropoffCount: 0 },
+      { id: "e1", name: "1. Free Mock Test Landing", visitors: 150000, conversionFromPrev: 1.0, dropoffRate: 0.35, dropoffCount: 52500 },
+      { id: "e2", name: "2. Test Submission & Partial Score", visitors: 97500, conversionFromPrev: 0.65, dropoffRate: 0.42, dropoffCount: 40950 },
+      { id: "e3", name: "3. Annual Pass Paywall", visitors: 56550, conversionFromPrev: 0.58, dropoffRate: 0.965, dropoffCount: 54570, isBleedingBottleneck: true },
+      { id: "e4", name: "4. Razorpay Gateway", visitors: 1980, conversionFromPrev: 0.035, dropoffRate: 0.22, dropoffCount: 435 },
+      { id: "e5", name: "5. Enrolled Student Dashboard", visitors: 1545, conversionFromPrev: 0.78, dropoffRate: 0.0, dropoffCount: 0 },
     ],
     retentionMatrix: [
-      { cohort: "Oct 2026", w0: 100, w1: 72, w2: 60, w3: 55, w4: 51, w5: 48 },
-      { cohort: "Sep 2026", w0: 100, w1: 69, w2: 57, w3: 52, w4: 48, w5: 45 },
-      { cohort: "Aug 2026", w0: 100, w1: 65, w2: 53, w3: 49, w4: 45, w5: 42 },
-      { cohort: "Jul 2026", w0: 100, w1: 61, w2: 50, w3: 46, w4: 42, w5: 39 },
+      { cohort: "Oct 01 - 07", w0: 100, w1: 28, w2: 19, w3: 15, w4: 12, w5: 10 },
+      { cohort: "Oct 08 - 14", w0: 100, w1: 31, w2: 22, w3: 17, w4: 14, w5: 12 },
+      { cohort: "Oct 15 - 21", w0: 100, w1: 26, w2: 18, w3: 14, w4: 11, w5: 9 },
+      { cohort: "Oct 22 - 28", w0: 100, w1: 34, w2: 24, w3: 19, w4: 16, w5: 13 },
     ],
     hotspots: [
       {
         id: 1,
         label: "#1",
-        title: "Rigid ₹18,000 Upfront Annual Commitment",
+        title: "All-or-Nothing ₹4,999 Annual Lockout (Zero Monthly Option)",
         xPercent: 50,
-        yPercent: 40,
+        yPercent: 42,
         severity: "CRITICAL",
-        telemetryEvidence: "96.5% of high-intent students abandon within 8 seconds of seeing the price tag.",
-        heuristicViolated: "Pricing Psychology & Commitment Staircase",
-        geminiVisionFinding: "Zero monthly (₹999/mo) or no-cost EMI options provided; student users have no authority to approve large card charges.",
-        prescribedFix: "Add a 3-month ₹1,499 quarterly tier and No-Cost EMI with Bajaj Finserv.",
+        telemetryEvidence: "96.5% drop-off occurs on first paywall impression without tapping any plan.",
+        heuristicViolated: "Nielsen #4: Consistency & Standards / Pricing Elasticity",
+        geminiVisionFinding: "Only a single upfront ₹4,999 yearly payment option exists. No ₹499 monthly or ₹99 single-test access.",
+        prescribedFix: "Introduce a ₹399/mo subscription toggle and a ₹99 single-test micro-transaction unlock.",
       },
       {
         id: 2,
         label: "#2",
-        title: "Intrusive 60-Second Countdown Panic Modal",
-        xPercent: 78,
-        yPercent: 20,
+        title: "Obscured Value Prop: Solutions Locked Behind Blur Effect",
+        xPercent: 50,
+        yPercent: 68,
         severity: "HIGH",
-        telemetryEvidence: "Back-button exit rate is 88.2% immediately upon timer activation.",
-        heuristicViolated: "Dark Pattern Friction & Anxiety Induction",
-        geminiVisionFinding: "Flashy red countdown banner triggers high anxiety for students seeking serious academic guidance.",
-        prescribedFix: "Replace countdown timer with institutional trust credentials (IIT Alumni faculty list).",
+        telemetryEvidence: "88% of users immediately exit back to Google to search for free answer keys.",
+        heuristicViolated: "Nielsen #2: Match Between System and the Real World",
+        geminiVisionFinding: "The paywall blur effect completely obscures whether video solutions exist or if it's text-only.",
+        prescribedFix: "Provide 1 free video solution preview to prove pedagogical superiority before asking for payment.",
       },
       {
         id: 3,
         label: "#3",
-        title: "Missing 'Share Payment Link with Parents' Trigger",
-        xPercent: 50,
-        yPercent: 80,
-        severity: "CRITICAL",
-        telemetryEvidence: "76% of student survey responses cite: 'Had to ask dad to pay from his phone'.",
-        heuristicViolated: "Payer vs. User Divergence in Indian EdTech",
-        geminiVisionFinding: "The checkout only supports card/UPI directly on the student's phone, with zero WhatsApp payment link forwarding.",
-        prescribedFix: "Introduce a 1-Tap 'Send UPI Payment Link to Papa on WhatsApp' button.",
+        title: "Absence of Social Proof and Rank Predictor Hook",
+        xPercent: 78,
+        yPercent: 88,
+        severity: "MEDIUM",
+        telemetryEvidence: "Adding AIR 24 topper testimonial on test landing increased CTR by 18%, but paywall lacks it.",
+        heuristicViolated: "Nielsen #10: Help & Social Proof",
+        geminiVisionFinding: "Zero testimonials from IIT-JEE toppers or percentile benchmarks on the paywall screen.",
+        prescribedFix: "Embed real-time AIR Rank Predictor comparison alongside Kota faculty credentials.",
       },
     ],
     weightedRca: [
-      { pillar: "Pricing Model & Payment Divergence", weight: 52, color: "bg-rose-500", explanation: "Students lack the ability to pay ₹18,000 without forwarding the link to parents." },
-      { pillar: "Panic Countdown Dark Patterns", weight: 26, color: "bg-amber-500", explanation: "Aggressive timer banners scare off students looking for transparent academic prep." },
-      { pillar: "Lack of Free Trial Micro-Tier", weight: 14, color: "bg-indigo-500", explanation: "No low-risk 7-day trial before full commitment." },
-      { pillar: "Organic Intent Drop", weight: 8, color: "bg-emerald-500", explanation: "General interest users checking predicted ranks with zero purchase intent." },
+      { pillar: "Extreme Upfront Price Barrier (₹4,999 Lockout)", weight: 58, color: "bg-rose-500", explanation: "58% of students cannot afford annual upfront payment without parental consent." },
+      { pillar: "Zero Free Sample Video Solution Preview", weight: 26, color: "bg-amber-500", explanation: "26% distrust solution quality due to completely blurred previews." },
+      { pillar: "Missing No-Cost EMI & UPI Autopay Options", weight: 16, color: "bg-indigo-500", explanation: "16% bounce at gateway due to lack of UPI Autopay support." },
     ],
     sqlPresets: [
       {
-        prompt: "Analyze Student Paywall Drop-off by Price Plan Selected",
-        sql: `SELECT plan_name, price_inr, 
-       COUNT(DISTINCT user_id) as views,
-       ROUND(AVG(is_completed) * 100, 2) as conversion_rate
-FROM subscription_attempts
-GROUP BY 1, 2
-ORDER BY conversion_rate DESC;`,
+        prompt: "Analyze Paywall Bounce Rate by User Academic Cohort",
+        sql: `SELECT 
+  student_target_year,
+  COUNT(DISTINCT user_id) AS paywall_views,
+  ROUND(AVG(CASE WHEN purchased = 1 THEN 1.0 ELSE 0.0 END) * 100, 2) AS conversion_rate,
+  ROUND(AVG(CASE WHEN bounced_under_5s = 1 THEN 1.0 ELSE 0.0 END) * 100, 1) AS instant_exit_pct
+FROM \`prepmate_edtech.paywall_events\`
+GROUP BY 1
+ORDER BY paywall_views DESC;`,
         resultRows: [
-          { plan_name: "Annual Plan (Full Access)", price_inr: "₹18,000", views: "52,100", conversion_rate: "3.5%" },
-          { plan_name: "Quarterly Pilot (Hidden)", price_inr: "₹3,999", views: "1,200", conversion_rate: "18.4%" },
+          { cohort: "IIT-JEE 2026 Aspirants", views: 34100, conversion: "0.84%", exit: "88.4%" },
+          { cohort: "NEET 2026 Aspirants", views: 18200, conversion: "1.42%", exit: "82.1%" },
+          { cohort: "Foundation (Class 10/11)", views: 4250, conversion: "2.10%", exit: "71.0%" },
         ],
-        geminiTakeaway: "The hidden quarterly plan converts at 5.2x higher rate than the annual lump-sum. Surfacing flexible tiers will immediately triple revenue throughput.",
+        geminiTakeaway: "IIT-JEE aspirants show an 88.4% instant exit under 5 seconds, confirming immense price shock at the single ₹4,999 tier.",
       },
     ],
-    prdMarkdown: `# Product Requirements Document (PRD): Paywall Re-architecture & WhatsApp Parent Flow
-**Target:** PrepMate IIT-JEE • **Priority:** P0 • **Expected Recovery:** ₹31.9 Lakhs/mo
+    prdMarkdown: `# Product Requirements Document (PRD)
+**Feature:** Flexible Micro-Paywall & Free Solution Teaser  
+**Target:** PrepMate IIT-JEE • **Priority:** P0 • **Expected Recovery:** ₹38.5 Lakhs/mo
 
-## 1. Problem Statement
-96.5% of students abandon Step 4 because they are presented with an ₹18,000 lump sum and have no way to forward the bill to their parents.`,
-    brokenUiWireframeTitle: "Current Broken Paywall",
+## 1. Objective
+Recover at least 25% of the 96.5% paywall drop-off by unbundling the ₹4,999 annual pass into a ₹399/mo pass and offering a free video preview.`,
+    brokenUiWireframeTitle: "Current Broken Paywall Screen",
     brokenUiItems: [
-      "❌ ₹18,000 Annual Only (No Monthly/EMI)",
-      "❌ Panic 60-Second Countdown Modal",
-      "❌ No WhatsApp Share to Parents Button",
-      "❌ Zero Free Trial Access",
+      "❌ Single ₹4,999 Annual Lockout (No Monthly/Per-Test Options)",
+      "❌ 100% Blurred Answers without Sample Video Quality Proof",
+      "❌ No Rank Predictor or Kota Faculty Endorsements",
+      "❌ Missing UPI Autopay / No-Cost EMI Options",
     ],
-    redesignedUiTitle: "Gemini High-Converting Parent-Student Paywall (+48% Lift)",
+    redesignedUiTitle: "FunnelDoctor AI Fixed Component",
     redesignedUiFeatures: [
-      "📱 1-Tap 'Send UPI Bill to Papa on WhatsApp'",
-      "💳 ₹1,499/mo Flexible Quarterly Staircase Tier",
-      "🎓 IIT Bombay Faculty Trust Credentials",
-      "✨ 7-Day 100% Refund Money-Back Guarantee",
+      "⚡ Dual Billing Toggle: ₹399/mo or ₹99 Instant Test Unlock",
+      "⚡ 1 Free Video Solution Preview with Step-by-Step Breakdown",
+      "⚡ Live AIR Rank Benchmark ('You are in Top 4.8% of 42k test takers')",
     ],
-    codeDiff: `// WhatsApp Parent Forwarding & Flexible Paywall Component
-import React from 'react';
-import { Send } from 'lucide-react';
+    codeDiff: `// FlexiblePlanSelector.tsx — Production Component Generated by FunnelDoctor AI
+import React, { useState } from 'react';
+import { CheckCircle2, Zap } from 'lucide-react';
 
-export function StudentPaywallCard({ onSendWhatsApp }: { onSendWhatsApp?: () => void }) {
+export function FlexiblePlanSelector({ onSelect }: { onSelect?: (plan: string) => void }) {
+  const [billing, setBilling] = useState<'monthly' | 'test'>('monthly');
+
   return (
-    <div className="bg-[#090D16] border border-white/10 rounded-3xl p-6 shadow-2xl text-center max-w-sm mx-auto">
-      <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20">
-        IIT-JEE CRACKER BATCH 2027
-      </span>
-      <h3 className="text-xl font-extrabold text-white mt-2">₹1,499 <span className="text-xs text-slate-400 font-normal">/ month</span></h3>
-      
-      <button 
-        onClick={onSendWhatsApp}
-        className="mt-5 w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
-      >
-        <Send className="w-4 h-4" />
-        <span>Send Payment Link to Papa on WhatsApp</span>
+    <div className="bg-[#090D16] p-6 rounded-3xl border border-white/10 shadow-2xl flex flex-col gap-4">
+      <div className="flex bg-slate-900 p-1 rounded-2xl border border-white/5">
+        <button 
+          onClick={() => setBilling('monthly')} 
+          className={\`flex-1 py-2 rounded-xl text-xs font-bold \${billing === 'monthly' ? 'bg-indigo-600 text-white' : 'text-slate-400'}\`}
+        >
+          Monthly Pass (₹399/mo)
+        </button>
+        <button 
+          onClick={() => setBilling('test')} 
+          className={\`flex-1 py-2 rounded-xl text-xs font-bold \${billing === 'test' ? 'bg-indigo-600 text-white' : 'text-slate-400'}\`}
+        >
+          Unlock 1 Test (₹99)
+        </button>
+      </div>
+
+      <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+        <p className="text-xs text-indigo-300 font-bold">Includes Video Solutions + AIR Rank Benchmark</p>
+      </div>
+
+      <button className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg">
+        Unlock Now via UPI
       </button>
     </div>
   );
@@ -542,31 +567,33 @@ export function StudentPaywallCard({ onSendWhatsApp }: { onSendWhatsApp?: () => 
   },
 };
 
-export default function FunnelDoctorEliteApp() {
-  // Navigation & View Mode State
+// ==========================================
+// MAIN MULTIMODAL APPLICATION COMPONENT
+// ==========================================
+export default function FunnelDoctorApp() {
+  // Navigation & Mode
   const [viewMode, setViewMode] = useState<"website" | "workspace">("website");
-  const [activeDatasetId, setActiveDatasetId] = useState<DatasetId>("d2c");
-  const [activeTab, setActiveTab] = useState<"telemetry" | "vision" | "rca" | "prd" | "warroom">("telemetry");
+  const [activeTab, setActiveTab] = useState<"telemetry" | "vision" | "rca" | "prd" | "pm">("telemetry");
 
-  // API Key & Settings Modal
+  // Active Startup Dataset
+  const [activeDatasetId, setActiveDatasetId] = useState<DatasetId>("d2c");
+
+  // Gemini API Key Management
   const [geminiApiKey, setGeminiApiKey] = useState<string>("");
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [tempApiKeyInput, setTempApiKeyInput] = useState<string>("");
 
-  // Live Hero Audit Simulation Progress Modal
+  // Website Hero Audit State
+  const [heroUrlInput, setHeroUrlInput] = useState<string>("https://quickstyle-d2c.in/checkout");
   const [isAuditingHero, setIsAuditingHero] = useState<boolean>(false);
   const [auditProgressStep, setAuditProgressStep] = useState<number>(0);
-  const [heroUrlInput, setHeroUrlInput] = useState<string>("https://quickstyle-d2c.in/checkout");
 
-  // Interactive UI Fix Studio Toggle (Tab 4)
-  const [uiFixViewMode, setUiFixViewMode] = useState<"broken" | "redesigned" | "code">("redesigned");
-
-  // Vision X-Ray Selected Pin (Tab 2)
+  // Vision UX X-Ray State (Tab 2)
   const [selectedPinId, setSelectedPinId] = useState<number>(1);
+  const [isVisionAnalyzing, setVisionAnalyzing] = useState<boolean>(false);
   const [uploadedVisionImage, setUploadedVisionImage] = useState<string | null>(null);
-  const [visionAnalyzing, setVisionAnalyzing] = useState<boolean>(false);
 
-  // SQL Lab Selected Preset (Tab 3)
+  // SQL & RCA Lab State (Tab 3)
   const [selectedSqlPresetIdx, setSelectedSqlPresetIdx] = useState<number>(0);
 
   // AI PM Voice War Room (Tab 5)
@@ -639,7 +666,7 @@ export default function FunnelDoctorEliteApp() {
     showToast(`${label} copied to clipboard!`);
   };
 
-  // Browser Voice Input (SpeechRecognition) & Output (SpeechSynthesis)
+  // Browser Voice Input & Output
   const handleToggleVoiceRecording = () => {
     if (typeof window === "undefined") return;
 
@@ -739,34 +766,35 @@ export default function FunnelDoctorEliteApp() {
   // ROI Math
   const calculatedLeaked = Math.round(calcVisitors * (calcDropRate / 100) * calcAov);
   const calculatedRecoverable = Math.round(calculatedLeaked * 0.22);
+  const calculatedAnnualLift = Math.round(calculatedRecoverable * 12);
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white relative bg-dot-pattern">
-      {/* Floating Ambient Mesh Gradient Blobs */}
-      <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none animate-mesh-float-1" />
-      <div className="fixed bottom-1/4 right-10 w-[450px] h-[450px] bg-violet-600/15 rounded-full blur-[130px] pointer-events-none animate-mesh-float-2" />
-      <div className="fixed top-1/2 left-10 w-[350px] h-[350px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#02040a] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white relative bg-grid-pattern overflow-x-hidden">
+      {/* Radiant Ambient Mesh Lighting Backgrounds */}
+      <div className="fixed -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-gradient-to-b from-indigo-500/15 via-purple-500/10 to-transparent rounded-full blur-[160px] pointer-events-none animate-mesh-float-1 z-0" />
+      <div className="fixed top-1/3 -right-24 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none animate-mesh-float-2 z-0" />
+      <div className="fixed bottom-10 -left-20 w-[450px] h-[450px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none z-0" />
 
-      {/* Toast Notification Container */}
+      {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-indigo-600/90 backdrop-blur-xl text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-2xl border border-indigo-400/40 flex items-center gap-2 animate-fadeIn">
-          <Sparkles className="w-4 h-4 text-yellow-300" />
+        <div className="fixed bottom-6 right-6 z-50 glass-panel text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl border-indigo-400/40 flex items-center gap-2.5 animate-fadeIn">
+          <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* GLOBAL PERSISTENT HEADER (TOP BAR)          */}
-      {/* ========================================== */}
-      <header className="sticky top-0 z-40 bg-[#030712]/80 backdrop-blur-xl border-b border-white/[0.08] px-4 md:px-8 py-3.5">
+      {/* ========================================================================= */}
+      {/* GLOBAL PERSISTENT HEADER (COMMAND BAR)                                   */}
+      {/* ========================================================================= */}
+      <header className="sticky top-0 z-40 bg-[#02040a]/80 backdrop-blur-2xl border-b border-white/[0.08] px-4 md:px-8 py-3.5 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo & Brand */}
+          {/* Logo & Brand Identity */}
           <div
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => setViewMode("website")}
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-[#030712] rounded-[14px] flex items-center justify-center">
+            <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-emerald-400 p-[1.5px] shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+              <div className="w-full h-full bg-[#050814] rounded-[14px] flex items-center justify-center">
                 <Activity className="w-5 h-5 text-emerald-400" />
               </div>
             </div>
@@ -775,8 +803,9 @@ export default function FunnelDoctorEliteApp() {
                 <span className="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
                   FunnelDoctor<span className="text-indigo-400 font-black">.ai</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hidden sm:inline">
-                  Google Gemini 2.5
+                <span className="text-[9px] uppercase font-mono font-bold tracking-[0.18em] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/25 hidden sm:inline-flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Gemini 2.5 Flash
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium">
@@ -785,14 +814,15 @@ export default function FunnelDoctorEliteApp() {
             </div>
           </div>
 
-          {/* Persistent Mode Switcher: Website vs App Workspace */}
-          <div className="flex items-center gap-2.5">
-            <div className="bg-slate-900/90 backdrop-blur-md p-1 rounded-2xl border border-white/[0.08] flex items-center gap-1 shadow-inner">
+          {/* Center / Right Control Hub */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Mode Switch Capsule */}
+            <div className="bg-slate-900/80 backdrop-blur-md p-1 rounded-2xl border border-white/[0.08] flex items-center gap-1 shadow-inner">
               <button
                 onClick={() => setViewMode("website")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   viewMode === "website"
-                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/20"
+                    ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25"
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -803,7 +833,7 @@ export default function FunnelDoctorEliteApp() {
                 onClick={() => setViewMode("workspace")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   viewMode === "workspace"
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/20 font-black"
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25 font-black"
                     : "text-slate-400 hover:text-slate-200"
                 }`}
               >
@@ -812,13 +842,22 @@ export default function FunnelDoctorEliteApp() {
               </button>
             </div>
 
+            {/* 60s Judge Pitch Script Button */}
+            <button
+              onClick={() => setShowPitchModal(true)}
+              className="glass-pill px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white hidden lg:flex items-center gap-1.5"
+            >
+              <Mic className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Pitch Script</span>
+            </button>
+
             {/* Gemini API Key Button */}
             <button
               onClick={() => setShowSettingsModal(true)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
                 geminiApiKey
                   ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-sm"
-                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/20"
+                  : "bg-indigo-500/10 border-indigo-500/25 text-indigo-300 hover:bg-indigo-500/20"
               }`}
             >
               <Key className="w-3.5 h-3.5" />
@@ -832,521 +871,647 @@ export default function FunnelDoctorEliteApp() {
       </header>
 
       {/* ========================================================================= */}
-      {/* VIEW MODE A: HIGH-END PUBLIC SAAS MARKETING WEBSITE                       */}
+      {/* VIEW MODE A: MULTI-CRORE PUBLIC SAAS MARKETING WEBSITE                    */}
       {/* ========================================================================= */}
       {viewMode === "website" && (
         <div className="flex-1 flex flex-col relative z-10">
           {/* HERO SECTION */}
-          <section className="relative pt-16 pb-24 px-4 md:px-8 overflow-hidden border-b border-white/[0.08]">
+          <section className="relative pt-20 pb-28 px-4 md:px-8 overflow-hidden border-b border-white/[0.08] bg-radial-hero">
             <div className="max-w-5xl mx-auto text-center relative z-10 flex flex-col items-center">
-              {/* Top Pill Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-white/10 text-xs font-semibold text-slate-300 mb-6 shadow-2xl backdrop-blur-xl">
+              {/* Shimmering Top Pill Badge */}
+              <div className="shimmer-badge inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-white/10 text-xs font-semibold text-slate-300 mb-8 shadow-2xl backdrop-blur-xl">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>🏆 Built for Startup Buildathon India 2026</span>
+                <span className="text-slate-300 font-medium">Startup Buildathon India 2026</span>
                 <span className="text-slate-600">•</span>
-                <span className="text-indigo-400 font-bold">Multimodal AI Product Analyst</span>
+                <span className="text-indigo-400 font-bold">Google DeepMind & Cloud Track</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.12]">
-                Your Checkout Funnel Is Leaking Revenue.{" "}
-                <span className="bg-gradient-to-r from-rose-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent">
-                  Our Multimodal AI Finds Why
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.04em] leading-[1.08] text-center max-w-4xl mx-auto">
+                Your Checkout Funnel <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-rose-400 via-rose-300 to-amber-300 bg-clip-text text-transparent">
+                  Is Leaking Crores.
+                </span>{" "}
+                <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-b from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                  Our Multimodal AI Fixes It In 60s.
                 </span>
-                —And Writes The Fix in 60 Seconds.
               </h1>
 
               {/* Subheadline */}
-              <p className="mt-5 text-sm md:text-base text-slate-400 max-w-2xl leading-relaxed">
-                FunnelDoctor AI combines <strong>Quantitative Funnel Telemetry</strong> (Cloud SQL & Event Logs) with{" "}
-                <strong>Qualitative Gemini Vision</strong> (UI Screenshot X-Rays) to pinpoint exact drop-off root causes, generate an executive PRD, and output ready-to-ship redesigned UI code.
+              <p className="mt-6 text-base sm:text-lg text-slate-400 max-w-2xl font-normal leading-relaxed">
+                Traditional analytics only show <span className="text-slate-200 font-semibold">WHERE</span> users left. 
+                FunnelDoctor AI fuses <span className="text-indigo-300 font-semibold">Cloud SQL Telemetry</span> with{" "}
+                <span className="text-indigo-300 font-semibold">Gemini 2.5 Vision UI X-Rays</span> to uncover{" "}
+                <span className="text-emerald-300 font-semibold">WHY</span>, author a complete PRD, and write ready-to-ship React code.
               </p>
 
-              {/* Interactive Hero Audit Bar */}
-              <div className="w-full max-w-2xl mt-8 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-2.5 shadow-2xl flex flex-col sm:flex-row items-center gap-2 hover:border-indigo-500/40 transition-colors">
-                <div className="flex items-center gap-2 flex-1 w-full px-2">
-                  <Search className="w-4 h-4 text-slate-500 shrink-0" />
-                  <input
-                    type="text"
-                    value={heroUrlInput}
-                    onChange={(e) => setHeroUrlInput(e.target.value)}
-                    placeholder="https://quickstyle-d2c.in/checkout"
-                    className="w-full bg-transparent text-xs md:text-sm text-slate-200 focus:outline-none font-mono"
-                  />
-                </div>
-                <button
-                  onClick={() => handleLaunchHeroDiagnosis(activeDatasetId)}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white font-extrabold text-xs md:text-sm shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 shrink-0 active:scale-95"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Run Live AI Diagnosis ➔</span>
-                </button>
-              </div>
-
-              {/* Instant 3 Demo Dataset Chips */}
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-                <span className="text-slate-500 font-medium">Or test live startup funnels:</span>
-                <button
-                  onClick={() => handleLaunchHeroDiagnosis("d2c")}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-indigo-400/40 text-slate-300 transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <span>🛍️ D2C Fashion Checkout</span>
-                  <span className="text-rose-400 font-bold font-mono">(-71.7% Drop)</span>
-                </button>
-                <button
-                  onClick={() => handleLaunchHeroDiagnosis("kyc")}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-indigo-400/40 text-slate-300 transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <span>💳 Fintech Video-KYC</span>
-                  <span className="text-rose-400 font-bold font-mono">(-74.8% Drop)</span>
-                </button>
-                <button
-                  onClick={() => handleLaunchHeroDiagnosis("edtech")}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-white/10 hover:border-indigo-400/40 text-slate-300 transition flex items-center gap-1.5 shadow-sm"
-                >
-                  <span>🎓 EdTech Paywall</span>
-                  <span className="text-rose-400 font-bold font-mono">(-96.5% Drop)</span>
-                </button>
-              </div>
-
-              {/* Asymmetric Bento Preview Composition */}
-              <div className="mt-14 w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                {/* Bento Card 1: Telemetry */}
-                <div className="glow-card rounded-3xl p-6 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[10px] text-rose-400 font-mono font-bold uppercase tracking-wider">
-                      1. Quantitative Telemetry
-                    </span>
-                    <h4 className="font-extrabold text-base text-slate-100 mt-1">Bleeding Step 4</h4>
-                    <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                      18,000 Bag Visitors ➔ 5,100 Address Checkouts (<strong>-71.7% Churn</strong>).
-                    </p>
-                  </div>
-                  <div className="mt-5 pt-3 border-t border-white/[0.08]">
-                    <span className="text-[10px] text-slate-500">Revenue Leaked:</span>
-                    <p className="text-lg font-black text-rose-400">₹68.4 Lakhs/mo</p>
-                  </div>
-                </div>
-
-                {/* Bento Card 2: Vision X-Ray */}
-                <div className="glow-card rounded-3xl p-6 flex flex-col justify-between border-rose-500/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] text-indigo-400 font-mono font-bold uppercase tracking-wider">
-                      2. Qualitative Spatial X-Ray
-                    </span>
-                    <span className="bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-500/40">
-                      Gemini Vision
-                    </span>
-                  </div>
-                  <h4 className="font-extrabold text-base text-slate-100">3 Hotspot Friction Pins</h4>
-                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                    • #1 Forced Account Login Wall
-                    <br />
-                    • #2 Hidden ₹149 Fee Surcharge
-                    <br />• #3 UPI CTA Below Keyboard
-                  </p>
-                  <div className="mt-5 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs">
-                    <span className="text-slate-400">Heuristics:</span>
-                    <span className="text-rose-400 font-bold">3 Violations</span>
-                  </div>
-                </div>
-
-                {/* Bento Card 3: Code Remediation */}
-                <div className="glow-card rounded-3xl p-6 flex flex-col justify-between border-emerald-500/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase tracking-wider">
-                      3. Auto-Remediation
-                    </span>
-                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/40">
-                      Code Synthesis
-                    </span>
-                  </div>
-                  <h4 className="font-extrabold text-base text-slate-100">Ready-to-Ship Code Fix</h4>
-                  <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                    Sticky 1-Tap UPI Express component + complete engineering PRD generated in 60s.
-                  </p>
-                  <div className="mt-5 pt-3 border-t border-white/[0.08]">
-                    <span className="text-[10px] text-slate-500">Recoverable Revenue:</span>
-                    <p className="text-lg font-black text-emerald-400">₹26.0 Lakhs/mo</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* SECTION 2: THE OLD BROKEN WAY VS. FUNNELDOCTOR AI */}
-          <section id="problem" className="py-24 px-4 md:px-8 border-b border-white/[0.08]">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-14">
-                <span className="text-xs uppercase font-extrabold text-indigo-400 tracking-wider">
-                  The Workflow Revolution
-                </span>
-                <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-2">
-                  The Old Broken Way vs. The FunnelDoctor AI Way
-                </h2>
-                <p className="text-sm text-slate-400 mt-2">
-                  Why traditional analytics dashboards leave founders stuck guessing.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* The Old Broken Way */}
-                <div className="glow-card rounded-3xl p-6 md:p-8 flex flex-col justify-between border-rose-500/20">
-                  <div>
-                    <div className="flex items-center gap-2 text-rose-400 font-bold text-sm mb-4">
-                      <X className="w-5 h-5" />
-                      <span>THE OLD BROKEN WORKFLOW (Takes 3 Weeks)</span>
-                    </div>
-                    <ul className="flex flex-col gap-3.5 text-xs text-slate-300">
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-400 shrink-0 font-bold font-mono">1.</span>
-                        <span>
-                          <strong>Mixpanel / GA4 only show the number:</strong> They tell you 70% of people left, but never explain *why* or what visual bug caused it.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-400 shrink-0 font-bold font-mono">2.</span>
-                        <span>
-                          <strong>Watching 50+ Hours of Replay Videos:</strong> Founders and PMs spend weeks watching session replays in Hotjar trying to spot patterns manually.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-400 shrink-0 font-bold font-mono">3.</span>
-                        <span>
-                          <strong>Weeks of Internal Debate:</strong> Designers argue about button colors while engineers argue about API latency.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-400 shrink-0 font-bold font-mono">4.</span>
-                        <span>
-                          <strong>Manual PRD Writing:</strong> Writing requirements, user stories, and acceptance criteria drags on for 2 sprints before code is touched.
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-rose-400 font-mono">
-                    Avg. Time to Ship Fix: 18 - 24 Days
-                  </div>
-                </div>
-
-                {/* The FunnelDoctor AI Way */}
-                <div className="glow-card rounded-3xl p-6 md:p-8 flex flex-col justify-between border-emerald-500/40 relative overflow-hidden">
-                  <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-                  <div>
-                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-4">
-                      <Check className="w-5 h-5" />
-                      <span>THE FUNNELDOCTOR AI WORKFLOW (Takes 60 Seconds)</span>
-                    </div>
-                    <ul className="flex flex-col gap-3.5 text-xs text-slate-200">
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-400 shrink-0 font-bold font-mono">1.</span>
-                        <span>
-                          <strong>Upload Funnel Data + Screen:</strong> Simply paste your checkout URL and funnel numbers or sync with your existing analytics.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-400 shrink-0 font-bold font-mono">2.</span>
-                        <span>
-                          <strong>Gemini Omni Vision Spots Visual Friction:</strong> Instantly detects keyboard occlusion, surprise shipping fees, and dark pattern layout shifts.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-400 shrink-0 font-bold font-mono">3.</span>
-                        <span>
-                          <strong>Google Agent Skills SQL Verification:</strong> Writes and executes segmented queries across OS versions and API response times.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-400 shrink-0 font-bold font-mono">4.</span>
-                        <span>
-                          <strong>Ready-to-Ship Code + PRD in 60s:</strong> Generates a full engineering PRD with RICE prioritization and copyable React + Tailwind code.
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-emerald-400 font-mono font-bold">
-                    Avg. Time to Ship Fix: 60 Seconds ⚡
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* SECTION 3: 4-STAGE GOOGLE AI ARCHITECTURE */}
-          <section id="architecture" className="py-24 px-4 md:px-8 border-b border-white/[0.08]">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-14">
-                <span className="text-xs uppercase font-extrabold text-indigo-400 tracking-wider">
-                  Technical Innovation
-                </span>
-                <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-2">
-                  Our 4-Stage Google AI Architecture
-                </h2>
-                <p className="text-sm text-slate-400 mt-2">
-                  Built on Google Cloud and Gemini 2.5 multimodal foundational models.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="glow-card rounded-2xl p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-mono font-bold mb-3 border border-indigo-500/30">
-                      01
-                    </div>
-                    <h3 className="font-bold text-sm text-white">Funnel & Cohort Telemetry</h3>
-                    <p className="text-xs text-indigo-400 font-mono mt-0.5">Cloud SQL + BigQuery</p>
-                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
-                      Ingests event drops and isolates the exact cohort, OS version, and checkout step bleeding revenue.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="glow-card rounded-2xl p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold mb-3 border border-emerald-500/30">
-                      02
-                    </div>
-                    <h3 className="font-bold text-sm text-white">Multimodal Vision X-Ray</h3>
-                    <p className="text-xs text-emerald-400 font-mono mt-0.5">Gemini 2.5 Flash Vision</p>
-                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
-                      Scans mobile and desktop viewports to spot dark patterns, keyboard occlusion, and Nielsen heuristic flaws.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="glow-card rounded-2xl p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-mono font-bold mb-3 border border-amber-500/30">
-                      03
-                    </div>
-                    <h3 className="font-bold text-sm text-white">Root-Cause SQL Lab</h3>
-                    <p className="text-xs text-amber-400 font-mono mt-0.5">Google Agent Skills</p>
-                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
-                      Autonomously generates and executes segmented SQL queries to prove whether drops are UX- or latency-driven.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="glow-card rounded-2xl p-5 flex flex-col justify-between">
-                  <div>
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-mono font-bold mb-3 border border-purple-500/30">
-                      04
-                    </div>
-                    <h3 className="font-bold text-sm text-white">Auto-PRD & Code Fix</h3>
-                    <p className="text-xs text-purple-400 font-mono mt-0.5">Gemini Code Synthesis</p>
-                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
-                      Outputs a production-grade Product Requirements Document and copyable React + Tailwind component.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* SECTION 4: INTERACTIVE REVENUE LEAKAGE & ROI CALCULATOR */}
-          <section id="calculator" className="py-24 px-4 md:px-8 border-b border-white/[0.08]">
-            <div className="max-w-4xl mx-auto glow-card rounded-3xl p-6 md:p-10 shadow-2xl border-white/10">
-              <div className="text-center mb-8">
-                <span className="text-xs uppercase font-extrabold text-emerald-400 tracking-wider">
-                  Interactive Financial Model
-                </span>
-                <h2 className="text-2xl md:text-3xl font-extrabold text-white mt-1">
-                  How Much Revenue Is Your Checkout Funnel Leaking?
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Adjust your metrics to calculate monthly leaked revenue and your conservative recovery potential.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                {/* Sliders */}
-                <div className="flex flex-col gap-5">
-                  <div>
-                    <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
-                      <span>Monthly Funnel Visitors</span>
-                      <span className="text-indigo-400 font-mono" suppressHydrationWarning>
-                        {formatNumber(calcVisitors)}
-                      </span>
-                    </div>
+              {/* Interactive Raycast-Style Command Palette Hero Audit Bar */}
+              <div className="mt-10 w-full max-w-2xl">
+                <div className="glass-panel p-2 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center gap-2 border-white/10 focus-within:border-indigo-500/50 transition-all">
+                  <div className="flex items-center gap-2.5 px-3 w-full flex-1">
+                    <Globe className="w-4 h-4 text-slate-500 shrink-0" />
                     <input
-                      type="range"
-                      min="10000"
-                      max="500000"
-                      step="10000"
-                      value={calcVisitors}
-                      onChange={(e) => setCalcVisitors(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      type="text"
+                      value={heroUrlInput}
+                      onChange={(e) => setHeroUrlInput(e.target.value)}
+                      placeholder="Paste your checkout URL (e.g. quickstyle-d2c.in/checkout)"
+                      className="bg-transparent border-none text-xs sm:text-sm text-slate-100 focus:outline-none w-full font-mono placeholder:text-slate-500"
                     />
+                    <kbd className="hidden sm:inline-block px-2 py-0.5 rounded bg-white/5 border border-white/10 font-mono text-[10px] text-slate-400 shrink-0">
+                      Enter ↵
+                    </kbd>
                   </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
-                      <span>Checkout Drop-Off Rate (%)</span>
-                      <span className="text-rose-400 font-mono">{calcDropRate}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="30"
-                      max="90"
-                      step="1"
-                      value={calcDropRate}
-                      onChange={(e) => setCalcDropRate(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
-                      <span>Average Order Value (₹)</span>
-                      <span className="text-emerald-400 font-mono" suppressHydrationWarning>
-                        ₹{formatNumber(calcAov)}
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="500"
-                      max="10000"
-                      step="250"
-                      value={calcAov}
-                      onChange={(e) => setCalcAov(Number(e.target.value))}
-                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                    />
-                  </div>
+                  <button
+                    onClick={() => handleLaunchHeroDiagnosis("d2c")}
+                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 shrink-0 active:scale-95"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Run AI Diagnosis ➔</span>
+                  </button>
                 </div>
 
-                {/* Calculation Output Card */}
-                <div className="bg-[#030712] p-6 rounded-2xl border border-white/[0.08] text-center flex flex-col justify-between shadow-2xl">
-                  <div>
-                    <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">
-                      Monthly Revenue Leaked
-                    </span>
-                    <p className="text-2xl md:text-3xl font-extrabold text-rose-400 mt-1">
-                      ₹{(calculatedLeaked / 100000).toFixed(1)} Lakhs
-                      <span className="text-xs font-normal text-slate-500"> / month</span>
-                    </p>
-                  </div>
-
-                  <div className="my-5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <span className="text-[11px] text-emerald-300 uppercase font-extrabold">
-                      Recoverable with FunnelDoctor AI (+22% lift)
-                    </span>
-                    <p className="text-xl md:text-2xl font-black text-emerald-400 mt-1">
-                      +₹{(calculatedRecoverable / 100000).toFixed(1)} Lakhs/mo
-                    </p>
-                  </div>
+                {/* 3 Instant Demo Funnel Chips */}
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+                  <span className="text-[11px] text-slate-500 font-semibold mr-1">Instant Demos:</span>
+                  <button
+                    onClick={() => {
+                      setHeroUrlInput("https://quickstyle-d2c.in/checkout");
+                      handleLaunchHeroDiagnosis("d2c");
+                    }}
+                    className="glass-pill px-3 py-1.5 rounded-xl text-slate-300 hover:text-white transition flex items-center gap-1.5 hover:border-rose-500/40"
+                  >
+                    <span>🛍️ QuickStyle D2C</span>
+                    <span className="text-rose-400 font-mono font-bold">-71.7% Drop</span>
+                  </button>
 
                   <button
                     onClick={() => {
-                      setViewMode("workspace");
-                      setActiveTab("prd");
+                      setHeroUrlInput("https://finpulse.bank/kyc-agent");
+                      handleLaunchHeroDiagnosis("kyc");
                     }}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-1.5"
+                    className="glass-pill px-3 py-1.5 rounded-xl text-slate-300 hover:text-white transition flex items-center gap-1.5 hover:border-rose-500/40"
                   >
-                    <span>Recover This Revenue Now ➔</span>
+                    <span>💳 FinPulse Neo-KYC</span>
+                    <span className="text-rose-400 font-mono font-bold">-74.8% Drop</span>
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setHeroUrlInput("https://prepmate.in/iit-jee/paywall");
+                      handleLaunchHeroDiagnosis("edtech");
+                    }}
+                    className="glass-pill px-3 py-1.5 rounded-xl text-slate-300 hover:text-white transition flex items-center gap-1.5 hover:border-rose-500/40"
+                  >
+                    <span>🎓 PrepMate EdTech</span>
+                    <span className="text-rose-400 font-mono font-bold">-96.5% Drop</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3D-Angled Hero Preview Mockup Card */}
+              <div className="mt-14 w-full max-w-4xl relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-emerald-500/20 rounded-3xl blur-2xl opacity-60 group-hover:opacity-100 transition duration-1000" />
+                <div className="relative glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 text-left shadow-2xl">
+                  {/* Top Bar of the Mockup */}
+                  <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/[0.08] text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                      <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                      <span className="ml-2 font-mono text-[11px] text-slate-400">
+                        FunnelDoctor_Multimodal_Kernel.exe &bull; QuickStyle D2C Checkout Session
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                      Live Telemetry Correlated
+                    </span>
+                  </div>
+
+                  {/* 2-Column Split: Telemetry Chart on Left + Gemini Vision Phone on Right */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    {/* Left: Bleeding Step 4 Telemetry */}
+                    <div className="bg-[#030712] p-5 rounded-2xl border border-white/[0.08] flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+                            Funnel Stage 4 Telemetry
+                          </span>
+                          <span className="text-xs font-black text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20">
+                            -71.7% Drop-off
+                          </span>
+                        </div>
+                        <h4 className="text-base font-extrabold text-white mt-1">
+                          Step 4: Checkout & Address Wall
+                        </h4>
+                        <p className="text-xs text-slate-400 mt-1">
+                          5,100 visitors entered &bull; Only 1,443 reached UPI payment.
+                        </p>
+                      </div>
+
+                      {/* Drop Bar Visualization */}
+                      <div className="my-5 flex flex-col gap-2">
+                        <div className="flex justify-between text-[11px] font-mono text-slate-400">
+                          <span>Conversion: 28.3%</span>
+                          <span className="text-rose-400 font-bold">Lost: 3,657 shoppers</span>
+                        </div>
+                        <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden flex border border-white/5">
+                          <div className="bg-emerald-500 h-full w-[28%]" />
+                          <div className="bg-rose-500/80 h-full w-[72%] animate-pulse" />
+                        </div>
+                      </div>
+
+                      {/* Leaked Cash Counter */}
+                      <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-rose-300 font-bold uppercase tracking-wider">
+                            Estimated Monthly Revenue Leak
+                          </p>
+                          <p className="text-lg font-black text-rose-400">₹68.4 Lakhs / mo</p>
+                        </div>
+                        <AlertTriangle className="w-5 h-5 text-rose-400" />
+                      </div>
+                    </div>
+
+                    {/* Right: Gemini Vision Screenshot Frame */}
+                    <div className="relative bg-[#030712] p-4 rounded-2xl border border-white/[0.08] flex flex-col items-center">
+                      <div className="w-full flex items-center justify-between mb-3 text-[11px]">
+                        <span className="font-mono text-indigo-400 flex items-center gap-1 font-bold">
+                          <Eye className="w-3.5 h-3.5" />
+                          Gemini 2.5 Vision X-Ray
+                        </span>
+                        <span className="text-slate-500 font-mono">Viewport: 390 x 844</span>
+                      </div>
+
+                      {/* Simulated Phone Viewport with Scanning Radar */}
+                      <div className="relative w-full max-w-[240px] aspect-[9/16] bg-slate-950 rounded-2xl border-2 border-slate-800 p-2 overflow-hidden shadow-2xl flex flex-col justify-between">
+                        {/* Radar Scanline */}
+                        <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-400 to-transparent shadow-[0_0_15px_#6366f1] animate-radar-scan z-20 pointer-events-none" />
+
+                        {/* Simulated Checkout Screen Mockup */}
+                        <div className="flex flex-col gap-1.5 opacity-80 text-[8px]">
+                          <div className="h-4 bg-slate-800 rounded flex items-center px-1.5 text-slate-300">
+                            🔒 QuickStyle Checkout
+                          </div>
+                          <div className="p-2 bg-slate-900 rounded border border-slate-800 flex flex-col gap-1">
+                            <div className="h-2 w-16 bg-slate-700 rounded" />
+                            <div className="h-2 w-full bg-slate-800 rounded" />
+                            <div className="h-2 w-3/4 bg-slate-800 rounded" />
+                          </div>
+                          <div className="p-2 bg-slate-900 rounded border border-slate-800 flex flex-col gap-1">
+                            <div className="h-2 w-12 bg-slate-700 rounded" />
+                            <div className="h-2 w-full bg-slate-800 rounded" />
+                          </div>
+                        </div>
+
+                        {/* Flaw Highlight Pin #3 */}
+                        <div className="relative p-2 rounded-xl bg-rose-500/20 border border-rose-500 text-[9px] text-rose-300 font-mono flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1 font-bold text-rose-200">
+                            <AlertCircle className="w-3 h-3 text-rose-400" />
+                            <span>FLAW #3: BUTTON OCCLUDED</span>
+                          </div>
+                          <span>Virtual keyboard pushed UPI button 240px below fold.</span>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 text-[10px] text-slate-500 text-center font-mono">
+                        Nielsen Heuristic #8 Violated: Aesthetic and Minimalist Design
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* SECTION 5: TRANSPARENT SAAS PRICING TIERS */}
-          <section id="pricing" className="py-24 px-4 md:px-8">
-            <div className="max-w-5xl mx-auto text-center">
-              <span className="text-xs uppercase font-extrabold text-indigo-400 tracking-wider">
-                Simple Pricing
-              </span>
-              <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-1">
-                Predictable Pricing for High-Growth Startups
-              </h2>
-              <p className="text-sm text-slate-400 mt-1 mb-12">
-                100x cheaper than hiring an agency. 100x faster than traditional analytics.
-              </p>
+          {/* PROBLEM SECTION: OLD WAY VS FUNNELDOCTOR AI */}
+          <section className="py-24 px-4 md:px-8 border-b border-white/[0.08] relative">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center max-w-2xl mx-auto mb-16">
+                <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-indigo-400">
+                  The Paradigm Shift
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+                  Why Traditional Funnel Analytics Leave You Bleeding Cash
+                </h2>
+                <p className="mt-4 text-sm text-slate-400">
+                  Google Analytics and Mixpanel give you numbers with zero visual empathy. FunnelDoctor AI connects the telemetry to the exact pixels.
+                </p>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                {/* Tier 1: Starter */}
-                <div className="glow-card rounded-3xl p-6 flex flex-col justify-between">
+              {/* Side-by-Side Comparison */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* The Old Way */}
+                <div className="glass-panel p-8 rounded-3xl border-rose-500/20 bg-rose-950/5 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-base text-white">Starter Sandbox</h3>
-                    <p className="text-xs text-slate-400 mt-1">For early-stage side projects</p>
-                    <div className="mt-4 mb-6">
-                      <span className="text-2xl font-black text-white">Free</span>
-                      <span className="text-xs text-slate-400"> / forever</span>
+                    <div className="flex items-center gap-3 text-rose-400 font-extrabold text-sm mb-4">
+                      <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center">
+                        <X className="w-4 h-4 text-rose-400" />
+                      </div>
+                      <span>The Old Way (Mixpanel, GA4, Hotjar)</span>
                     </div>
-                    <ul className="flex flex-col gap-2.5 text-xs text-slate-300">
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>1 Funnel Audit per month</span>
+
+                    <ul className="flex flex-col gap-4 text-xs text-slate-400">
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 font-bold">✕</span>
+                        <span>Shows you dropped users as a percentage with zero explanation of why they abandoned.</span>
                       </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Gemini Vision UI X-Ray</span>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 font-bold">✕</span>
+                        <span>Forces engineers and PMs to spend 3 weeks debating subjective opinions and digging logs.</span>
                       </li>
-                      <li className="flex items-center gap-2">
-                        <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Basic RCA Diagnostics</span>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 font-bold">✕</span>
+                        <span>Zero integration with responsive viewport rendering or virtual keyboard occlusion.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 font-bold">✕</span>
+                        <span>Leaves the fix unwritten while your checkout bleeds lakhs every single week.</span>
                       </li>
                     </ul>
                   </div>
+
+                  <div className="mt-8 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-300 font-mono">
+                    Outcome: 3 weeks of meetings &bull; ₹15 Lakhs lost during deliberation
+                  </div>
+                </div>
+
+                {/* The FunnelDoctor AI Breakthrough */}
+                <div className="glass-panel p-8 rounded-3xl border-emerald-500/30 bg-emerald-950/5 flex flex-col justify-between shadow-2xl shadow-emerald-500/10">
+                  <div>
+                    <div className="flex items-center gap-3 text-emerald-400 font-extrabold text-sm mb-4">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                      </div>
+                      <span>The FunnelDoctor AI Autonomous Agent</span>
+                    </div>
+
+                    <ul className="flex flex-col gap-4 text-xs text-slate-300">
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>Correlates raw Cloud SQL session events with Gemini 2.5 Multimodal UI Vision X-Rays.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>Pins exact UI hotspot flaws evaluated against Nielsen Norman Heuristics.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>Generates a complete engineering PRD with RICE prioritization matrix.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span>Outputs ready-to-ship production React code to deploy the fix in under 60 seconds.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="mt-8 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 font-mono flex items-center justify-between">
+                    <span>Outcome: Fixed in 60s &bull; Estimated +₹26 Lakhs/mo revenue lift</span>
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* THE MULTI-CRORE ASYMMETRIC BENTO GRID */}
+          <section className="py-24 px-4 md:px-8 border-b border-white/[0.08] relative">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center max-w-2xl mx-auto mb-16">
+                <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-indigo-400">
+                  Multimodal Architecture
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+                  Engineered with Google DeepMind & Google Cloud
+                </h2>
+                <p className="mt-4 text-sm text-slate-400">
+                  Four autonomous intelligence layers working in concert to diagnose and repair conversion bottlenecks.
+                </p>
+              </div>
+
+              {/* Asymmetric Bento Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Tile 1: Large 2-Col - Gemini Vision X-Ray */}
+                <div className="md:col-span-2 glass-panel p-8 rounded-3xl relative overflow-hidden group">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-indigo-400 font-bold">
+                      Layer 01 &bull; Qualitative Vision
+                    </span>
+                    <span className="text-xs text-slate-500 font-mono">gemini-2.5-flash</span>
+                  </div>
+                  <h3 className="text-2xl font-extrabold text-white">Gemini 2.5 Vision UI X-Ray</h3>
+                  <p className="text-xs text-slate-400 mt-2 max-w-xl">
+                    Crawls your live URL at 390px, 768px, and 1440px viewports. Inspects visual hierarchy, occluded buttons, contrast ratios, and Nielsen Norman UX heuristic violations.
+                  </p>
+
+                  <div className="mt-6 bg-[#030712] p-4 rounded-2xl border border-white/[0.08] flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
+                      <Eye className="w-6 h-6" />
+                    </div>
+                    <div className="text-xs font-mono">
+                      <p className="text-indigo-300 font-bold">Heuristic #8 Violation Detected</p>
+                      <p className="text-slate-400">UPI CTA pushed below virtual keyboard fold on Android viewports.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tile 2: 1-Col - BigQuery Telemetry Engine */}
+                <div className="glass-panel p-8 rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-emerald-400 font-bold">
+                      Layer 02 &bull; Quantitative
+                    </span>
+                    <h3 className="text-xl font-extrabold text-white mt-2">Cloud SQL Telemetry Engine</h3>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Translates natural language questions into BigQuery SQL, ingesting raw event logs to pinpoint drop-offs with statistical confidence.
+                    </p>
+                  </div>
+                  <div className="mt-6 p-3 bg-[#030712] rounded-xl border border-white/[0.08] text-[11px] font-mono text-emerald-400 flex items-center justify-between">
+                    <span>⚡ 100k events/sec</span>
+                    <Database className="w-4 h-4 text-emerald-400" />
+                  </div>
+                </div>
+
+                {/* Tile 3: 1-Col - RCA Heuristics Engine */}
+                <div className="glass-panel p-8 rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-400 font-bold">
+                      Layer 03 &bull; Synthesis
+                    </span>
+                    <h3 className="text-xl font-extrabold text-white mt-2">Root-Cause Heuristics</h3>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Weighs drop-offs across User Friction, Network Latency, and Pricing Transparency to build a mathematical causality model.
+                    </p>
+                  </div>
+                  <div className="mt-6 p-3 bg-[#030712] rounded-xl border border-white/[0.08] text-[11px] font-mono text-amber-300 flex items-center justify-between">
+                    <span>42% Friction &bull; 34% Wall</span>
+                    <Flame className="w-4 h-4 text-amber-400" />
+                  </div>
+                </div>
+
+                {/* Tile 4: Large 2-Col - Auto-PRD & Production React Code */}
+                <div className="md:col-span-2 glass-panel p-8 rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-purple-400 font-bold">
+                        Layer 04 &bull; Autonomous Action
+                      </span>
+                      <span className="text-xs text-slate-500 font-mono">React + Tailwind CSS</span>
+                    </div>
+                    <h3 className="text-2xl font-extrabold text-white">Auto-PRD & Production Code Studio</h3>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Does not just diagnose—FunnelDoctor AI authors an executive PRD with RICE scores and produces production-grade React code components ready to commit into your repository.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 bg-[#030712] p-4 rounded-2xl border border-white/[0.08] font-mono text-[11px] text-slate-300 flex items-center justify-between">
+                    <span className="text-emerald-400">export function ExpressCheckoutBar() &#123; ... &#125;</span>
+                    <span className="text-slate-500 text-[10px]">1-Click Copy Ready</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* INTERACTIVE ROI RECOVERY CALCULATOR */}
+          <section className="py-24 px-4 md:px-8 border-b border-white/[0.08] relative">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center max-w-xl mx-auto mb-16">
+                <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-emerald-400">
+                  Value Realization
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+                  Calculate Your Recoverable Revenue
+                </h2>
+                <p className="mt-4 text-sm text-slate-400">
+                  Drag the sliders to model your startup’s funnel metrics and see how much cash FunnelDoctor AI can recover.
+                </p>
+              </div>
+
+              {/* Calculator Box */}
+              <div className="glass-panel p-8 sm:p-10 rounded-3xl border-white/10 shadow-2xl">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  {/* Left: Sliders */}
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <div className="flex justify-between text-xs text-slate-300 font-semibold mb-2">
+                        <span>Monthly Funnel Visitors</span>
+                        <span className="text-indigo-400 font-mono font-bold" suppressHydrationWarning>
+                          {formatNumber(calcVisitors)}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="10000"
+                        max="500000"
+                        step="10000"
+                        value={calcVisitors}
+                        onChange={(e) => setCalcVisitors(Number(e.target.value))}
+                        className="w-full accent-indigo-500 bg-slate-900 rounded-lg cursor-pointer h-2"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                        <span>10,000</span>
+                        <span>500,000</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs text-slate-300 font-semibold mb-2">
+                        <span>Drop-off Rate at Worst Bottleneck</span>
+                        <span className="text-rose-400 font-mono font-bold" suppressHydrationWarning>
+                          {calcDropRate}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="20"
+                        max="95"
+                        step="1"
+                        value={calcDropRate}
+                        onChange={(e) => setCalcDropRate(Number(e.target.value))}
+                        className="w-full accent-rose-500 bg-slate-900 rounded-lg cursor-pointer h-2"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                        <span>20% (Healthy)</span>
+                        <span>95% (Catastrophic)</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs text-slate-300 font-semibold mb-2">
+                        <span>Average Order Value (AOV)</span>
+                        <span className="text-emerald-400 font-mono font-bold" suppressHydrationWarning>
+                          ₹{formatNumber(calcAov)}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="200"
+                        max="10000"
+                        step="100"
+                        value={calcAov}
+                        onChange={(e) => setCalcAov(Number(e.target.value))}
+                        className="w-full accent-emerald-500 bg-slate-900 rounded-lg cursor-pointer h-2"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+                        <span>₹200</span>
+                        <span>₹10,000</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Revenue Impact Output Card */}
+                  <div className="bg-[#030712] p-8 rounded-2xl border border-white/[0.08] flex flex-col justify-between shadow-2xl text-center">
+                    <div>
+                      <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-slate-400 font-bold">
+                        Monthly Revenue Leaking
+                      </span>
+                      <p className="text-3xl sm:text-4xl font-extrabold text-rose-400 mt-2" suppressHydrationWarning>
+                        ₹{(calculatedLeaked / 100000).toFixed(1)} Lakhs
+                        <span className="text-xs font-normal text-slate-500"> / month</span>
+                      </p>
+                    </div>
+
+                    <div className="my-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25">
+                      <span className="text-[10px] uppercase font-mono font-extrabold text-emerald-300 tracking-wider">
+                        Recoverable ARR Boost (+22% Lift)
+                      </span>
+                      <p className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1" suppressHydrationWarning>
+                        +₹{(calculatedRecoverable / 100000).toFixed(1)} Lakhs/mo
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-mono mt-1" suppressHydrationWarning>
+                        (~₹{(calculatedAnnualLift / 10000000).toFixed(2)} Crores Annual ARR)
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setViewMode("workspace");
+                        setActiveTab("prd");
+                      }}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-xl shadow-emerald-500/20 transition flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <span>Recover This Revenue Now ➔</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SAAS PRICING MATRIX */}
+          <section className="py-24 px-4 md:px-8 border-b border-white/[0.08] relative">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center max-w-xl mx-auto mb-16">
+                <span className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-indigo-400">
+                  Transparent SaaS Pricing
+                </span>
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mt-2">
+                  Built to Pay for Itself on Day 1
+                </h2>
+                <p className="mt-4 text-sm text-slate-400">
+                  Start with our developer CLI or deploy the full multimodal autonomous agent across your startup funnels.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Tier 1: Starter */}
+                <div className="glass-panel p-8 rounded-3xl flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Developer</span>
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-white">Free</span>
+                      <span className="text-xs text-slate-500">/ forever (OSS)</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Local CLI & CSV heuristic auditor for open-source builders.
+                    </p>
+
+                    <ul className="mt-6 flex flex-col gap-3 text-xs text-slate-300">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>CLI & CSV Funnel Parser</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Nielsen Heuristic Diagnostics</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Markdown PRD Generation</span>
+                      </li>
+                    </ul>
+                  </div>
+
                   <button
                     onClick={() => setViewMode("workspace")}
-                    className="mt-6 w-full py-2.5 rounded-xl border border-white/10 hover:bg-slate-800 text-xs font-bold text-white transition"
+                    className="mt-8 w-full py-2.5 rounded-xl border border-white/10 hover:bg-slate-800 text-xs font-bold text-white transition"
                   >
-                    Start Free
+                    Launch Open Source
                   </button>
                 </div>
 
-                {/* Tier 2: Growth Pro (POPULAR) */}
-                <div className="glow-card rounded-3xl p-6 flex flex-col justify-between border-2 border-indigo-500 shadow-2xl shadow-indigo-500/10 relative">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] uppercase font-black px-3 py-0.5 rounded-full shadow-md">
-                    MOST POPULAR
+                {/* Tier 2: Pro (Multimodal Vision) - Highlighted */}
+                <div className="glass-panel p-8 rounded-3xl border-indigo-500/50 bg-indigo-950/10 flex flex-col justify-between shadow-2xl shadow-indigo-500/20 relative">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-black uppercase tracking-wider text-white">
+                    Most Popular &bull; Buildathon Special
                   </div>
+
                   <div>
-                    <h3 className="font-bold text-base text-white">Growth Pro</h3>
-                    <p className="text-xs text-slate-400 mt-1">For scaling D2C, SaaS & Fintech apps</p>
-                    <div className="mt-4 mb-6">
-                      <span className="text-2xl font-black text-white">₹4,999</span>
-                      <span className="text-xs text-slate-400"> ($59) / mo</span>
+                    <span className="text-xs font-mono font-bold text-indigo-400 uppercase tracking-wider">Startup Pro</span>
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-white">₹7,999</span>
+                      <span className="text-xs text-slate-500">/ month</span>
                     </div>
-                    <ul className="flex flex-col gap-2.5 text-xs text-slate-200">
+                    <p className="text-xs text-slate-400 mt-2">
+                      Full Multimodal Vision X-Ray, SQL Telemetry & React Code Generator.
+                    </p>
+
+                    <ul className="mt-6 flex flex-col gap-3 text-xs text-slate-200">
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Unlimited Funnel Audits</span>
+                        <span>Unlimited Gemini 2.5 Vision Audits</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Natural-Language-to-SQL Lab</span>
+                        <span>BigQuery Natural-Language SQL Lab</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Auto-PRD & React Code Fix Studio</span>
+                        <span>Production React UI Component Diff</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Gemini Live Voice PM War Room</span>
+                        <span>Autonomous AI PM Voice Agent</span>
                       </li>
                     </ul>
                   </div>
+
                   <button
-                    onClick={() => setViewMode("workspace")}
-                    className="mt-6 w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-xs font-bold text-white shadow-lg transition"
+                    onClick={() => handleLaunchHeroDiagnosis("d2c")}
+                    className="mt-8 w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-xs shadow-lg shadow-indigo-500/30 transition"
                   >
-                    Launch Pro Workspace
+                    Start 14-Day Free Trial
                   </button>
                 </div>
 
                 {/* Tier 3: Enterprise */}
-                <div className="glow-card rounded-3xl p-6 flex flex-col justify-between">
+                <div className="glass-panel p-8 rounded-3xl flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-base text-white">Enterprise Autopilot</h3>
-                    <p className="text-xs text-slate-400 mt-1">For enterprise data engineering teams</p>
-                    <div className="mt-4 mb-6">
-                      <span className="text-2xl font-black text-white">₹19,999</span>
-                      <span className="text-xs text-slate-400"> ($249) / mo</span>
+                    <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Enterprise Scale</span>
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-white">₹39,999</span>
+                      <span className="text-xs text-slate-500">/ month</span>
                     </div>
-                    <ul className="flex flex-col gap-2.5 text-xs text-slate-300">
+                    <p className="text-xs text-slate-400 mt-2">
+                      Real-time telemetry pipelines and automated PR deployment to GitHub.
+                    </p>
+
+                    <ul className="mt-6 flex flex-col gap-3 text-xs text-slate-300">
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Real-time GA4/PostHog Webhook Sync</span>
+                        <span>Automated GitHub PR Pull Requests</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
@@ -1354,13 +1519,14 @@ export default function FunnelDoctorEliteApp() {
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-400" />
-                        <span>Custom Cloud SQL / BigQuery Pipelines</span>
+                        <span>Dedicated Cloud SQL / BigQuery Pipelines</span>
                       </li>
                     </ul>
                   </div>
+
                   <button
                     onClick={() => setViewMode("workspace")}
-                    className="mt-6 w-full py-2.5 rounded-xl border border-white/10 hover:bg-slate-800 text-xs font-bold text-white transition"
+                    className="mt-8 w-full py-2.5 rounded-xl border border-white/10 hover:bg-slate-800 text-xs font-bold text-white transition"
                   >
                     Contact Enterprise
                   </button>
@@ -1369,41 +1535,59 @@ export default function FunnelDoctorEliteApp() {
             </div>
           </section>
 
-          {/* Footer */}
-          <footer className="border-t border-white/[0.08] px-6 py-8 text-center text-xs text-slate-500 bg-[#030712]">
-            FunnelDoctor AI &copy; 2026 &bull; Built for Startup Buildathon India 2026 &bull; Powered by Google DeepMind & Google Cloud
+          {/* FOOTER */}
+          <footer className="border-t border-white/[0.08] px-6 py-12 text-center text-xs text-slate-500 bg-[#02040a]">
+            <p>
+              FunnelDoctor AI &copy; 2026 &bull; Built for Startup Buildathon India 2026 &bull; Powered by Google DeepMind & Google Cloud
+            </p>
+            <p className="mt-2 text-[11px] text-slate-600 font-mono">
+              Designed with precision for founders and growth engineers losing crores in checkout.
+            </p>
           </footer>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW MODE B: THE APP COMMAND CENTER WORKSPACE                             */}
+      {/* VIEW MODE B: THE INTERACTIVE 5-TAB APP COMMAND CENTER WORKSPACE          */}
       {/* ========================================================================= */}
       {viewMode === "workspace" && (
         <div className="flex-1 flex flex-col md:flex-row relative z-10">
           {/* LEFT SIDEBAR (Dark Obsidian w-64) */}
-          <aside className="w-full md:w-64 bg-[#030712]/90 backdrop-blur-xl border-r border-white/[0.08] p-4 flex flex-col justify-between shrink-0">
+          <aside className="w-full md:w-64 bg-[#02040a]/90 backdrop-blur-2xl border-r border-white/[0.08] p-4 flex flex-col justify-between shrink-0">
             <div className="flex flex-col gap-6">
-              {/* Dataset Switcher Dropdown */}
+              {/* Dataset Switcher Pills */}
               <div>
-                <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block mb-1.5">
-                  Select Active Startup Funnel
+                <label className="text-[10px] uppercase font-mono font-bold text-slate-500 tracking-[0.18em] block mb-2">
+                  Active Startup Funnel
                 </label>
-                <div className="relative">
-                  <select
-                    value={activeDatasetId}
-                    onChange={(e) => {
-                      setActiveDatasetId(e.target.value as DatasetId);
-                      setSelectedPinId(1);
-                      showToast(`Switched Dataset to ${DATASETS[e.target.value as DatasetId].name}`);
-                    }}
-                    className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer pr-8"
-                  >
-                    <option value="d2c">🛍️ QuickStyle D2C Fashion (-71.7%)</option>
-                    <option value="kyc">💳 FinPulse Neo-KYC (-74.8%)</option>
-                    <option value="edtech">🎓 PrepMate IIT Paywall (-96.5%)</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+                <div className="flex flex-col gap-1.5">
+                  {(["d2c", "kyc", "edtech"] as DatasetId[]).map((id) => {
+                    const d = DATASETS[id];
+                    const isSelected = activeDatasetId === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => {
+                          setActiveDatasetId(id);
+                          setSelectedPinId(1);
+                          showToast(`Loaded ${d.name}`);
+                        }}
+                        className={`w-full p-2.5 rounded-2xl border text-left transition flex items-center justify-between ${
+                          isSelected
+                            ? "bg-slate-800/90 border-indigo-500/40 shadow-lg text-white font-bold"
+                            : "glass-pill text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        <div className="truncate">
+                          <p className="text-xs truncate">{d.name}</p>
+                          <p className="text-[10px] text-slate-500 font-mono">{d.companyCategory}</p>
+                        </div>
+                        <span className="text-[10px] font-mono text-rose-400 font-bold shrink-0">
+                          -{d.bleedingDropRate}%
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1413,7 +1597,7 @@ export default function FunnelDoctorEliteApp() {
                   onClick={() => setActiveTab("telemetry")}
                   className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
                     activeTab === "telemetry"
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20 font-bold"
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25 font-bold"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
                   }`}
                 >
@@ -1425,7 +1609,7 @@ export default function FunnelDoctorEliteApp() {
                   onClick={() => setActiveTab("vision")}
                   className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
                     activeTab === "vision"
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20 font-bold"
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25 font-bold"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
                   }`}
                 >
@@ -1437,7 +1621,7 @@ export default function FunnelDoctorEliteApp() {
                   onClick={() => setActiveTab("rca")}
                   className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
                     activeTab === "rca"
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20 font-bold"
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25 font-bold"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
                   }`}
                 >
@@ -1449,140 +1633,173 @@ export default function FunnelDoctorEliteApp() {
                   onClick={() => setActiveTab("prd")}
                   className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
                     activeTab === "prd"
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20 font-bold"
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25 font-bold"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
                   }`}
                 >
-                  <FileText className="w-4 h-4" />
+                  <FileCode2 className="w-4 h-4" />
                   <span>4. Auto-PRD & UI Fix</span>
                 </button>
 
                 <button
-                  onClick={() => setActiveTab("warroom")}
+                  onClick={() => setActiveTab("pm")}
                   className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
-                    activeTab === "warroom"
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md shadow-emerald-500/20 font-black"
-                      : "text-emerald-400 hover:bg-emerald-500/10"
+                    activeTab === "pm"
+                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/25 font-bold"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
                   }`}
                 >
-                  <Volume2 className="w-4 h-4" />
+                  <Bot className="w-4 h-4" />
                   <span>5. Live AI PM War Room</span>
                 </button>
               </nav>
+
+              {/* Active Dataset Quick Summary Card */}
+              <div className="bg-[#030712] p-3.5 rounded-2xl border border-white/[0.08] text-[11px] flex flex-col gap-2">
+                <div className="flex justify-between font-mono">
+                  <span className="text-slate-500">Overall Conv:</span>
+                  <span className="text-emerald-400 font-bold">{dataset.overallConversion}%</span>
+                </div>
+                <div className="flex justify-between font-mono">
+                  <span className="text-slate-500">Leaked ARR:</span>
+                  <span className="text-rose-400 font-bold">{dataset.monthlyLeakedRevenue}</span>
+                </div>
+                <div className="flex justify-between font-mono">
+                  <span className="text-slate-500">Recoverable:</span>
+                  <span className="text-indigo-400 font-bold">{dataset.recoverableRevenue}</span>
+                </div>
+              </div>
             </div>
 
-            {/* Sidebar Bottom Controls */}
-            <div className="flex flex-col gap-2 pt-4 border-t border-white/[0.08]">
+            {/* Bottom 60s Pitch Script Launcher */}
+            <div className="pt-4 border-t border-white/[0.08]">
               <button
                 onClick={() => setShowPitchModal(true)}
-                className="w-full py-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 border border-white/5"
               >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>🎤 60-Sec Judge Pitch Guide</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode("website")}
-                className="w-full py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5"
-              >
-                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                <span>Back to Website</span>
+                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                <span>60-Sec Pitch Script</span>
               </button>
             </div>
           </aside>
 
-          {/* MAIN PRODUCT WORKSPACE AREA */}
-          <main className="flex-1 p-4 md:p-8 flex flex-col gap-6 overflow-y-auto max-w-6xl">
-            {/* Top Overview KPI Banner */}
-            <div className="glow-card rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          {/* MAIN WORKSPACE CONTENT PANE */}
+          <main className="flex-1 bg-[#02040a] p-4 md:p-8 overflow-y-auto max-h-[calc(100vh-65px)]">
+            {/* Top Workspace Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-white/[0.08]">
               <div>
-                <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">
-                  Active Audit Target
-                </span>
-                <h2 className="text-xl font-extrabold text-white mt-0.5">{dataset.name}</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-slate-500 uppercase tracking-wider">
+                    {dataset.companyCategory} &bull; Funnel Audit
+                  </span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[10px] font-mono text-emerald-400 font-semibold">Live Telemetry Ingested</span>
+                </div>
+                <h2 className="text-2xl font-black text-white mt-1">{dataset.name}</h2>
                 <p className="text-xs text-slate-400">{dataset.tagline}</p>
               </div>
 
-              {/* 4 Quick KPI Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full md:w-auto">
-                <div className="bg-[#030712] p-2.5 rounded-xl border border-white/[0.08] text-center">
-                  <span className="text-[10px] text-slate-500 block font-medium">Conversion</span>
-                  <span className="text-xs font-extrabold text-emerald-400 font-mono">
-                    {dataset.overallConversion}%
-                  </span>
-                </div>
-                <div className="bg-[#030712] p-2.5 rounded-xl border border-rose-500/30 text-center">
-                  <span className="text-[10px] text-rose-400 block font-bold">Bleeding Step</span>
-                  <span className="text-xs font-extrabold text-rose-400 font-mono">
-                    -{dataset.bleedingDropRate}% Drop
-                  </span>
-                </div>
-                <div className="bg-[#030712] p-2.5 rounded-xl border border-white/[0.08] text-center">
-                  <span className="text-[10px] text-slate-500 block font-medium">Leaked Revenue</span>
-                  <span className="text-xs font-extrabold text-white font-mono">
-                    {dataset.monthlyLeakedRevenue}
-                  </span>
-                </div>
-                <div className="bg-[#030712] p-2.5 rounded-xl border border-emerald-500/30 text-center">
-                  <span className="text-[10px] text-emerald-400 block font-bold">AI Recovery</span>
-                  <span className="text-xs font-extrabold text-emerald-400 font-mono">
-                    {dataset.recoverableRevenue}
-                  </span>
-                </div>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => copyToClipboard(dataset.prdMarkdown, "Engineering PRD")}
+                  className="glass-pill px-3 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy PRD</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("prd");
+                    showToast("Switched to Auto-PRD & Code Studio");
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5"
+                >
+                  <Zap className="w-3.5 h-3.5 fill-current" />
+                  <span>View Code Fix</span>
+                </button>
               </div>
             </div>
 
-            {/* TAB 1: 📊 FUNNEL & COHORT TELEMETRY */}
+            {/* ================================================================= */}
+            {/* TAB 1: FUNNEL TELEMETRY                                           */}
+            {/* ================================================================= */}
             {activeTab === "telemetry" && (
               <div className="flex flex-col gap-6">
-                {/* 5-Step Visual Funnel Visualization */}
-                <div className="glow-card rounded-2xl p-6 shadow-2xl">
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                        <TrendingDown className="w-4 h-4 text-rose-400" />
-                        <span>Step-by-Step Conversion Funnel Drop-off Velocity</span>
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5" suppressHydrationWarning>
-                        {formatNumber(dataset.monthlyVisitors)} Total Funnel Sessions Analyzed via Cloud SQL
-                      </p>
-                    </div>
+                {/* 4 Metric Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                    <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Total Initial Visitors</span>
+                    <p className="text-2xl font-extrabold text-white mt-2" suppressHydrationWarning>
+                      {formatNumber(dataset.monthlyVisitors)}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-1">Ingested via BigQuery</span>
                   </div>
 
-                  <div className="flex flex-col gap-3">
-                    {dataset.steps.map((st, i) => {
-                      const widthPercent = Math.max(10, (st.visitors / dataset.steps[0].visitors) * 100);
+                  <div className="glass-panel p-5 rounded-2xl border-rose-500/30 flex flex-col justify-between">
+                    <span className="text-[10px] font-mono text-rose-300 uppercase tracking-wider">Bleeding Bottleneck</span>
+                    <p className="text-2xl font-extrabold text-rose-400 mt-2">
+                      -{dataset.bleedingDropRate}% Drop
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-1 truncate">{dataset.bleedingStepName}</span>
+                  </div>
 
+                  <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                    <span className="text-[10px] font-mono text-amber-300 uppercase tracking-wider">Monthly Revenue Leaked</span>
+                    <p className="text-2xl font-extrabold text-amber-400 mt-2">
+                      {dataset.monthlyLeakedRevenue}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-1">AOV: ₹{formatNumber(dataset.aov)}</span>
+                  </div>
+
+                  <div className="glass-panel p-5 rounded-2xl border-emerald-500/30 flex flex-col justify-between">
+                    <span className="text-[10px] font-mono text-emerald-300 uppercase tracking-wider">Recoverable Lift (+22%)</span>
+                    <p className="text-2xl font-extrabold text-emerald-400 mt-2">
+                      {dataset.recoverableRevenue}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-1">With 1-Tap Component Fix</span>
+                  </div>
+                </div>
+
+                {/* Funnel Waterfall Steps */}
+                <div className="glass-panel p-6 rounded-3xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="font-extrabold text-base text-white">Full-Funnel Stage-by-Stage Telemetry</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Click any stage to run vision correlation.</p>
+                    </div>
+                    <span className="text-xs font-mono text-slate-500">N=6 Sequential Steps</span>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    {dataset.steps.map((st, idx) => {
+                      const pctOfInitial = Math.round((st.visitors / dataset.monthlyVisitors) * 100);
                       return (
                         <div
                           key={st.id}
-                          className={`p-3.5 rounded-xl border transition ${
+                          className={`p-4 rounded-2xl border transition ${
                             st.isBleedingBottleneck
-                              ? "bg-rose-950/20 border-rose-500/50 shadow-lg shadow-rose-950/30"
+                              ? "bg-rose-950/20 border-rose-500/40 shadow-xl"
                               : "bg-[#030712] border-white/[0.08]"
                           }`}
                         >
-                          <div className="flex items-center justify-between text-xs mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-slate-400 font-bold">{i + 1}.</span>
-                              <span className="font-bold text-slate-200">{st.name}</span>
+                              <span className="text-xs font-mono font-bold text-slate-400">0{idx + 1}.</span>
+                              <span className="text-sm font-extrabold text-white">{st.name}</span>
                               {st.isBleedingBottleneck && (
-                                <span className="text-[9px] uppercase font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
-                                  CRITICAL BOTTLENECK LEAK
+                                <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-bold">
+                                  🚨 CRITICAL LEAK POINT
                                 </span>
                               )}
                             </div>
-
-                            <div className="flex items-center gap-3">
-                              <span className="text-slate-400 font-mono font-medium" suppressHydrationWarning>
-                                {formatNumber(st.visitors)} users
+                            <div className="flex items-center gap-3 font-mono text-xs">
+                              <span className="text-slate-300" suppressHydrationWarning>
+                                {formatNumber(st.visitors)} sessions
                               </span>
-                              {i < dataset.steps.length - 1 && (
-                                <span
-                                  className={`font-mono font-bold ${
-                                    st.isBleedingBottleneck ? "text-rose-400" : "text-amber-400"
-                                  }`}
-                                >
+                              <span className="text-slate-500">({pctOfInitial}%)</span>
+                              {st.dropoffRate > 0 && (
+                                <span className="text-rose-400 font-bold">
                                   -{(st.dropoffRate * 100).toFixed(1)}% drop
                                 </span>
                               )}
@@ -1590,28 +1807,25 @@ export default function FunnelDoctorEliteApp() {
                           </div>
 
                           {/* Progress Bar */}
-                          <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden flex items-center">
+                          <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden flex border border-white/5">
                             <div
-                              className={`h-full rounded-full transition-all duration-700 ${
-                                st.isBleedingBottleneck
-                                  ? "bg-gradient-to-r from-rose-500 via-rose-400 to-amber-500"
-                                  : "bg-gradient-to-r from-indigo-500 to-teal-400"
+                              className={`h-full transition-all duration-500 ${
+                                st.isBleedingBottleneck ? "bg-rose-500" : "bg-indigo-500"
                               }`}
-                              style={{ width: `${widthPercent}%` }}
+                              style={{ width: `${pctOfInitial}%` }}
                             />
                           </div>
 
                           {st.isBleedingBottleneck && (
-                            <div className="mt-3 pt-2.5 border-t border-rose-500/20 flex items-center justify-between">
-                              <span className="text-[11px] text-rose-300" suppressHydrationWarning>
-                                🚨 <strong>{formatNumber(st.dropoffCount)} dropped users</strong> at this single step!
+                            <div className="mt-3 flex items-center justify-between text-xs text-rose-300 pt-2 border-t border-rose-500/20">
+                              <span suppressHydrationWarning>
+                                ⚠️ <strong>{formatNumber(st.dropoffCount)} shoppers</strong> dropped at this exact step.
                               </span>
                               <button
                                 onClick={() => setActiveTab("vision")}
-                                className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                                className="underline font-bold hover:text-white"
                               >
-                                <Eye className="w-3 h-3" />
-                                <span>X-Ray This Step with Gemini Vision ➔</span>
+                                View Vision X-Ray ➔
                               </button>
                             </div>
                           )}
@@ -1621,43 +1835,34 @@ export default function FunnelDoctorEliteApp() {
                   </div>
                 </div>
 
-                {/* Cohort Retention Heatmap Matrix */}
-                <div className="glow-card rounded-2xl p-6 shadow-2xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                        <Users className="w-4 h-4 text-indigo-400" />
-                        <span>Weekly User Retention Heatmap Matrix</span>
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Cohort retention decay tracking conversion health over 5 weeks
-                      </p>
-                    </div>
-                  </div>
+                {/* Cohort Retention Heatmap */}
+                <div className="glass-panel p-6 rounded-3xl">
+                  <h3 className="font-extrabold text-base text-white mb-1">Weekly Cohort Retention Matrix</h3>
+                  <p className="text-xs text-slate-400 mb-6">Tracking repeat checkout activity post-drop-off intervention.</p>
 
                   <div className="overflow-x-auto">
-                    <table className="w-full text-xs text-center border-collapse">
+                    <table className="w-full text-xs text-left">
                       <thead>
-                        <tr className="text-slate-400 border-b border-white/[0.08] font-mono">
-                          <th className="py-2 text-left">Cohort</th>
-                          <th className="py-2">Week 0</th>
-                          <th className="py-2">Week 1</th>
-                          <th className="py-2">Week 2</th>
-                          <th className="py-2">Week 3</th>
-                          <th className="py-2">Week 4</th>
-                          <th className="py-2">Week 5</th>
+                        <tr className="border-b border-white/[0.08] text-slate-500 font-mono text-[10px] uppercase">
+                          <th className="pb-3">Cohort</th>
+                          <th className="pb-3 text-center">Week 0</th>
+                          <th className="pb-3 text-center">Week 1</th>
+                          <th className="pb-3 text-center">Week 2</th>
+                          <th className="pb-3 text-center">Week 3</th>
+                          <th className="pb-3 text-center">Week 4</th>
+                          <th className="pb-3 text-center">Week 5</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {dataset.retentionMatrix.map((r, idx) => (
-                          <tr key={idx} className="border-b border-white/[0.04] font-mono text-[11px]">
-                            <td className="py-2.5 text-left font-semibold text-slate-300">{r.cohort}</td>
-                            <td className="py-2 bg-emerald-600/40 text-emerald-200 font-bold">{r.w0}%</td>
-                            <td className="py-2 bg-emerald-600/20 text-emerald-300">{r.w1}%</td>
-                            <td className="py-2 bg-indigo-600/20 text-indigo-300">{r.w2}%</td>
-                            <td className="py-2 bg-indigo-600/10 text-indigo-400">{r.w3}%</td>
-                            <td className="py-2 bg-slate-900 text-slate-400">{r.w4}%</td>
-                            <td className="py-2 bg-slate-900/60 text-slate-500">{r.w5}%</td>
+                      <tbody className="divide-y divide-white/[0.04]">
+                        {dataset.retentionMatrix.map((r, i) => (
+                          <tr key={i} className="font-mono">
+                            <td className="py-2.5 text-slate-300 font-semibold">{r.cohort}</td>
+                            <td className="text-center py-2.5 bg-indigo-500/25 text-indigo-200">{r.w0}%</td>
+                            <td className="text-center py-2.5 bg-indigo-500/20 text-indigo-200">{r.w1}%</td>
+                            <td className="text-center py-2.5 bg-indigo-500/15 text-indigo-300">{r.w2}%</td>
+                            <td className="text-center py-2.5 bg-indigo-500/10 text-indigo-300">{r.w3}%</td>
+                            <td className="text-center py-2.5 bg-indigo-500/5 text-slate-400">{r.w4}%</td>
+                            <td className="text-center py-2.5 text-slate-500">{r.w5}%</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1667,217 +1872,205 @@ export default function FunnelDoctorEliteApp() {
               </div>
             )}
 
-            {/* TAB 2: 👁️ MULTIMODAL VISION UX X-RAY */}
+            {/* ================================================================= */}
+            {/* TAB 2: GEMINI VISION UX X-RAY                                     */}
+            {/* ================================================================= */}
             {activeTab === "vision" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left 5 Cols: Interactive Mobile Screen Inspector with Hotspot Pins */}
-                <div className="lg:col-span-5 glow-card rounded-2xl p-5 shadow-2xl flex flex-col items-center">
-                  <div className="w-full flex items-center justify-between mb-4 border-b border-white/[0.08] pb-2.5">
-                    <div>
-                      <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">
-                        Bleeding Step Visual Capture
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Left Side (5 Cols): Interactive Smartphone Device Mockup */}
+                <div className="lg:col-span-5 flex flex-col items-center">
+                  <div className="glass-panel p-4 rounded-3xl w-full flex flex-col items-center">
+                    <div className="w-full flex items-center justify-between mb-4 text-xs">
+                      <span className="font-mono text-indigo-400 font-bold flex items-center gap-1.5">
+                        <Eye className="w-4 h-4" />
+                        Viewport: 390px Mobile Viewport
                       </span>
-                      <h4 className="font-bold text-sm text-white">{dataset.bleedingStepName}</h4>
-                    </div>
-                    <span className="text-xs text-indigo-400 font-mono">Mobile 390px</span>
-                  </div>
-
-                  {/* Device Wireframe Frame */}
-                  <div className="relative w-[280px] h-[520px] bg-[#030712] border-[6px] border-slate-800 rounded-[38px] p-3 shadow-2xl flex flex-col justify-between overflow-hidden">
-                    {/* Speaker / Dynamic Island */}
-                    <div className="w-20 h-3.5 bg-slate-900 rounded-full mx-auto mb-2 shrink-0 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                      <span className="text-[10px] font-mono text-slate-500">Gemini Vision 2.5</span>
                     </div>
 
-                    {/* Simulated Screen Content */}
-                    <div className="relative flex-1 bg-slate-900/90 rounded-xl p-3 border border-white/[0.08] flex flex-col justify-between text-xs overflow-hidden">
-                      {uploadedVisionImage ? (
-                        <img
-                          src={uploadedVisionImage}
-                          alt="Custom Upload"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="flex flex-col gap-2 my-auto">
-                          <div className="p-2 bg-[#030712] rounded-lg border border-white/[0.08] text-[11px]">
-                            <p className="font-bold text-slate-200">{dataset.name}</p>
-                            <p className="text-[10px] text-slate-400">Order Verification</p>
-                          </div>
+                    {/* Smartphone Titanium Frame */}
+                    <div className="relative w-[280px] sm:w-[320px] aspect-[9/18] bg-[#030712] rounded-[48px] border-4 border-slate-700 shadow-2xl p-3 flex flex-col justify-between overflow-hidden">
+                      {/* Top Dynamic Island */}
+                      <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-5 bg-slate-900 rounded-full z-30 flex items-center justify-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-950 ml-16" />
+                      </div>
 
-                          <div className="p-2.5 bg-rose-950/40 border border-rose-500/50 rounded-lg text-[10px] text-rose-200">
-                            <span className="font-bold">⚠️ Friction Modal:</span>
-                            <p className="text-slate-300 mt-0.5">
-                              {dataset.hotspots[0]?.title}
-                            </p>
-                          </div>
+                      {/* Radar Scanline Animation */}
+                      <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-indigo-400 to-transparent shadow-[0_0_15px_#6366f1] animate-radar-scan z-20 pointer-events-none" />
 
-                          <div className="h-8 bg-[#030712]/60 border border-dashed border-white/[0.08] rounded flex items-center justify-center text-[9px] text-slate-500 font-mono">
-                            [Virtual Keyboard Input Boundary]
+                      {/* Simulated Screen Content */}
+                      <div className="relative w-full h-full bg-slate-950 rounded-[38px] p-4 pt-10 flex flex-col justify-between text-[10px] overflow-hidden">
+                        {/* Mockup Elements */}
+                        <div className="flex flex-col gap-2 opacity-80">
+                          <div className="h-4 bg-slate-800 rounded-lg flex items-center px-2 text-slate-300 font-bold">
+                            {dataset.name}
+                          </div>
+                          <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex flex-col gap-1.5">
+                            <div className="h-2.5 w-20 bg-slate-700 rounded" />
+                            <div className="h-2 w-full bg-slate-800 rounded" />
+                            <div className="h-2 w-4/5 bg-slate-800 rounded" />
+                          </div>
+                          <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex flex-col gap-1.5">
+                            <div className="h-2.5 w-16 bg-slate-700 rounded" />
+                            <div className="h-2 w-full bg-slate-800 rounded" />
                           </div>
                         </div>
-                      )}
 
-                      {/* Numbered Hotspot Pins */}
-                      {dataset.hotspots.map((pin) => (
-                        <button
-                          key={pin.id}
-                          onClick={() => setSelectedPinId(pin.id)}
-                          style={{ top: `${pin.yPercent}%`, left: `${pin.xPercent}%` }}
-                          className={`absolute -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-2xl cursor-pointer transition-transform ${
-                            selectedPinId === pin.id
-                              ? "bg-rose-500 text-white scale-125 ring-4 ring-rose-500/30"
-                              : "bg-rose-600 text-white opacity-85 hover:scale-110"
-                          }`}
-                        >
-                          {pin.label}
-                        </button>
-                      ))}
+                        {/* Interactive Pulsing Hotspot Pins */}
+                        {dataset.hotspots.map((pin) => {
+                          const isSelected = selectedPinId === pin.id;
+                          return (
+                            <button
+                              key={pin.id}
+                              onClick={() => setSelectedPinId(pin.id)}
+                              style={{ left: `${pin.xPercent}%`, top: `${pin.yPercent}%` }}
+                              className={`absolute -translate-x-1/2 -translate-y-1/2 z-30 transition-transform ${
+                                isSelected ? "scale-125" : "hover:scale-110"
+                              }`}
+                            >
+                              <span className="relative flex h-8 w-8 items-center justify-center">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-6 w-6 bg-rose-600 text-white font-black text-[11px] items-center justify-center shadow-lg border border-white">
+                                  {pin.id}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
 
-                      <div className="border-t border-white/[0.08] pt-1.5 text-[9px] text-slate-500 flex justify-between">
-                        <span>SSL Verified</span>
-                        <span className="text-indigo-400 font-mono">Gemini Vision Grounding</span>
+                        {/* Bottom Phone Indicator Bar */}
+                        <div className="w-24 h-1 bg-slate-600 rounded-full mx-auto" />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Upload Any UI Screenshot Button */}
-                  <label className="mt-4 w-full py-2.5 bg-[#030712] hover:bg-slate-800 border border-white/[0.08] rounded-xl text-xs font-semibold text-slate-300 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
-                    <Camera className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Upload Custom Screenshot for Gemini Audit</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleUploadCustomScreenshot}
-                      className="hidden"
-                    />
-                  </label>
-                  {visionAnalyzing && (
-                    <p className="text-[11px] text-indigo-400 mt-2 animate-pulse flex items-center gap-1 font-semibold">
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                      Gemini 2.5 Flash analyzing UI wireframe...
-                    </p>
-                  )}
-                </div>
-
-                {/* Right 7 Cols: Correlated Multimodal Findings linked to Pins */}
-                <div className="lg:col-span-7 flex flex-col gap-4">
-                  <div className="glow-card rounded-2xl p-5 shadow-2xl">
-                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
-                      Correlated Multimodal Diagnostics
-                    </span>
-                    <h3 className="text-base font-extrabold text-white mt-0.5">
-                      Pin Details & Heuristic Violations
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Click any pin on the mobile screen to inspect the exact heuristic and quantitative evidence.
-                    </p>
-
-                    <div className="mt-4 flex flex-col gap-3">
-                      {dataset.hotspots.map((pin) => {
-                        const isSelected = selectedPinId === pin.id;
-
-                        return (
-                          <div
-                            key={pin.id}
-                            onClick={() => setSelectedPinId(pin.id)}
-                            className={`p-4 rounded-xl border transition cursor-pointer ${
-                              isSelected
-                                ? "bg-[#030712] border-indigo-500 ring-1 ring-indigo-500/50"
-                                : "bg-[#030712]/60 border-white/[0.08] hover:border-slate-700"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-mono font-bold text-xs">
-                                  {pin.label}
-                                </span>
-                                <h4 className="font-bold text-xs text-white">{pin.title}</h4>
-                              </div>
-                              <span
-                                className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
-                                  pin.severity === "CRITICAL"
-                                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                                    : "bg-amber-500/20 text-amber-400 border border-amber-500/40"
-                                }`}
-                              >
-                                {pin.severity}
-                              </span>
-                            </div>
-
-                            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                              {pin.geminiVisionFinding}
-                            </p>
-
-                            <div className="mt-2.5 pt-2 border-t border-white/[0.04] grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
-                              <div className="bg-slate-900/80 p-2 rounded-lg text-slate-400">
-                                <span className="font-bold text-rose-400 block">Telemetry Evidence:</span>
-                                {pin.telemetryEvidence}
-                              </div>
-                              <div className="bg-slate-900/80 p-2 rounded-lg text-slate-400">
-                                <span className="font-bold text-indigo-400 block">Heuristic Violated:</span>
-                                {pin.heuristicViolated}
-                              </div>
-                            </div>
-
-                            <div className="mt-2.5 p-2 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-xs text-emerald-300 flex items-start gap-1.5">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                              <span>
-                                <strong>Prescribed Engineering Fix:</strong> {pin.prescribedFix}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* Screenshot Upload Dropzone */}
+                    <div className="mt-4 w-full">
+                      <label className="w-full py-2.5 rounded-xl border border-dashed border-white/10 hover:border-indigo-400/50 text-[11px] font-mono text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5 cursor-pointer">
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        <span>Upload Custom Screenshot to Audit</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadCustomScreenshot}
+                          className="hidden"
+                        />
+                      </label>
                     </div>
                   </div>
+                </div>
+
+                {/* Right Side (7 Cols): Hotspot Diagnostic Inspector */}
+                <div className="lg:col-span-7 flex flex-col gap-4">
+                  {/* Pin Selection Pills */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {dataset.hotspots.map((pin) => (
+                      <button
+                        key={pin.id}
+                        onClick={() => setSelectedPinId(pin.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+                          selectedPinId === pin.id
+                            ? "bg-rose-500 text-white shadow-lg shadow-rose-500/25"
+                            : "glass-pill text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <span>Flaw #{pin.id}</span>
+                        <span className="text-[10px] opacity-80">{pin.severity}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Active Pin Details Card */}
+                  {(() => {
+                    const pin = dataset.hotspots.find((p) => p.id === selectedPinId) || dataset.hotspots[0];
+                    return (
+                      <div className="glass-panel p-6 sm:p-8 rounded-3xl flex flex-col gap-6 shadow-2xl">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">
+                              Identified Bottleneck Flaw #{pin.id}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[10px] font-bold">
+                              {pin.severity} SEVERITY
+                            </span>
+                          </div>
+                          <h3 className="text-xl font-extrabold text-white mt-1">{pin.title}</h3>
+                        </div>
+
+                        {/* Nielsen Heuristic Tag */}
+                        <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                          <span className="text-[10px] font-mono uppercase font-bold text-indigo-300">
+                            Heuristic Violated:
+                          </span>
+                          <p className="text-xs font-semibold text-indigo-200 mt-0.5">
+                            {pin.heuristicViolated}
+                          </p>
+                        </div>
+
+                        {/* Gemini Vision Multimodal Finding */}
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                            Gemini 2.5 Vision Observation:
+                          </span>
+                          <p className="text-xs text-slate-300 leading-relaxed bg-[#030712] p-4 rounded-2xl border border-white/[0.08]">
+                            {pin.geminiVisionFinding}
+                          </p>
+                        </div>
+
+                        {/* Telemetry Correlation */}
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <Database className="w-3.5 h-3.5 text-emerald-400" />
+                            Correlated SQL Telemetry Evidence:
+                          </span>
+                          <p className="text-xs text-slate-300 leading-relaxed bg-[#030712] p-4 rounded-2xl border border-white/[0.08]">
+                            {pin.telemetryEvidence}
+                          </p>
+                        </div>
+
+                        {/* Prescribed Solution */}
+                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                          <span className="text-[10px] font-mono uppercase font-bold text-emerald-300">
+                            Prescribed Engineering Fix:
+                          </span>
+                          <p className="text-xs font-bold text-emerald-200 mt-0.5">
+                            {pin.prescribedFix}
+                          </p>
+                        </div>
+
+                        {/* Jump to Code CTA */}
+                        <button
+                          onClick={() => {
+                            setActiveTab("prd");
+                            showToast("Navigated to Auto-PRD & Code Studio");
+                          }}
+                          className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg transition flex items-center justify-center gap-1.5"
+                        >
+                          <Zap className="w-3.5 h-3.5 fill-current" />
+                          <span>Generate Code Fix for Flaw #{pin.id} ➔</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
 
-            {/* TAB 3: 🧠 ROOT CAUSE ANALYSIS (RCA) & SQL LAB */}
+            {/* ================================================================= */}
+            {/* TAB 3: ROOT-CAUSE & SQL LAB                                       */}
+            {/* ================================================================= */}
             {activeTab === "rca" && (
               <div className="flex flex-col gap-6">
-                {/* 4-Pillar Weighted RCA Breakdown */}
-                <div className="glow-card rounded-2xl p-6 shadow-2xl">
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2 mb-1">
-                    <Database className="w-4 h-4 text-indigo-400" />
-                    <span>4-Pillar Weighted Root-Cause Attribution</span>
-                  </h3>
-                  <p className="text-xs text-slate-400 mb-5">
-                    Multimodal weighted attribution isolating the exact drivers of the {dataset.bleedingDropRate}% drop-off.
-                  </p>
-
-                  <div className="flex flex-col gap-3">
-                    {dataset.weightedRca.map((item, idx) => (
-                      <div key={idx} className="bg-[#030712] p-3.5 rounded-xl border border-white/[0.08]">
-                        <div className="flex items-center justify-between text-xs mb-1.5">
-                          <span className="font-bold text-slate-200">{item.pillar}</span>
-                          <span className="font-mono font-black text-indigo-400">{item.weight}% Weight</span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden mb-2">
-                          <div
-                            className={`h-full ${item.color} rounded-full`}
-                            style={{ width: `${item.weight}%` }}
-                          />
-                        </div>
-                        <p className="text-[11px] text-slate-400">{item.explanation}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Natural-Language-to-SQL Lab */}
-                <div className="glow-card rounded-2xl p-6 shadow-2xl">
+                {/* Natural Language Prompt & SQL Presets */}
+                <div className="glass-panel p-6 rounded-3xl">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                        <Terminal className="w-4 h-4 text-emerald-400" />
-                        <span>Interactive Natural-Language-to-SQL Lab</span>
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Ask questions in plain English. Google Agent Skills executes segmented queries on Cloud SQL telemetry.
-                      </p>
+                      <h3 className="font-extrabold text-base text-white">Natural Language SQL Telemetry Studio</h3>
+                      <p className="text-xs text-slate-400">Ask any question about drop-off causality. Ingested via BigQuery Sandbox.</p>
                     </div>
+                    <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                      ⚡ BigQuery Connected
+                    </span>
                   </div>
 
                   {/* Preset Query Chips */}
@@ -1886,306 +2079,300 @@ export default function FunnelDoctorEliteApp() {
                       <button
                         key={idx}
                         onClick={() => setSelectedSqlPresetIdx(idx)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
                           selectedSqlPresetIdx === idx
-                            ? "bg-gradient-to-r from-indigo-600 to-violet-600 border-indigo-500 text-white shadow-sm"
-                            : "bg-[#030712] border-white/10 text-slate-400 hover:text-white"
+                            ? "bg-indigo-600 text-white font-bold"
+                            : "glass-pill text-slate-400 hover:text-white"
                         }`}
                       >
-                        💬 "{preset.prompt}"
+                        {preset.prompt}
                       </button>
                     ))}
                   </div>
 
-                  {/* Generated SQL Block */}
-                  {dataset.sqlPresets[selectedSqlPresetIdx] && (
-                    <div className="flex flex-col gap-4">
-                      <div className="bg-[#030712] rounded-xl p-4 border border-white/[0.08] font-mono text-xs text-emerald-400 overflow-x-auto relative shadow-inner">
-                        <button
-                          onClick={() =>
-                            copyToClipboard(
-                              dataset.sqlPresets[selectedSqlPresetIdx].sql,
-                              "SQL Query"
-                            )
-                          }
-                          className="absolute right-3 top-3 text-slate-400 hover:text-white"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <pre>{dataset.sqlPresets[selectedSqlPresetIdx].sql}</pre>
-                      </div>
+                  {/* IDE-Style SQL Code Block */}
+                  {(() => {
+                    const preset = dataset.sqlPresets[selectedSqlPresetIdx] || dataset.sqlPresets[0];
+                    return (
+                      <div className="flex flex-col gap-4">
+                        <div className="bg-[#030712] rounded-2xl border border-white/[0.08] p-4 font-mono text-xs overflow-x-auto text-indigo-300">
+                          <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.06] text-[10px] text-slate-500">
+                            <span>BigQuery Engine &bull; Standard SQL 2.0</span>
+                            <button
+                              onClick={() => copyToClipboard(preset.sql, "SQL Query")}
+                              className="hover:text-white flex items-center gap-1"
+                            >
+                              <Copy className="w-3 h-3" />
+                              <span>Copy SQL</span>
+                            </button>
+                          </div>
+                          <pre className="text-slate-300 leading-relaxed whitespace-pre-wrap">{preset.sql}</pre>
+                        </div>
 
-                      {/* Executed Data Table */}
-                      <div className="overflow-x-auto rounded-xl border border-white/[0.08] bg-[#030712]">
-                        <table className="w-full text-xs text-left">
-                          <thead className="bg-slate-900/80 text-slate-400 font-mono text-[11px] border-b border-white/[0.08]">
-                            <tr>
-                              {Object.keys(
-                                dataset.sqlPresets[selectedSqlPresetIdx].resultRows[0] || {}
-                              ).map((col) => (
-                                <th key={col} className="p-2.5">
-                                  {col}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {dataset.sqlPresets[selectedSqlPresetIdx].resultRows.map((row, rIdx) => (
-                              <tr key={rIdx} className="border-b border-white/[0.04] font-mono text-slate-300">
-                                {Object.values(row).map((val, cIdx) => (
-                                  <td key={cIdx} className="p-2.5">
-                                    {String(val)}
-                                  </td>
+                        {/* Query Execution Result Table */}
+                        <div className="bg-[#030712] rounded-2xl border border-white/[0.08] p-4">
+                          <span className="text-[10px] font-mono uppercase text-slate-400 font-bold block mb-3">
+                            Query Result Set (3 Rows Returned &bull; Latency: 182ms)
+                          </span>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs text-left">
+                              <thead>
+                                <tr className="border-b border-white/[0.08] text-slate-500 font-mono text-[10px] uppercase">
+                                  {Object.keys(preset.resultRows[0]).map((k) => (
+                                    <th key={k} className="pb-2">{k}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/[0.04]">
+                                {preset.resultRows.map((row, i) => (
+                                  <tr key={i} className="font-mono text-slate-300">
+                                    {Object.values(row).map((val, vi) => (
+                                      <td key={vi} className="py-2">{val}</td>
+                                    ))}
+                                  </tr>
                                 ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
 
-                      {/* Gemini Data Scientist Takeaway */}
-                      <div className="p-3.5 bg-indigo-950/30 border border-indigo-500/30 rounded-xl text-xs text-indigo-200 flex items-start gap-2">
-                        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="text-indigo-400 block mb-0.5">
-                            Gemini Data Scientist Takeaway:
-                          </strong>
-                          <span>{dataset.sqlPresets[selectedSqlPresetIdx].geminiTakeaway}</span>
+                        {/* Gemini Takeaway Card */}
+                        <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 flex items-start gap-2.5">
+                          <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="text-white">Gemini Multimodal Takeaway: </strong>
+                            <span>{preset.geminiTakeaway}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
+                </div>
+
+                {/* Weighted RCA Distribution */}
+                <div className="glass-panel p-6 rounded-3xl">
+                  <h3 className="font-extrabold text-base text-white mb-1">Root-Cause Weight Distribution</h3>
+                  <p className="text-xs text-slate-400 mb-6">Quantitative correlation of friction contributors.</p>
+
+                  <div className="flex flex-col gap-4">
+                    {dataset.weightedRca.map((item, idx) => (
+                      <div key={idx} className="flex flex-col gap-1.5">
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span className="text-white">{item.pillar}</span>
+                          <span className="font-mono text-slate-300 font-bold">{item.weight}% weight</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden flex border border-white/5">
+                          <div className={`h-full ${item.color}`} style={{ width: `${item.weight}%` }} />
+                        </div>
+                        <p className="text-[11px] text-slate-400">{item.explanation}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* TAB 4: 🛠️ AUTO-PRD & UI FIX STUDIO */}
+            {/* ================================================================= */}
+            {/* TAB 4: AUTO-PRD & PRODUCTION UI FIX STUDIO                        */}
+            {/* ================================================================= */}
             {activeTab === "prd" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left 6 Cols: Complete Structured PRD */}
-                <div className="lg:col-span-6 glow-card rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-4">
-                      <div>
-                        <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
-                          1-Click Deliverable
-                        </span>
-                        <h3 className="font-extrabold text-sm text-white">
-                          RICE-Prioritized Engineering PRD
-                        </h3>
+              <div className="flex flex-col gap-8">
+                {/* Top Section: Markdown PRD Document */}
+                <div className="glass-panel p-6 sm:p-8 rounded-3xl">
+                  <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-indigo-400" />
+                      <h3 className="font-extrabold text-base text-white">Autonomous Engineering PRD</h3>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(dataset.prdMarkdown, "Engineering PRD")}
+                      className="glass-pill px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center gap-1.5"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Full PRD</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-[#030712] p-6 rounded-2xl border border-white/[0.08] text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-80 overflow-y-auto">
+                    {dataset.prdMarkdown}
+                  </div>
+                </div>
+
+                {/* Split Interactive View: Current Broken UI vs Redesigned UI */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left: Broken UI Flaws */}
+                  <div className="glass-panel p-6 rounded-3xl border-rose-500/20 bg-rose-950/5">
+                    <span className="text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">
+                      {dataset.brokenUiWireframeTitle}
+                    </span>
+                    <h4 className="text-base font-extrabold text-white mt-1 mb-4">Current Pain Points</h4>
+
+                    <div className="flex flex-col gap-2.5 text-xs text-slate-300">
+                      {dataset.brokenUiItems.map((item, i) => (
+                        <div key={i} className="p-3 bg-slate-950/80 rounded-xl border border-white/[0.06]">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right: FunnelDoctor Redesigned Component */}
+                  <div className="glass-panel p-6 rounded-3xl border-emerald-500/30 bg-emerald-950/5 shadow-xl shadow-emerald-500/10">
+                    <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
+                      {dataset.redesignedUiTitle}
+                    </span>
+                    <h4 className="text-base font-extrabold text-white mt-1 mb-4">Production Interventions</h4>
+
+                    <div className="flex flex-col gap-2.5 text-xs text-slate-200">
+                      {dataset.redesignedUiFeatures.map((feat, i) => (
+                        <div key={i} className="p-3 bg-slate-950/80 rounded-xl border border-emerald-500/20 text-emerald-200 font-semibold">
+                          {feat}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Production Ready React Component Code Diff */}
+                <div className="glass-panel p-6 sm:p-8 rounded-3xl">
+                  <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-2 font-mono text-xs text-indigo-400 font-bold">
+                      <Code2 className="w-4 h-4" />
+                      <span>Ready-to-Ship React Component (TypeScript + Tailwind)</span>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(dataset.codeDiff, "React Component Code")}
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg transition flex items-center gap-1.5"
+                    >
+                      <Copy className="w-3.5 h-3.5 fill-current" />
+                      <span>Copy Component Code</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-[#030712] p-5 rounded-2xl border border-white/[0.08] font-mono text-xs text-emerald-300 overflow-x-auto leading-relaxed">
+                    <pre className="text-slate-300 whitespace-pre-wrap">{dataset.codeDiff}</pre>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================================= */}
+            {/* TAB 5: LIVE AI PM WAR ROOM                                        */}
+            {/* ================================================================= */}
+            {activeTab === "pm" && (
+              <div className="glass-panel p-6 sm:p-8 rounded-3xl flex flex-col justify-between min-h-[550px] shadow-2xl">
+                {/* Header & Waveform */}
+                <div>
+                  <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.08]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                        <Bot className="w-5 h-5" />
                       </div>
+                      <div>
+                        <h3 className="font-extrabold text-base text-white">Autonomous AI Principal PM</h3>
+                        <p className="text-[11px] text-slate-400 font-mono">
+                          Trained on 1,400+ D2C, Fintech & EdTech Funnels
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Animated Audio Waveform & Speech Toggle */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-end gap-1 h-6">
+                        <span className="w-1 bg-indigo-500 rounded-full animate-wave-1" />
+                        <span className="w-1 bg-purple-500 rounded-full animate-wave-2" />
+                        <span className="w-1 bg-emerald-400 rounded-full animate-wave-3" />
+                        <span className="w-1 bg-indigo-400 rounded-full animate-wave-4" />
+                        <span className="w-1 bg-violet-400 rounded-full animate-wave-5" />
+                      </div>
+
                       <button
-                        onClick={() => copyToClipboard(dataset.prdMarkdown, "PRD Document")}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition flex items-center gap-1.5"
+                        onClick={() => {
+                          if ("speechSynthesis" in window) {
+                            if (isSpeakingAudio) {
+                              window.speechSynthesis.cancel();
+                              setIsSpeakingAudio(false);
+                            } else {
+                              const lastMsg = voiceMessages[voiceMessages.length - 1];
+                              if (lastMsg) {
+                                const u = new SpeechSynthesisUtterance(lastMsg.text);
+                                u.onend = () => setIsSpeakingAudio(false);
+                                setIsSpeakingAudio(true);
+                                window.speechSynthesis.speak(u);
+                              }
+                            }
+                          }
+                        }}
+                        className={`p-2 rounded-xl border transition ${
+                          isSpeakingAudio
+                            ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400"
+                            : "glass-pill text-slate-400 hover:text-white"
+                        }`}
+                        title={isSpeakingAudio ? "Mute Speech" : "Listen to Audio Briefing"}
                       >
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Markdown</span>
+                        {isSpeakingAudio ? <Volume2 className="w-4 h-4 animate-pulse" /> : <VolumeX className="w-4 h-4" />}
                       </button>
                     </div>
-
-                    <div className="bg-[#030712] rounded-xl p-4 border border-white/[0.08] text-xs font-mono text-slate-300 leading-relaxed max-h-[500px] overflow-y-auto whitespace-pre-wrap">
-                      {dataset.prdMarkdown}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right 6 Cols: Before vs. After UI Transformation & Code */}
-                <div className="lg:col-span-6 glow-card rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 mb-4">
-                      <div>
-                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
-                          UI Remediation Studio
-                        </span>
-                        <h3 className="font-extrabold text-sm text-white">
-                          Before vs. After Code Fix
-                        </h3>
-                      </div>
-
-                      {/* 3-Way Segmented Toggle */}
-                      <div className="flex items-center bg-[#030712] p-1 rounded-xl border border-white/[0.08] text-xs">
-                        <button
-                          onClick={() => setUiFixViewMode("broken")}
-                          className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                            uiFixViewMode === "broken"
-                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                              : "text-slate-400"
-                          }`}
-                        >
-                          ❌ Broken
-                        </button>
-                        <button
-                          onClick={() => setUiFixViewMode("redesigned")}
-                          className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                            uiFixViewMode === "redesigned"
-                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                              : "text-slate-400"
-                          }`}
-                        >
-                          ✅ Redesigned
-                        </button>
-                        <button
-                          onClick={() => setUiFixViewMode("code")}
-                          className={`px-2.5 py-1 rounded-lg font-semibold transition ${
-                            uiFixViewMode === "code"
-                              ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
-                              : "text-slate-400"
-                          }`}
-                        >
-                          💻 Code
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Mode 1: Broken UI Preview */}
-                    {uiFixViewMode === "broken" && (
-                      <div className="bg-[#030712] rounded-2xl p-6 border border-rose-500/30 flex flex-col gap-3">
-                        <h4 className="font-bold text-sm text-rose-400">
-                          {dataset.brokenUiWireframeTitle}
-                        </h4>
-                        <ul className="flex flex-col gap-2 text-xs text-slate-300">
-                          {dataset.brokenUiItems.map((item, idx) => (
-                            <li key={idx} className="p-2 bg-slate-900 rounded-lg border border-slate-800">
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-3 p-3 bg-rose-950/20 border border-rose-500/30 rounded-xl text-xs text-rose-300 text-center font-bold">
-                          Causes {dataset.bleedingDropRate}% drop-off & ₹{dataset.monthlyLeakedRevenue} leakage.
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mode 2: Redesigned UI Preview */}
-                    {uiFixViewMode === "redesigned" && (
-                      <div className="bg-[#030712] rounded-2xl p-6 border border-emerald-500/30 flex flex-col gap-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-sm text-emerald-400">
-                            {dataset.redesignedUiTitle}
-                          </h4>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            +38% Conversion Lift
-                          </span>
-                        </div>
-                        <ul className="flex flex-col gap-2 text-xs text-slate-300">
-                          {dataset.redesignedUiFeatures.map((item, idx) => (
-                            <li key={idx} className="p-2 bg-slate-900 rounded-lg border border-slate-800 flex items-center gap-2">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <button
-                          onClick={() => setUiFixViewMode("code")}
-                          className="mt-3 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
-                        >
-                          <Code2 className="w-4 h-4" />
-                          <span>View Ready-to-Ship React Code ➔</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Mode 3: Ready-to-Ship Code Block */}
-                    {uiFixViewMode === "code" && (
-                      <div className="bg-[#030712] rounded-xl p-4 border border-white/[0.08] font-mono text-xs text-emerald-400 overflow-x-auto relative max-h-[460px]">
-                        <button
-                          onClick={() => copyToClipboard(dataset.codeDiff, "React Component")}
-                          className="absolute right-3 top-3 text-slate-400 hover:text-white"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <pre>{dataset.codeDiff}</pre>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 5: 🎙️ LIVE AI PM WAR ROOM (VOICE & CHAT) */}
-            {activeTab === "warroom" && (
-              <div className="glow-card rounded-2xl p-6 shadow-2xl flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      <Volume2 className="w-4 h-4 animate-pulse" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-white">Live AI PM War Room</h3>
-                      <p className="text-[11px] text-slate-400">
-                        Ask strategic root-cause questions via voice or text. Answers spoken live via browser audio.
-                      </p>
-                    </div>
                   </div>
 
-                  <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                    SpeechSynthesis Active
-                  </span>
-                </div>
-
-                {/* Quick-Ask Chips */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() =>
-                      handleSendVoiceQuery("Give me a 30-second executive summary of why conversion dropped")
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-[#030712] hover:bg-slate-800 border border-white/10 text-xs text-slate-300 transition"
-                  >
-                    💬 "30-sec executive summary of why conversion dropped"
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleSendVoiceQuery("What is the #1 code fix our engineers should deploy today?")
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-[#030712] hover:bg-slate-800 border border-white/10 text-xs text-slate-300 transition"
-                  >
-                    💬 "What should our engineers deploy first today?"
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleSendVoiceQuery("Estimate the monthly revenue recovery after this sprint")
-                    }
-                    className="px-3 py-1.5 rounded-xl bg-[#030712] hover:bg-slate-800 border border-white/10 text-xs text-slate-300 transition"
-                  >
-                    💬 "Estimate monthly revenue recovery after this sprint"
-                  </button>
-                </div>
-
-                {/* Chat Log Window */}
-                <div className="bg-[#030712] rounded-2xl p-4 border border-white/[0.08] h-[380px] overflow-y-auto flex flex-col gap-3">
-                  {voiceMessages.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex flex-col max-w-[85%] ${
-                        msg.sender === "user" ? "self-end items-end" : "self-start items-start"
-                      }`}
-                    >
+                  {/* Chat Messages Thread */}
+                  <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-2">
+                    {voiceMessages.map((msg, i) => (
                       <div
-                        className={`p-3 rounded-2xl text-xs leading-relaxed ${
-                          msg.sender === "user"
-                            ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-br-none shadow-md"
-                            : "bg-slate-900 border border-white/[0.08] text-slate-200 rounded-bl-none shadow-md"
+                        key={i}
+                        className={`flex flex-col max-w-[85%] ${
+                          msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
                         }`}
                       >
-                        {msg.text}
+                        <div
+                          className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
+                            msg.sender === "user"
+                              ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium"
+                              : "bg-[#030712] border border-white/[0.08] text-slate-200"
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                        <span className="text-[10px] text-slate-500 mt-1 font-mono">{msg.timestamp}</span>
                       </div>
-                      <span className="text-[10px] text-slate-500 mt-1 px-1">{msg.timestamp}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                {/* Audio Input Controls */}
-                <div className="flex items-center gap-2">
+                {/* Prompt Suggestions */}
+                <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                  <button
+                    onClick={() => handleSendVoiceQuery("Give me an executive summary of this funnel")}
+                    className="glass-pill px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition"
+                  >
+                    💬 Executive Summary
+                  </button>
+                  <button
+                    onClick={() => handleSendVoiceQuery("What should our engineers deploy first?")}
+                    className="glass-pill px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition"
+                  >
+                    🚀 Top Engineering Priority
+                  </button>
+                  <button
+                    onClick={() => handleSendVoiceQuery("How does this compare to industry benchmarks?")}
+                    className="glass-pill px-3 py-1.5 rounded-xl text-slate-400 hover:text-white transition"
+                  >
+                    📊 Benchmark Comparison
+                  </button>
+                </div>
+
+                {/* Chat Input Bar with Voice Recognition */}
+                <div className="mt-4 pt-4 border-t border-white/[0.08] flex items-center gap-2">
                   <button
                     onClick={handleToggleVoiceRecording}
-                    className={`p-3 rounded-xl border transition shrink-0 ${
+                    className={`p-2.5 rounded-xl border transition shrink-0 ${
                       isListeningVoice
-                        ? "bg-rose-500 border-rose-400 text-white animate-pulse"
-                        : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+                        ? "bg-rose-500 text-white border-rose-400 animate-pulse"
+                        : "glass-pill text-slate-400 hover:text-white"
                     }`}
-                    title={isListeningVoice ? "Listening... click to stop" : "Click to speak"}
+                    title={isListeningVoice ? "Listening..." : "Click to Speak"}
                   >
-                    {isListeningVoice ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-emerald-400" />}
+                    {isListeningVoice ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                   </button>
 
                   <input
@@ -2195,13 +2382,13 @@ export default function FunnelDoctorEliteApp() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSendVoiceQuery(chatInput);
                     }}
-                    placeholder="Type or speak a question for the AI PM..."
-                    className="flex-1 bg-[#030712] border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    placeholder="Ask the AI PM anything (e.g. 'Why are users dropping off at Step 4?')..."
+                    className="flex-1 bg-[#030712] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-sans"
                   />
 
                   <button
                     onClick={() => handleSendVoiceQuery(chatInput)}
-                    className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-white p-2.5 rounded-xl transition shrink-0 shadow-md"
+                    className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-white p-2.5 rounded-xl transition shrink-0 shadow-lg"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -2216,8 +2403,8 @@ export default function FunnelDoctorEliteApp() {
       {/* MULTI-STEP HERO DIAGNOSIS PROGRESS MODAL                                  */}
       {/* ========================================================================= */}
       {isAuditingHero && (
-        <div className="fixed inset-0 z-50 bg-[#030712]/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="glow-card rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col items-center text-center border-white/10">
+        <div className="fixed inset-0 z-50 bg-[#02040a]/85 backdrop-blur-xl flex items-center justify-center p-4 animate-fadeIn">
+          <div className="glass-panel rounded-3xl max-w-md w-full p-8 shadow-2xl flex flex-col items-center text-center border-white/10">
             <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-4 border border-indigo-500/30">
               <RefreshCw className="w-7 h-7 animate-spin" />
             </div>
@@ -2226,7 +2413,7 @@ export default function FunnelDoctorEliteApp() {
 
             <div className="w-full flex flex-col gap-2.5 text-xs text-left">
               <div
-                className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                className={`p-3 rounded-xl border flex items-center justify-between ${
                   auditProgressStep >= 1
                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                     : "bg-[#030712] border-white/[0.08] text-slate-500"
@@ -2237,7 +2424,7 @@ export default function FunnelDoctorEliteApp() {
               </div>
 
               <div
-                className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                className={`p-3 rounded-xl border flex items-center justify-between ${
                   auditProgressStep >= 2
                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                     : "bg-[#030712] border-white/[0.08] text-slate-500"
@@ -2248,7 +2435,7 @@ export default function FunnelDoctorEliteApp() {
               </div>
 
               <div
-                className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                className={`p-3 rounded-xl border flex items-center justify-between ${
                   auditProgressStep >= 3
                     ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
                     : "bg-[#030712] border-white/[0.08] text-slate-500"
@@ -2266,8 +2453,8 @@ export default function FunnelDoctorEliteApp() {
       {/* 60-SEC JUDGE PITCH GUIDE MODAL                                            */}
       {/* ========================================================================= */}
       {showPitchModal && (
-        <div className="fixed inset-0 z-50 bg-[#030712]/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="glow-card rounded-3xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 relative border-white/10">
+        <div className="fixed inset-0 z-50 bg-[#02040a]/85 backdrop-blur-xl flex items-center justify-center p-4 animate-fadeIn">
+          <div className="glass-panel rounded-3xl max-w-lg w-full p-8 shadow-2xl flex flex-col gap-4 relative border-white/10">
             <button
               onClick={() => setShowPitchModal(false)}
               className="absolute right-4 top-4 text-slate-400 hover:text-white p-1"
@@ -2280,7 +2467,7 @@ export default function FunnelDoctorEliteApp() {
               <h3 className="font-extrabold text-base text-white">60-Second Buildathon Pitch Script</h3>
             </div>
 
-            <div className="bg-[#030712] p-4 rounded-xl border border-white/[0.08] text-xs font-mono text-slate-300 leading-relaxed overflow-y-auto max-h-[360px] whitespace-pre-wrap">
+            <div className="bg-[#030712] p-5 rounded-2xl border border-white/[0.08] text-xs font-mono text-slate-300 leading-relaxed overflow-y-auto max-h-[360px] whitespace-pre-wrap">
 {`"Good morning judges! Every startup founder and D2C brand watches users drop off in checkout—losing crores of rupees every month.
 
 Traditional analytics like Mixpanel or GA4 only tell you WHERE people left. They never tell you WHY.
@@ -2296,7 +2483,7 @@ This isn't another analytics dashboard—it's an autonomous AI Product Manager t
 
             <button
               onClick={() => setShowPitchModal(false)}
-              className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-white text-xs font-bold rounded-xl transition"
+              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 text-white text-xs font-bold rounded-xl transition"
             >
               Ready to Pitch!
             </button>
@@ -2308,8 +2495,8 @@ This isn't another analytics dashboard—it's an autonomous AI Product Manager t
       {/* GEMINI API SETTINGS MODAL                                                 */}
       {/* ========================================================================= */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 bg-[#030712]/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="glow-card rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative border-white/10">
+        <div className="fixed inset-0 z-50 bg-[#02040a]/85 backdrop-blur-xl flex items-center justify-center p-4 animate-fadeIn">
+          <div className="glass-panel rounded-3xl max-w-md w-full p-8 shadow-2xl flex flex-col gap-4 relative border-white/10">
             <button
               onClick={() => setShowSettingsModal(false)}
               className="absolute right-4 top-4 text-slate-400 hover:text-white p-1"
