@@ -21,17 +21,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Remote.com Style Clean Canvas Patterns */
-.bg-grid-subtle {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
-}
-
-.bg-dot-subtle {
-  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Remote.com Iconic Radiant Gradient Hero Sky */
+.bg-remote-gradient {
+  background: linear-gradient(
+    180deg,
+    #53147e 0%,
+    #6d1b9b 12%,
+    #832db8 24%,
+    #9333ea 36%,
+    #818cf8 52%,
+    #93c5fd 68%,
+    #a5f3fc 82%,
+    #cffafe 92%,
+    #f8fafc 100%
+  );
 }
 
 /* Remote.com Enterprise Card System */

@@ -767,10 +767,10 @@ export default function FunnelDoctorApp() {
   const calculatedAnnualLift = Math.round(calculatedRecoverable * 12);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white relative bg-grid-subtle">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white relative">
       {/* Toast Notification Container */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 animate-fadeIn">
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-fadeIn">
           <Sparkles className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -779,36 +779,60 @@ export default function FunnelDoctorApp() {
       {/* ========================================================================= */}
       {/* GLOBAL PERSISTENT HEADER (REMOTE.COM STYLE)                               */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-8 py-3.5 transition-all shadow-sm">
+      <header className={`sticky top-0 z-40 transition-colors ${
+        viewMode === "website" ? "bg-[#53147e] text-white border-b border-purple-800/40" : "bg-white text-slate-900 border-b border-slate-200 shadow-sm"
+      } px-4 md:px-8 py-3.5`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo & Brand */}
           <div
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => setViewMode("website")}
           >
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform">
-              <Activity className="w-5 h-5 text-white" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-white shadow-md transition-transform group-hover:scale-105 ${
+              viewMode === "website" ? "bg-white text-purple-900" : "bg-indigo-600 text-white"
+            }`}>
+              <Activity className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-slate-950">
-                  FunnelDoctor<span className="text-indigo-600 font-black">.ai</span>
+                <span className={`font-extrabold text-base tracking-tight ${viewMode === "website" ? "text-white" : "text-slate-950"}`}>
+                  FunnelDoctor<span className={viewMode === "website" ? "text-cyan-300" : "text-indigo-600"}>.ai</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60 hidden sm:inline-flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1 ${
+                  viewMode === "website" ? "bg-white/10 text-cyan-200 border border-white/20" : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                }`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Gemini 2.5 Active
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">
+              <p className={`text-[11px] font-medium ${viewMode === "website" ? "text-purple-200/80" : "text-slate-500"}`}>
                 Autonomous Multimodal Conversion & RCA Agent
               </p>
             </div>
           </div>
 
-          {/* Navigation & Controls */}
+          {/* Navigation Links (Remote.com style) */}
+          <div className="hidden lg:flex items-center gap-6 text-xs font-semibold">
+            <button onClick={() => setViewMode("website")} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
+              Telemetry
+            </button>
+            <button onClick={() => { setViewMode("workspace"); setActiveTab("vision"); }} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
+              Vision X-Ray
+            </button>
+            <button onClick={() => { setViewMode("workspace"); setActiveTab("rca"); }} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
+              SQL Lab
+            </button>
+            <button onClick={() => { setViewMode("workspace"); setActiveTab("prd"); }} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
+              PRD Studio
+            </button>
+          </div>
+
+          {/* Controls & CTAs */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* View Mode Switcher */}
-            <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80">
+            {/* View Mode Toggle Pill */}
+            <div className={`p-1 rounded-xl flex items-center gap-1 border ${
+              viewMode === "website" ? "bg-black/20 border-white/15" : "bg-slate-100 border-slate-200"
+            }`}>
               <button
                 onClick={() => setViewMode("website")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
@@ -818,81 +842,140 @@ export default function FunnelDoctorApp() {
                 }`}
               >
                 <Globe className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden sm:inline">Product Website</span>
+                <span className="hidden sm:inline">Website</span>
               </button>
               <button
                 onClick={() => setViewMode("workspace")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                   viewMode === "workspace"
                     ? "bg-indigo-600 text-white shadow-sm font-bold"
-                    : "text-slate-600 hover:text-slate-900"
+                    : viewMode === "website" ? "text-white/80 hover:text-white" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>Live App Workspace</span>
+                <span>Workspace</span>
               </button>
             </div>
 
-            {/* Pitch Script Launcher */}
+            {/* Pitch Script */}
             <button
               onClick={() => setShowPitchModal(true)}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition"
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                viewMode === "website" ? "bg-white/10 hover:bg-white/20 text-white border-white/20" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+              }`}
             >
-              <Mic className="w-3.5 h-3.5 text-indigo-600" />
+              <Mic className="w-3.5 h-3.5 text-cyan-300" />
               <span>Pitch Script</span>
             </button>
 
-            {/* Gemini API Key */}
+            {/* Primary Action Button (White in hero, Indigo in app) */}
             <button
-              onClick={() => setShowSettingsModal(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                geminiApiKey
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                  : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+              onClick={() => {
+                if (viewMode === "website") {
+                  setViewMode("workspace");
+                } else {
+                  setShowSettingsModal(true);
+                }
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition active:scale-95 ${
+                viewMode === "website" ? "bg-white text-slate-950 hover:bg-slate-100" : "bg-indigo-600 text-white hover:bg-indigo-700"
               }`}
             >
-              <Key className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">
-                {geminiApiKey ? "API Active" : "API Key"}
-              </span>
-              <Settings className="w-3 h-3 text-slate-400" />
+              {viewMode === "website" ? "Launch Workspace ➔" : "Gemini API"}
             </button>
           </div>
         </div>
       </header>
 
       {/* ========================================================================= */}
-      {/* VIEW MODE A: REMOTE.COM INSPIRED SAAS MARKETING WEBSITE                   */}
+      {/* VIEW MODE A: REMOTE.COM EXACT RADIANT GRADIENT + SCULPTURAL HERO          */}
       {/* ========================================================================= */}
       {viewMode === "website" && (
         <div className="flex-1 flex flex-col relative z-10">
-          {/* HERO SECTION */}
-          <section className="pt-16 pb-24 px-4 md:px-8 border-b border-slate-200/80 bg-white">
-            <div className="max-w-5xl mx-auto text-center flex flex-col items-center">
-              {/* Remote-Style Top Pill Tag */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-xs font-semibold text-indigo-700 mb-6 shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          {/* THE ICONIC REMOTE.COM SKY GRADIENT HERO */}
+          <section className="relative pt-8 pb-24 px-4 md:px-8 bg-remote-gradient overflow-hidden">
+            <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
+              {/* Top Subtext Pill */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-white mb-6 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-cyan-300 animate-pulse" />
                 <span>Startup Buildathon India 2026</span>
-                <span className="text-indigo-300">•</span>
-                <span>Powered by Google DeepMind & Cloud</span>
+                <span className="text-white/40">•</span>
+                <span className="text-cyan-200">Powered by Google DeepMind & Cloud</span>
               </div>
 
-              {/* Remote.com Style Headline */}
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-slate-950 tracking-tight leading-[1.08] max-w-4xl mx-auto">
-                Your checkout funnel is leaking revenue. <br />
-                <span className="text-indigo-600">Our multimodal AI writes the fix in 60s.</span>
+              {/* MASSIVE ICONIC SCULPTURAL WORDMARK (LIKE "REMOTE" IN IMAGE 2) */}
+              <div className="w-full max-w-5xl my-4 sm:my-8 px-2 select-none pointer-events-none">
+                <svg
+                  viewBox="0 0 1000 170"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-auto drop-shadow-sm"
+                >
+                  {/* Sculptural geometric letters in pale ice-cyan #CCFBF1 */}
+                  {/* 'f' */}
+                  <path
+                    d="M 50 170 L 50 80 Q 50 15 115 15 L 140 15 L 140 55 L 115 55 Q 92 55 92 80 L 92 170 Z M 25 75 L 135 75 L 135 110 L 25 110 Z"
+                    fill="#CCFBF1"
+                  />
+                  {/* 'u' */}
+                  <path
+                    d="M 165 75 L 205 75 L 205 130 Q 205 170 245 170 Q 285 170 285 130 L 285 75 L 325 75 L 325 135 Q 325 205 245 205 Q 165 205 165 135 Z"
+                    fill="#CCFBF1"
+                  />
+                  {/* 'n' (first) */}
+                  <path
+                    d="M 355 75 L 395 75 L 395 95 Q 415 75 455 75 Q 515 75 515 130 L 515 170 L 475 170 L 475 130 Q 475 110 445 110 Q 395 110 395 140 L 395 170 L 355 170 Z"
+                    fill="#CCFBF1"
+                  />
+                  {/* 'n' (second) */}
+                  <path
+                    d="M 545 75 L 585 75 L 585 95 Q 605 75 645 75 Q 705 75 705 130 L 705 170 L 665 170 L 665 130 Q 665 110 635 110 Q 585 110 585 140 L 585 170 L 545 170 Z"
+                    fill="#CCFBF1"
+                  />
+                  {/* 'e' */}
+                  <path
+                    d="M 795 75 Q 865 75 865 125 L 755 125 Q 755 145 775 155 Q 795 165 835 160 L 845 190 Q 805 200 765 190 Q 725 170 725 125 Q 725 75 795 75 Z M 795 102 Q 765 102 757 115 L 833 115 Q 833 102 795 102 Z"
+                    fill="#CCFBF1"
+                  />
+                  {/* 'l' */}
+                  <path
+                    d="M 895 20 Q 895 15 915 15 L 945 15 L 945 170 L 895 170 Z"
+                    fill="#CCFBF1"
+                  />
+                </svg>
+              </div>
+
+              {/* REMOTE.COM EXACT HEADLINE STYLE */}
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-[1.12] max-w-3xl mx-auto mt-2">
+                The conversion operating system for modern product teams.
               </h1>
 
               {/* Subheadline */}
-              <p className="mt-6 text-base sm:text-xl text-slate-600 max-w-2xl font-normal leading-relaxed">
-                Traditional analytics tools like GA4 and Mixpanel show where users leave. 
-                FunnelDoctor AI fuses <span className="font-semibold text-slate-900">Cloud SQL Telemetry</span> with{" "}
-                <span className="font-semibold text-indigo-600">Gemini 2.5 Vision UI X-Rays</span> to diagnose why, author an engineering PRD, and output ready-to-ship React code.
+              <p className="mt-5 text-base sm:text-lg text-slate-800 max-w-2xl mx-auto font-medium leading-relaxed">
+                One platform for quantitative Cloud SQL telemetry, Gemini 2.5 Vision UI X-Rays, and ready-to-ship React fixes. Built for Startup Buildathon India 2026.
               </p>
 
-              {/* Remote.com Style Interactive Hero URL Bar */}
-              <div className="mt-10 w-full max-w-2xl">
-                <div className="bg-white p-2 rounded-2xl border border-slate-300 shadow-xl shadow-slate-200/50 flex flex-col sm:flex-row items-center gap-2 focus-within:border-indigo-600 transition-all">
+              {/* Remote-Style Solid Dual Hero Buttons */}
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                <button
+                  onClick={() => setViewMode("workspace")}
+                  className="px-8 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-sm shadow-xl transition active:scale-95 flex items-center gap-2"
+                >
+                  <span>Launch Live Workspace ➔</span>
+                </button>
+
+                <button
+                  onClick={() => setShowSettingsModal(true)}
+                  className="px-7 py-3.5 rounded-xl bg-white/70 hover:bg-white text-slate-950 border-2 border-slate-950 font-bold text-sm shadow-sm transition flex items-center gap-2"
+                >
+                  <Key className="w-4 h-4 text-slate-700" />
+                  <span>Connect Gemini API</span>
+                </button>
+              </div>
+
+              {/* Integrated Remote-Style Hero URL Audit Bar */}
+              <div className="mt-12 w-full max-w-2xl">
+                <div className="bg-white p-2.5 rounded-2xl border border-slate-300 shadow-2xl flex flex-col sm:flex-row items-center gap-2 focus-within:border-indigo-600 transition-all">
                   <div className="flex items-center gap-2.5 px-3 w-full flex-1">
                     <Globe className="w-4 h-4 text-slate-400 shrink-0" />
                     <input
@@ -905,22 +988,22 @@ export default function FunnelDoctorApp() {
                   </div>
                   <button
                     onClick={() => handleLaunchHeroDiagnosis("d2c")}
-                    className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 shrink-0 active:scale-95"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 shrink-0 active:scale-95"
                   >
-                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <Sparkles className="w-4 h-4 text-yellow-300" />
                     <span>Run AI Diagnosis ➔</span>
                   </button>
                 </div>
 
                 {/* 3 Instant Demo Funnel Chips */}
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
-                  <span className="text-[11px] text-slate-500 font-semibold mr-1">Instant Demos:</span>
+                  <span className="text-[11px] text-slate-700 font-semibold mr-1">Instant Demos:</span>
                   <button
                     onClick={() => {
                       setHeroUrlInput("https://quickstyle-d2c.in/checkout");
                       handleLaunchHeroDiagnosis("d2c");
                     }}
-                    className="remote-pill px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-950 transition flex items-center gap-1.5"
+                    className="bg-white/90 hover:bg-white border border-slate-300 px-3 py-1.5 rounded-xl text-slate-800 transition flex items-center gap-1.5 shadow-sm"
                   >
                     <span>🛍️ QuickStyle D2C</span>
                     <span className="text-rose-600 font-bold font-mono">71.7% Drop</span>
@@ -931,7 +1014,7 @@ export default function FunnelDoctorApp() {
                       setHeroUrlInput("https://finpulse.bank/kyc-agent");
                       handleLaunchHeroDiagnosis("kyc");
                     }}
-                    className="remote-pill px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-950 transition flex items-center gap-1.5"
+                    className="bg-white/90 hover:bg-white border border-slate-300 px-3 py-1.5 rounded-xl text-slate-800 transition flex items-center gap-1.5 shadow-sm"
                   >
                     <span>💳 FinPulse Neo-KYC</span>
                     <span className="text-rose-600 font-bold font-mono">74.8% Drop</span>
@@ -942,20 +1025,24 @@ export default function FunnelDoctorApp() {
                       setHeroUrlInput("https://prepmate.in/iit-jee/paywall");
                       handleLaunchHeroDiagnosis("edtech");
                     }}
-                    className="remote-pill px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-950 transition flex items-center gap-1.5"
+                    className="bg-white/90 hover:bg-white border border-slate-300 px-3 py-1.5 rounded-xl text-slate-800 transition flex items-center gap-1.5 shadow-sm"
                   >
                     <span>🎓 PrepMate EdTech</span>
                     <span className="text-rose-600 font-bold font-mono">96.5% Drop</span>
                   </button>
                 </div>
               </div>
+            </div>
+          </section>
 
-              {/* Remote-Style Elevated Product Showcase Card */}
-              <div className="mt-14 w-full max-w-4xl remote-card rounded-3xl p-6 sm:p-8 text-left">
+          {/* REMOTE-STYLE ELEVATED PRODUCT SHOWCASE CARD */}
+          <section className="py-16 px-4 md:px-8 bg-white border-b border-slate-200">
+            <div className="max-w-5xl mx-auto">
+              <div className="remote-card rounded-3xl p-6 sm:p-8 text-left shadow-xl border-slate-200">
                 {/* Showcase Header */}
                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-200 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-800">
+                    <span className="font-bold text-slate-900">
                       Step 4: Checkout & Address Wall
                     </span>
                     <span className="text-slate-400">•</span>
@@ -969,7 +1056,7 @@ export default function FunnelDoctorApp() {
                 {/* 2-Column Split: Telemetry on Left + Mobile Viewport on Right */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   {/* Left Column: Drop-Off Telemetry Card */}
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 flex flex-col justify-between">
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">
@@ -1010,7 +1097,7 @@ export default function FunnelDoctorApp() {
                   </div>
 
                   {/* Right Column: Clean Mobile Screenshot with Radar Scan */}
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 flex flex-col items-center">
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col items-center">
                     <div className="w-full flex items-center justify-between mb-3 text-xs">
                       <span className="font-bold text-indigo-600 flex items-center gap-1.5">
                         <Eye className="w-4 h-4" />
@@ -1056,98 +1143,8 @@ export default function FunnelDoctorApp() {
             </div>
           </section>
 
-          {/* PARADIGM SHIFT: OLD WAY VS FUNNELDOCTOR AI */}
-          <section className="py-20 px-4 md:px-8 border-b border-slate-200/80 bg-[#F8FAFC]">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center max-w-2xl mx-auto mb-16">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-                  The Paradigm Shift
-                </span>
-                <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-tight mt-2">
-                  Why traditional analytics leave you guessing
-                </h2>
-                <p className="mt-4 text-base text-slate-600">
-                  Google Analytics and Mixpanel only tell you that users left. FunnelDoctor AI connects telemetry directly to the visual root cause.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Old Way */}
-                <div className="remote-card p-8 rounded-2xl border-rose-200 bg-white flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 text-rose-600 font-bold text-base mb-6">
-                      <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center">
-                        <X className="w-4 h-4 text-rose-600" />
-                      </div>
-                      <span>Traditional Analytics (Mixpanel, GA4)</span>
-                    </div>
-
-                    <ul className="flex flex-col gap-4 text-sm text-slate-600">
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-600 font-bold">✕</span>
-                        <span>Reports percentage drops with zero insight into why users abandoned.</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-600 font-bold">✕</span>
-                        <span>Requires weeks of cross-functional meetings between PMs, designers, and engineers.</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-600 font-bold">✕</span>
-                        <span>Cannot detect mobile viewport glitches or virtual keyboard occlusions.</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-rose-600 font-bold">✕</span>
-                        <span>Leaves the code fix unwritten while your checkout continues to bleed revenue.</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="mt-8 p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
-                    Average outcome: 3 weeks of debate &bull; ₹15 Lakhs lost during deliberation
-                  </div>
-                </div>
-
-                {/* FunnelDoctor AI Way */}
-                <div className="remote-card p-8 rounded-2xl border-indigo-300 bg-white flex flex-col justify-between shadow-lg">
-                  <div>
-                    <div className="flex items-center gap-3 text-indigo-600 font-bold text-base mb-6">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
-                        <Check className="w-4 h-4 text-indigo-600" />
-                      </div>
-                      <span>FunnelDoctor AI Autonomous Agent</span>
-                    </div>
-
-                    <ul className="flex flex-col gap-4 text-sm text-slate-700">
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Correlates raw SQL events with Gemini 2.5 Multimodal UI Vision X-Rays.</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Pinpoints exact UI hotspot flaws against Nielsen Norman UX heuristics.</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Generates an engineering PRD complete with RICE prioritization matrix.</span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Produces ready-to-ship production React code to deploy the fix in under 60 seconds.</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="mt-8 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center justify-between">
-                    <span>Outcome: Fixed in 60 seconds &bull; Projected +₹26 Lakhs/mo revenue lift</span>
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* REMOTE.COM STYLE MODULAR 4-PILLAR ARCHITECTURE */}
-          <section className="py-20 px-4 md:px-8 border-b border-slate-200/80 bg-white">
+          {/* REMOTE-STYLE MODULAR 4-PILLAR ARCHITECTURE */}
+          <section className="py-20 px-4 md:px-8 border-b border-slate-200 bg-[#F8FAFC]">
             <div className="max-w-5xl mx-auto">
               <div className="text-center max-w-2xl mx-auto mb-16">
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
@@ -1246,7 +1243,7 @@ export default function FunnelDoctorApp() {
           </section>
 
           {/* INTERACTIVE ROI RECOVERY CALCULATOR (REMOTE.COM STYLE) */}
-          <section className="py-20 px-4 md:px-8 border-b border-slate-200/80 bg-[#F8FAFC]">
+          <section className="py-20 px-4 md:px-8 border-b border-slate-200 bg-white">
             <div className="max-w-4xl mx-auto">
               <div className="text-center max-w-xl mx-auto mb-16">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
@@ -1372,7 +1369,7 @@ export default function FunnelDoctorApp() {
           </section>
 
           {/* REMOTE.COM STYLE TRANSPARENT PRICING */}
-          <section className="py-20 px-4 md:px-8 border-b border-slate-200/80 bg-white">
+          <section className="py-20 px-4 md:px-8 border-b border-slate-200 bg-[#F8FAFC]">
             <div className="max-w-5xl mx-auto">
               <div className="text-center max-w-xl mx-auto mb-16">
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
