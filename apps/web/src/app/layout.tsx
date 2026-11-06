@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RentNear AI | Hyper-Local P2P Daily & High-Utility Rental Marketplace",
+  title: "FunnelDoctor AI | Autonomous Multimodal Conversion, UX Vision & RCA B2B SaaS",
   description:
-    "AI-Native Hyper-Local Peer-to-Peer Daily & High-Utility Product Rental Marketplace built for Startup Buildathon India 2026. Powered by Google Gemini.",
+    "Autonomous Multimodal Conversion & Root-Cause-Analysis SaaS built for Startup Buildathon India 2026. Powered by Google DeepMind & Google Cloud Gemini 2.5.",
 };
 
 export default function RootLayout({
@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-emerald-500 selection:text-white">
+    <html lang="en" className="dark scroll-smooth">
+      <body className="min-h-screen bg-[#090D16] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
         {children}
       </body>
     </html>

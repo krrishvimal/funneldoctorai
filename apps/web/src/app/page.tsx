@@ -1,297 +1,615 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Search,
-  MapPin,
-  Sparkles,
-  SlidersHorizontal,
-  ShieldCheck,
-  Clock,
-  Zap,
-  PlusCircle,
-  CheckCircle2,
+  Activity,
+  AlertCircle,
   AlertTriangle,
   ArrowRight,
-  Camera,
-  Upload,
-  RefreshCw,
-  X,
-  ChevronRight,
-  User,
-  Wallet,
-  Star,
-  Filter,
-  Heart,
-  Lock,
-  Key,
-  Award,
   ArrowUpRight,
+  BarChart3,
+  Bot,
   Check,
-  Info,
-  Calendar,
-  Layers,
-  Settings,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Code2,
+  Copy,
+  Cpu,
+  Database,
+  DollarSign,
+  Download,
+  ExternalLink,
   Eye,
-  Sliders,
-  Tag,
-  ThumbsUp,
-  CreditCard,
-  MessageSquare,
+  FileCode2,
+  FileSpreadsheet,
+  FileText,
+  Filter,
+  Flame,
+  Globe,
   HelpCircle,
-  Image as ImageIcon,
+  Info,
+  Key,
+  Laptop,
+  Layers,
+  Lightbulb,
+  Lock,
+  Maximize2,
+  Mic,
+  MicOff,
+  Monitor,
+  MoveRight,
+  Play,
+  RefreshCw,
+  Search,
+  Send,
+  Settings,
+  ShieldAlert,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Star,
+  Terminal,
+  TrendingDown,
+  TrendingUp,
+  Users,
+  Volume2,
+  Wand2,
+  X,
+  Zap,
 } from "lucide-react";
 
 // ==========================================
-// TYPES & DATA STRUCTURES
+// DATASET DEFINITIONS (3 RICH INDIAN STARTUP FUNNELS)
 // ==========================================
-export interface RentalItem {
+type DatasetId = "d2c" | "kyc" | "edtech";
+
+interface FunnelStepData {
   id: string;
+  name: string;
+  visitors: number;
+  conversionFromPrev: number; // e.g. 0.42
+  dropoffRate: number; // e.g. 0.717
+  dropoffCount: number;
+  isBleedingBottleneck?: boolean;
+}
+
+interface HotspotPin {
+  id: number;
+  label: string;
   title: string;
-  category: "Hostel & Daily" | "DIY & Tools" | "Party & Media" | "Cameras" | "Gaming" | "Trekking & Sports";
-  rentDaily: number;
-  rentHourly?: number;
-  deposit: number;
-  retailValue: number;
-  distanceMeters: number;
-  distanceLabel: string;
-  lenderName: string;
-  lenderTrust: number; // e.g. 99 for 99%
-  lenderAvatar?: string;
-  aiConditionScore: number; // e.g. 9.6
-  aiConditionNotes: string;
-  image: string;
-  isPopular?: boolean;
+  xPercent: number;
+  yPercent: number;
+  severity: "CRITICAL" | "HIGH" | "MEDIUM";
+  telemetryEvidence: string;
+  heuristicViolated: string;
+  geminiVisionFinding: string;
+  prescribedFix: string;
 }
 
-export interface ActiveRental {
-  id: string;
-  itemId: string;
-  itemTitle: string;
-  itemImage: string;
-  role: "borrower" | "lender";
-  partnerName: string;
-  rentTotal: number;
-  depositLocked: number;
-  otp: string;
-  status: "Handover Pending" | "Active in Hand" | "Return Inspection" | "Completed";
-  expiresIn: string;
+interface DatasetDetails {
+  id: DatasetId;
+  name: string;
+  tagline: string;
+  companyCategory: string;
+  overallConversion: number;
+  monthlyVisitors: number;
+  aov: number;
+  monthlyLeakedRevenue: string;
+  recoverableRevenue: string;
+  bleedingStepName: string;
+  bleedingDropRate: number;
+  steps: FunnelStepData[];
+  retentionMatrix: { cohort: string; w0: number; w1: number; w2: number; w3: number; w4: number; w5: number }[];
+  hotspots: HotspotPin[];
+  weightedRca: { pillar: string; weight: number; color: string; explanation: string }[];
+  sqlPresets: { prompt: string; sql: string; resultRows: Record<string, string | number>[]; geminiTakeaway: string }[];
+  prdMarkdown: string;
+  brokenUiWireframeTitle: string;
+  brokenUiItems: string[];
+  redesignedUiTitle: string;
+  redesignedUiFeatures: string[];
+  codeDiff: string;
 }
 
-// 8 Realistic Pre-Populated Indian Neighborhood/Campus Seed Items
-const SEED_ITEMS: RentalItem[] = [
-  {
-    id: "item-1",
-    title: "BenQ 1080p Portable Movie Projector",
-    category: "Party & Media",
-    rentDaily: 350,
-    rentHourly: 60,
-    deposit: 2000,
-    retailValue: 18500,
-    distanceMeters: 180,
-    distanceLabel: "180m away",
-    lenderName: "Aarav S.",
-    lenderTrust: 99,
-    aiConditionScore: 9.6,
-    aiConditionNotes: "Lens verified scratch-free • 3500 ANSI lumens tested",
-    image: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80",
-    isPopular: true,
-  },
-  {
-    id: "item-2",
-    title: "Bosch Cordless Impact Drill + 40-Bit Kit",
-    category: "DIY & Tools",
-    rentDaily: 120,
-    rentHourly: 30,
-    deposit: 800,
-    retailValue: 4800,
-    distanceMeters: 320,
-    distanceLabel: "320m away",
-    lenderName: "Vikram M.",
-    lenderTrust: 97,
-    aiConditionScore: 9.2,
-    aiConditionNotes: "Chuck & 18V dual batteries health tested • 0% motor play",
-    image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80",
-    isPopular: true,
-  },
-  {
-    id: "item-3",
-    title: "Philips Garment Steamer & Heavy Steam Iron",
-    category: "Hostel & Daily",
-    rentDaily: 49,
-    rentHourly: 15,
-    deposit: 300,
-    retailValue: 2200,
-    distanceMeters: 90,
-    distanceLabel: "90m away (Hostel Block B)",
-    lenderName: "Riya K.",
-    lenderTrust: 100,
-    aiConditionScore: 9.8,
-    aiConditionNotes: "Soleplate clean • Zero calcification • Ready to steam",
-    image: "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=600&q=80",
-    isPopular: true,
-  },
-  {
-    id: "item-4",
-    title: "Raymond Tailored Navy Blue Interview Blazer (Size 40/M)",
-    category: "Hostel & Daily",
-    rentDaily: 150,
-    deposit: 700,
-    retailValue: 6500,
-    distanceMeters: 150,
-    distanceLabel: "150m away",
-    lenderName: "Kabir D.",
-    lenderTrust: 98,
-    aiConditionScore: 9.5,
-    aiConditionNotes: "Dry-cleaned • Zero stains or fabric tears • Wrinkle-free",
-    image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "item-5",
-    title: "Sony DualSense PS5 Wireless Controller (x2 Bundle)",
-    category: "Gaming",
-    rentDaily: 180,
-    rentHourly: 40,
-    deposit: 1200,
-    retailValue: 11000,
-    distanceMeters: 210,
-    distanceLabel: "210m away",
-    lenderName: "Rohan T.",
-    lenderTrust: 96,
-    aiConditionScore: 9.4,
-    aiConditionNotes: "Zero analog stick drift • Haptic triggers calibrated",
-    image: "https://images.unsplash.com/photo-1606318801954-d46846592d0b?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "item-6",
-    title: "GoPro Hero 12 Black + Chest Mount",
-    category: "Cameras",
-    rentDaily: 450,
-    deposit: 2500,
-    retailValue: 38000,
-    distanceMeters: 600,
-    distanceLabel: "600m away",
-    lenderName: "Neha G.",
-    lenderTrust: 99,
-    aiConditionScore: 9.7,
-    aiConditionNotes: "Waterproof seal intact • Lens protector clean • 2x Enduro batteries",
-    image: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "item-7",
-    title: "Quechua 60L Trekking Rucksack + Minus 5°C Sleeping Bag",
-    category: "Trekking & Sports",
-    rentDaily: 200,
-    deposit: 1000,
-    retailValue: 7500,
-    distanceMeters: 450,
-    distanceLabel: "450m away",
-    lenderName: "Siddharth P.",
-    lenderTrust: 95,
-    aiConditionScore: 9.1,
-    aiConditionNotes: "All buckles intact • Sanitized lining • Rain cover included",
-    image: "https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "item-8",
-    title: "JBL PartyBox 110 Portable Bluetooth Speaker",
-    category: "Party & Media",
-    rentDaily: 400,
-    deposit: 2000,
-    retailValue: 26000,
-    distanceMeters: 290,
-    distanceLabel: "290m away",
-    lenderName: "Ananya V.",
-    lenderTrust: 99,
-    aiConditionScore: 9.5,
-    aiConditionNotes: "Bass & dynamic LED ring verified • Battery holds 11+ hours",
-    image: "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=600&q=80",
-  },
-];
+const DATASETS: Record<DatasetId, DatasetDetails> = {
+  d2c: {
+    id: "d2c",
+    name: "QuickStyle D2C Fashion",
+    tagline: "Omnichannel Streetwear & Apparel Checkout",
+    companyCategory: "E-Commerce / D2C",
+    overallConversion: 2.8,
+    monthlyVisitors: 100000,
+    aov: 1850,
+    monthlyLeakedRevenue: "₹68.4 Lakhs/mo",
+    recoverableRevenue: "₹26.0 Lakhs/mo (+38% Lift)",
+    bleedingStepName: "Checkout & Address Wall (Step 4)",
+    bleedingDropRate: 71.7,
+    steps: [
+      { id: "s1", name: "1. Homepage & Catalog", visitors: 100000, conversionFromPrev: 1.0, dropoffRate: 0.58, dropoffCount: 58000 },
+      { id: "s2", name: "2. Product Details (PDP)", visitors: 42000, conversionFromPrev: 0.42, dropoffRate: 0.571, dropoffCount: 24000 },
+      { id: "s3", name: "3. Bag & Cart Drawer", visitors: 18000, conversionFromPrev: 0.428, dropoffRate: 0.717, dropoffCount: 12900 },
+      { id: "s4", name: "4. Checkout & Address Wall", visitors: 5100, conversionFromPrev: 0.283, dropoffRate: 0.717, dropoffCount: 3657, isBleedingBottleneck: true },
+      { id: "s5", name: "5. Payment & Order Confirmed", visitors: 2800, conversionFromPrev: 0.549, dropoffRate: 0, dropoffCount: 0 },
+    ],
+    retentionMatrix: [
+      { cohort: "Oct 2026", w0: 100, w1: 42, w2: 28, w3: 21, w4: 18, w5: 16 },
+      { cohort: "Sep 2026", w0: 100, w1: 39, w2: 25, w3: 19, w4: 17, w5: 15 },
+      { cohort: "Aug 2026", w0: 100, w1: 36, w2: 24, w3: 18, w4: 15, w5: 14 },
+      { cohort: "Jul 2026", w0: 100, w1: 33, w2: 22, w3: 16, w4: 14, w5: 12 },
+    ],
+    hotspots: [
+      {
+        id: 1,
+        label: "#1",
+        title: "Forced 6-Field Account Login Wall",
+        xPercent: 50,
+        yPercent: 32,
+        severity: "CRITICAL",
+        telemetryEvidence: "64.2% of users abandon the page without focusing on the first input field.",
+        heuristicViolated: "Nielsen #3: User Control & Freedom (Zero Guest Checkout option)",
+        geminiVisionFinding: "Gemini Vision detected an intrusive, full-screen modal blocking the bag items with no visible close [X] icon on 390px viewports.",
+        prescribedFix: "Enable 1-Tap OTP login and allow Guest Checkout with SMS order tracking.",
+      },
+      {
+        id: 2,
+        label: "#2",
+        title: "Surprise ₹149 Delivery & Convenience Fee Surge",
+        xPercent: 78,
+        yPercent: 62,
+        severity: "HIGH",
+        telemetryEvidence: "Rage-click rate spikes to 38.4% on the order breakdown summary.",
+        heuristicViolated: "Pricing Transparency & Trust Anxiety",
+        geminiVisionFinding: "Free shipping promise on PDP is contradicted by a hidden ₹149 convenience fee injected at the final payment step.",
+        prescribedFix: "Display an interactive 'Free Shipping Progress Meter' on the cart drawer and calculate taxes early.",
+      },
+      {
+        id: 3,
+        label: "#3",
+        title: "UPI Intent Button Occluded Below Mobile Keyboard Fold",
+        xPercent: 50,
+        yPercent: 88,
+        severity: "CRITICAL",
+        telemetryEvidence: "Mobile conversion is 4.1x worse than desktop (1.8% vs 7.4%).",
+        heuristicViolated: "Fitts's Law & Mobile Viewport Ergonomics",
+        geminiVisionFinding: "When Android virtual keyboard opens for PIN entry, the primary green CTA is pushed 260px below the viewport scroll boundary.",
+        prescribedFix: "Implement a persistent, CSS fixed-bottom sticky CTA bar with 1-Tap Google Pay & PhonePe.",
+      },
+    ],
+    weightedRca: [
+      { pillar: "UI/UX & Visual Friction", weight: 45, color: "bg-rose-500", explanation: "Forced login modal & below-the-fold CTA account for nearly half of checkout abandonment." },
+      { pillar: "Hidden Fee Shock", weight: 30, color: "bg-amber-500", explanation: "Surprise ₹149 fee injected at the final commitment step triggers immediate sticker shock." },
+      { pillar: "Mobile Android Latency", weight: 18, color: "bg-indigo-500", explanation: "P95 payment gateway redirect latency is 4.8 seconds on 4G networks." },
+      { pillar: "Traffic Intent Mismatch", weight: 7, color: "bg-emerald-500", explanation: "Meta ad creative targeting mismatched sizes resulting in dead inventory clicks." },
+    ],
+    sqlPresets: [
+      {
+        prompt: "Compare Step 4 checkout drop-off by Device OS & App Version",
+        sql: `SELECT device_os, app_version,
+       COUNT(DISTINCT session_id) as total_sessions,
+       ROUND(AVG(is_dropoff) * 100, 1) as dropoff_pct,
+       ROUND(AVG(p95_api_latency_ms), 0) as avg_latency_ms
+FROM checkout_telemetry_events
+WHERE step_name = 'checkout_address'
+GROUP BY 1, 2
+ORDER BY dropoff_pct DESC;`,
+        resultRows: [
+          { device_os: "Android 13/14", app_version: "v4.2.1", total_sessions: "34,200", dropoff_pct: "78.4%", avg_latency_ms: "4,820ms" },
+          { device_os: "iOS 17/18", app_version: "v4.2.1", total_sessions: "11,800", dropoff_pct: "52.1%", avg_latency_ms: "1,240ms" },
+          { device_os: "Desktop Web", app_version: "Chrome/Safari", total_sessions: "5,000", dropoff_pct: "41.6%", avg_latency_ms: "820ms" },
+        ],
+        geminiTakeaway: "Android sessions experience 3.8x higher API latency and an acute 78.4% drop-off compared to iOS, directly tied to the unoptimized WebView input container.",
+      },
+      {
+        prompt: "Correlate Payment Gateway Latency with Cart Abandonment",
+        sql: `SELECT latency_bucket,
+       COUNT(user_id) as attempts,
+       ROUND(SUM(CASE WHEN status = 'SUCCESS' THEN 1 ELSE 0 END)::numeric / COUNT(*) * 100, 2) as success_rate
+FROM upi_gateway_transactions
+GROUP BY 1
+ORDER BY 1 ASC;`,
+        resultRows: [
+          { latency_bucket: "< 1.5s", attempts: "14,200", success_rate: "89.4%" },
+          { latency_bucket: "1.5s - 3.0s", attempts: "8,900", success_rate: "74.1%" },
+          { latency_bucket: "> 3.0s (Spike)", attempts: "3,100", success_rate: "28.6%" },
+        ],
+        geminiTakeaway: "Transactions exceeding 3.0 seconds suffer a catastrophic 71.4% failure rate as users reflexively press back or cancel UPI intent.",
+      },
+    ],
+    prdMarkdown: `# Product Requirements Document (PRD): Checkout Friction Elimination & UPI Acceleration
+**Target Release:** Sprint 42 • **Author:** FunnelDoctor Autonomous AI PM
+**Status:** Approved for Engineering Implementation • **Priority:** P0
 
-export default function RentNearApp() {
-  // Navigation
-  const [currentTab, setCurrentTab] = useState<"explore" | "concierge" | "snap" | "scanner" | "hub">("explore");
-  
-  // App state
-  const [items, setItems] = useState<RentalItem[]>(SEED_ITEMS);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [radiusMeters, setRadiusMeters] = useState<number>(1000); // 1.0km default
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [pricingMode, setPricingMode] = useState<"daily" | "hourly">("daily");
+## 1. Executive Summary & Root Cause
+QuickStyle D2C loses ₹68.4 Lakhs/mo at Step 4 (Checkout & Address Wall) due to a 71.7% drop-off rate. 
+Gemini Multimodal inspection identifies:
+1. Forced 6-field account creation modal blocking guest users.
+2. Undisclosed ₹149 delivery fee injected on final payment screen.
+3. UPI intent CTA rendered below the fold on mobile devices.
 
-  // Gemini API Key State
+## 2. Core Metrics & Expected Impact
+- **Primary Metric:** Step 4 to 5 Conversion Rate (Target: 28.3% ➔ 45.0%).
+- **Secondary Metric:** Mobile P95 Checkout Latency (< 1,800ms).
+- **Financial Projection:** Recover ₹26.0 Lakhs/mo (+38% relative conversion lift).
+
+## 3. RICE-Scored Engineering Backlog
+| Rank | Feature / Task | Reach | Impact | Confidence | Effort | RICE Score |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **P0** | Sticky Bottom Bar with 1-Tap UPI (GPay/PhonePe) | 5,100/mo | 3.0 (Huge) | 90% | 1.0 wk | **13,770** |
+| **P0** | Free Shipping Progress Meter on Bag Drawer | 18,000/mo | 2.0 (High) | 85% | 0.5 wk | **61,200** |
+| **P1** | 1-Click WhatsApp OTP Login & Guest Checkout | 5,100/mo | 2.0 (High) | 80% | 1.5 wk | **5,440** |
+
+## 4. Technical Acceptance Criteria
+- [ ] Primary CTA adheres to 54px touch target height and stays fixed at \`bottom-0\`.
+- [ ] Full address pre-filled using Google Maps Places Autocomplete API.
+- [ ] Zero cumulative layout shifts (\`CLS < 0.05\`) on Android WebView.`,
+    brokenUiWireframeTitle: "Current Broken UI (Step 4)",
+    brokenUiItems: [
+      "❌ Mandatory 6-Field Account Creation Form",
+      "❌ No Guest Checkout Option",
+      "❌ Hidden ₹149 Surcharge Added at Final Click",
+      "❌ CTA Hidden 260px Below Keyboard Fold",
+    ],
+    redesignedUiTitle: "Gemini Redesigned High-Converting UI (+38% Lift)",
+    redesignedUiFeatures: [
+      "⚡ 1-Tap Google Pay & PhonePe Sticky Bottom Bar",
+      "🚚 Upfront Free-Shipping Eligibility Bar",
+      "🔑 1-Click WhatsApp OTP Verification",
+      "🛡️ Verified 256-Bit SSL Trust Badges",
+    ],
+    codeDiff: `// Redesigned High-Converting Sticky Checkout Component
+import React from 'react';
+import { Zap, ShieldCheck } from 'lucide-react';
+
+export function ExpressCheckoutBar({ cartTotal = 1850, onPay }: { cartTotal?: number; onPay?: () => void }) {
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 shadow-2xl flex items-center justify-between">
+      <div>
+        <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>FREE EXPRESS DELIVERY UNLOCKED</span>
+        </div>
+        <p className="text-xl font-extrabold text-white">₹{cartTotal.toLocaleString()}</p>
+      </div>
+
+      <button 
+        onClick={onPay}
+        className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
+      >
+        <Zap className="w-4 h-4 fill-slate-950" />
+        <span>1-TAP UPI FAST-PAY</span>
+      </button>
+    </div>
+  );
+}`,
+  },
+  kyc: {
+    id: "kyc",
+    name: "FinPulse Neo Bank (Video-KYC)",
+    tagline: "Digital Savings & Credit Line Onboarding",
+    companyCategory: "Fintech / Banking",
+    overallConversion: 10.1,
+    monthlyVisitors: 80000,
+    aov: 4200,
+    monthlyLeakedRevenue: "₹1.12 Cr/mo",
+    recoverableRevenue: "₹42.8 Lakhs/mo (+38% Lift)",
+    bleedingStepName: "Aadhaar Video-KYC (Step 4)",
+    bleedingDropRate: 74.8,
+    steps: [
+      { id: "s1", name: "1. App Install & Open", visitors: 80000, conversionFromPrev: 1.0, dropoffRate: 0.15, dropoffCount: 12000 },
+      { id: "s2", name: "2. Mobile OTP Verification", visitors: 68000, conversionFromPrev: 0.85, dropoffRate: 0.338, dropoffCount: 23000 },
+      { id: "s3", name: "3. PAN & Credit Check", visitors: 45000, conversionFromPrev: 0.662, dropoffRate: 0.748, dropoffCount: 33700 },
+      { id: "s4", name: "4. Live Aadhaar Video-KYC", visitors: 11300, conversionFromPrev: 0.251, dropoffRate: 0.748, dropoffCount: 8452, isBleedingBottleneck: true },
+      { id: "s5", name: "5. Active Credit Account", visitors: 8100, conversionFromPrev: 0.716, dropoffRate: 0, dropoffCount: 0 },
+    ],
+    retentionMatrix: [
+      { cohort: "Oct 2026", w0: 100, w1: 68, w2: 54, w3: 48, w4: 42, w5: 39 },
+      { cohort: "Sep 2026", w0: 100, w1: 65, w2: 51, w3: 45, w4: 40, w5: 37 },
+      { cohort: "Aug 2026", w0: 100, w1: 61, w2: 48, w3: 42, w4: 38, w5: 35 },
+      { cohort: "Jul 2026", w0: 100, w1: 58, w2: 46, w3: 39, w4: 36, w5: 33 },
+    ],
+    hotspots: [
+      {
+        id: 1,
+        label: "#1",
+        title: "Front-Camera Permission Denial with Zero Recovery UX",
+        xPercent: 50,
+        yPercent: 30,
+        severity: "CRITICAL",
+        telemetryEvidence: "42% of mobile drop-offs trigger an unhandled 'CAMERA_DENIED' JavaScript error.",
+        heuristicViolated: "Nielsen #9: Help Users Recognize, Diagnose, and Recover from Errors",
+        geminiVisionFinding: "When Android denies system camera prompt, the app displays a blank dark grey box without an 'Open Settings' deep-link button.",
+        prescribedFix: "Implement a warm-up permissions preview screen with an OS deep-link recovery modal.",
+      },
+      {
+        id: 2,
+        label: "#2",
+        title: "15-Second Hard Timeout on 4G Video Stream",
+        xPercent: 80,
+        yPercent: 58,
+        severity: "HIGH",
+        telemetryEvidence: "Drop-off spikes in Tier 2/3 cities where latency exceeds 800ms.",
+        heuristicViolated: "System Status Visibility & Reliability",
+        geminiVisionFinding: "The WebRTC stream kills the connection abruptly without attempting packet downscaling or fallback audio verification.",
+        prescribedFix: "Implement adaptive WebRTC bitrate degradation and 45s fallback buffer.",
+      },
+      {
+        id: 3,
+        label: "#3",
+        title: "Ambiguous 'Waiting for Agent' Queue Counter",
+        xPercent: 50,
+        yPercent: 82,
+        severity: "HIGH",
+        telemetryEvidence: "Average wait time is 4m 12s, but users exit after 45 seconds.",
+        heuristicViolated: "Expectation Management & Cognitive Load",
+        geminiVisionFinding: "The screen shows a static spinner with zero indication of queue position or estimated wait minutes.",
+        prescribedFix: "Add a live queue counter ('Position #2 - ~1m wait') and offer scheduled callback appointments.",
+      },
+    ],
+    weightedRca: [
+      { pillar: "Technical Video-WebRTC Latency", weight: 42, color: "bg-indigo-500", explanation: "Camera permission drops and WebRTC socket disconnects drive the bulk of failed calls." },
+      { pillar: "Queue Anxiety & Expectation Mismatch", weight: 32, color: "bg-rose-500", explanation: "Indefinite spinner with no estimated wait time causes panic abandonment." },
+      { pillar: "Form Re-entry Friction", weight: 16, color: "bg-amber-500", explanation: "Requiring manual typing of 12-digit Aadhaar instead of DigiLocker XML fetch." },
+      { pillar: "Branch Opening Reluctance", weight: 10, color: "bg-emerald-500", explanation: "Older demographics preferring in-person branch assistance." },
+    ],
+    sqlPresets: [
+      {
+        prompt: "Check WebRTC Video-KYC Drop-off by Network Speed Bucket",
+        sql: `SELECT network_type, 
+       COUNT(*) as kyc_sessions,
+       ROUND(AVG(webrtc_latency_ms), 0) as avg_latency,
+       ROUND(SUM(CASE WHEN kyc_status = 'ABANDONED' THEN 1 ELSE 0 END)::numeric / COUNT(*) * 100, 1) as dropoff_pct
+FROM kyc_telemetry_logs
+GROUP BY 1
+ORDER BY dropoff_pct DESC;`,
+        resultRows: [
+          { network_type: "Cellular 4G (Tier 2/3)", kyc_sessions: "38,400", avg_latency: "1,420ms", dropoff_pct: "81.2%" },
+          { network_type: "Cellular 5G", kyc_sessions: "28,100", avg_latency: "280ms", dropoff_pct: "54.0%" },
+          { network_type: "Broadband Wi-Fi", kyc_sessions: "13,500", avg_latency: "140ms", dropoff_pct: "36.8%" },
+        ],
+        geminiTakeaway: "Over 81% of Tier-2 4G users fail video verification due to rigid WebRTC bitrate locks. Adding dynamic downscaling will instantly recover 22% of dropouts.",
+      },
+    ],
+    prdMarkdown: `# Product Requirements Document (PRD): Video-KYC Friction Removal
+**Target:** FinPulse Neo-Bank • **Priority:** P0 • **Expected Recovery:** ₹42.8 Lakhs/mo
+
+## 1. Objective
+Reduce Aadhaar Video-KYC drop-off from 74.8% to 42.0% within 30 days by resolving permissions barriers and providing clear queue status.
+
+## 2. Key User Stories
+- **US-1:** As a user on 4G, I want the video stream to adaptively downscale so my call doesn't terminate on network fluctuations.
+- **US-2:** As a busy applicant, I want to see my exact queue position and estimated wait time, or schedule an automated callback.`,
+    brokenUiWireframeTitle: "Current Broken Video-KYC Screen",
+    brokenUiItems: [
+      "❌ Blank Grey Box on Camera Permission Denial",
+      "❌ Indefinite Spinner with No Queue Position",
+      "❌ Abrupt 15s Disconnect on Low Bandwidth",
+      "❌ No Scheduled Callback Option",
+    ],
+    redesignedUiTitle: "Gemini Adaptive KYC Room (+42% Lift)",
+    redesignedUiFeatures: [
+      "⚡ Pre-Call Camera & Mic Warmup Check",
+      "🕒 Live Queue Counter ('Position #2 • ~1 min')",
+      "📶 Adaptive 360p WebRTC Auto-Downscaling",
+      "📅 1-Tap 'Schedule Video Call for Tomorrow' Button",
+    ],
+    codeDiff: `// Adaptive WebRTC Warmup & Queue Status Component
+import React, { useState } from 'react';
+import { Camera, Clock, Calendar } from 'lucide-react';
+
+export function KYCQueueRoom({ queuePosition = 2, estMinutes = 1 }) {
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-center max-w-sm mx-auto shadow-2xl">
+      <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl mx-auto flex items-center justify-center mb-4">
+        <Camera className="w-8 h-8 animate-pulse" />
+      </div>
+      <h3 className="font-extrabold text-white text-base">Bank Officer Connecting</h3>
+      <p className="text-xs text-slate-400 mt-1">Queue Position: #{queuePosition} • ~{estMinutes} min wait</p>
+      
+      <button className="mt-5 w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+        <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+        <span>Schedule for Later</span>
+      </button>
+    </div>
+  );
+}`,
+  },
+  edtech: {
+    id: "edtech",
+    name: "PrepMate IIT-JEE Prep",
+    tagline: "Test Prep & Rank Predictor Paywall",
+    companyCategory: "EdTech / SaaS",
+    overallConversion: 1.33,
+    monthlyVisitors: 120000,
+    aov: 5200,
+    monthlyLeakedRevenue: "₹84.0 Lakhs/mo",
+    recoverableRevenue: "₹31.9 Lakhs/mo (+38% Lift)",
+    bleedingStepName: "Annual Pro Paywall (Step 4)",
+    bleedingDropRate: 96.5,
+    steps: [
+      { id: "s1", name: "1. Free Mock Test", visitors: 120000, conversionFromPrev: 1.0, dropoffRate: 0.183, dropoffCount: 22000 },
+      { id: "s2", name: "2. Detailed Scorecard", visitors: 98000, conversionFromPrev: 0.816, dropoffRate: 0.448, dropoffCount: 44000 },
+      { id: "s3", name: "3. AIR Rank Predictor", visitors: 54000, conversionFromPrev: 0.551, dropoffRate: 0.965, dropoffCount: 52100 },
+      { id: "s4", name: "4. Annual Pro Paywall", visitors: 1900, conversionFromPrev: 0.035, dropoffRate: 0.965, dropoffCount: 300, isBleedingBottleneck: true },
+      { id: "s5", name: "5. Enrolled Paid Subscriber", visitors: 1600, conversionFromPrev: 0.842, dropoffRate: 0, dropoffCount: 0 },
+    ],
+    retentionMatrix: [
+      { cohort: "Oct 2026", w0: 100, w1: 72, w2: 60, w3: 55, w4: 51, w5: 48 },
+      { cohort: "Sep 2026", w0: 100, w1: 69, w2: 57, w3: 52, w4: 48, w5: 45 },
+      { cohort: "Aug 2026", w0: 100, w1: 65, w2: 53, w3: 49, w4: 45, w5: 42 },
+      { cohort: "Jul 2026", w0: 100, w1: 61, w2: 50, w3: 46, w4: 42, w5: 39 },
+    ],
+    hotspots: [
+      {
+        id: 1,
+        label: "#1",
+        title: "Rigid ₹18,000 Upfront Annual Commitment",
+        xPercent: 50,
+        yPercent: 40,
+        severity: "CRITICAL",
+        telemetryEvidence: "96.5% of high-intent students abandon within 8 seconds of seeing the price tag.",
+        heuristicViolated: "Pricing Psychology & Commitment Staircase",
+        geminiVisionFinding: "Zero monthly (₹999/mo) or no-cost EMI options provided; student users have no authority to approve large card charges.",
+        prescribedFix: "Add a 3-month ₹1,499 quarterly tier and No-Cost EMI with Bajaj Finserv.",
+      },
+      {
+        id: 2,
+        label: "#2",
+        title: "Intrusive 60-Second Countdown Panic Modal",
+        xPercent: 78,
+        yPercent: 20,
+        severity: "HIGH",
+        telemetryEvidence: "Back-button exit rate is 88.2% immediately upon timer activation.",
+        heuristicViolated: "Dark Pattern Friction & Anxiety Induction",
+        geminiVisionFinding: "Flashy red countdown banner triggers high anxiety for students seeking serious academic guidance.",
+        prescribedFix: "Replace countdown timer with institutional trust credentials (IIT Alumni faculty list).",
+      },
+      {
+        id: 3,
+        label: "#3",
+        title: "Missing 'Share Payment Link with Parents' Trigger",
+        xPercent: 50,
+        yPercent: 80,
+        severity: "CRITICAL",
+        telemetryEvidence: "76% of student survey responses cite: 'Had to ask dad to pay from his phone'.",
+        heuristicViolated: "Payer vs. User Divergence in Indian EdTech",
+        geminiVisionFinding: "The checkout only supports card/UPI directly on the student's phone, with zero WhatsApp payment link forwarding.",
+        prescribedFix: "Introduce a 1-Tap 'Send UPI Payment Link to Papa on WhatsApp' button.",
+      },
+    ],
+    weightedRca: [
+      { pillar: "Pricing Model & Payment Divergence", weight: 52, color: "bg-rose-500", explanation: "Students lack the ability to pay ₹18,000 without forwarding the link to parents." },
+      { pillar: "Panic Countdown Dark Patterns", weight: 26, color: "bg-amber-500", explanation: "Aggressive timer banners scare off students looking for transparent academic prep." },
+      { pillar: "Lack of Free Trial Micro-Tier", weight: 14, color: "bg-indigo-500", explanation: "No low-risk 7-day trial before full commitment." },
+      { pillar: "Organic Intent Drop", weight: 8, color: "bg-emerald-500", explanation: "General interest users checking predicted ranks with zero purchase intent." },
+    ],
+    sqlPresets: [
+      {
+        prompt: "Analyze Student Paywall Drop-off by Price Plan Selected",
+        sql: `SELECT plan_name, price_inr, 
+       COUNT(DISTINCT user_id) as views,
+       ROUND(AVG(is_completed) * 100, 2) as conversion_rate
+FROM subscription_attempts
+GROUP BY 1, 2
+ORDER BY conversion_rate DESC;`,
+        resultRows: [
+          { plan_name: "Annual Plan (Full Access)", price_inr: "₹18,000", views: "52,100", conversion_rate: "3.5%" },
+          { plan_name: "Quarterly Pilot (Hidden)", price_inr: "₹3,999", views: "1,200", conversion_rate: "18.4%" },
+        ],
+        geminiTakeaway: "The hidden quarterly plan converts at 5.2x higher rate than the annual lump-sum. Surfacing flexible tiers will immediately triple revenue throughput.",
+      },
+    ],
+    prdMarkdown: `# Product Requirements Document (PRD): Paywall Re-architecture & WhatsApp Parent Flow
+**Target:** PrepMate IIT-JEE • **Priority:** P0 • **Expected Recovery:** ₹31.9 Lakhs/mo
+
+## 1. Problem Statement
+96.5% of students abandon Step 4 because they are presented with an ₹18,000 lump sum and have no way to forward the bill to their parents.
+
+## 2. Core User Stories
+- **US-1 (Parent Link):** As a high school student, I want to tap 'Send WhatsApp Payment Link to Parents' so my father can pay directly from his UPI.
+- **US-2 (Staircase Pricing):** As an applicant, I want to subscribe for ₹1,499/mo or use No-Cost EMI.`,
+    brokenUiWireframeTitle: "Current Broken Paywall",
+    brokenUiItems: [
+      "❌ ₹18,000 Annual Only (No Monthly/EMI)",
+      "❌ Panic 60-Second Countdown Modal",
+      "❌ No WhatsApp Share to Parents Button",
+      "❌ Zero Free Trial Access",
+    ],
+    redesignedUiTitle: "Gemini High-Converting Parent-Student Paywall (+48% Lift)",
+    redesignedUiFeatures: [
+      "📱 1-Tap 'Send UPI Bill to Papa on WhatsApp'",
+      "💳 ₹1,499/mo Flexible Quarterly Staircase Tier",
+      "🎓 IIT Bombay Faculty Trust Credentials",
+      "✨ 7-Day 100% Refund Money-Back Guarantee",
+    ],
+    codeDiff: `// WhatsApp Parent Forwarding & Flexible Paywall Component
+import React from 'react';
+import { Send, ShieldCheck } from 'lucide-react';
+
+export function StudentPaywallCard({ onSendWhatsApp }: { onSendWhatsApp?: () => void }) {
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-center max-w-sm mx-auto">
+      <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20">
+        IIT-JEE CRACKER BATCH 2027
+      </span>
+      <h3 className="text-xl font-extrabold text-white mt-2">₹1,499 <span className="text-xs text-slate-400 font-normal">/ month</span></h3>
+      
+      <button 
+        onClick={onSendWhatsApp}
+        className="mt-5 w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+      >
+        <Send className="w-4 h-4" />
+        <span>Send Payment Link to Papa on WhatsApp</span>
+      </button>
+    </div>
+  );
+}`,
+  },
+};
+
+export default function FunnelDoctorApp() {
+  // Navigation & View Mode State
+  const [viewMode, setViewMode] = useState<"website" | "workspace">("website");
+  const [activeDatasetId, setActiveDatasetId] = useState<DatasetId>("d2c");
+  const [activeTab, setActiveTab] = useState<"telemetry" | "vision" | "rca" | "prd" | "warroom">("telemetry");
+
+  // API Key & Settings Modal
   const [geminiApiKey, setGeminiApiKey] = useState<string>("");
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [tempApiKeyInput, setTempApiKeyInput] = useState<string>("");
 
-  // Booking Modal State
-  const [bookingItem, setBookingItem] = useState<RentalItem | null>(null);
-  const [bookingDuration, setBookingDuration] = useState<number>(1);
-  const [bookingConfirmed, setBookingConfirmed] = useState<boolean>(false);
-  const [generatedOtp, setGeneratedOtp] = useState<string>("");
+  // Live Hero Audit Simulation Progress Modal
+  const [isAuditingHero, setIsAuditingHero] = useState<boolean>(false);
+  const [auditProgressStep, setAuditProgressStep] = useState<number>(0);
+  const [heroUrlInput, setHeroUrlInput] = useState<string>("https://quickstyle-d2c.in/checkout");
 
-  // My Hub Active Rentals
-  const [activeRentals, setActiveRentals] = useState<ActiveRental[]>([
+  // Interactive UI Fix Studio Toggle (Tab 4)
+  const [uiFixViewMode, setUiFixViewMode] = useState<"broken" | "redesigned" | "code">("redesigned");
+
+  // Vision X-Ray Selected Pin (Tab 2)
+  const [selectedPinId, setSelectedPinId] = useState<number>(1);
+  const [uploadedVisionImage, setUploadedVisionImage] = useState<string | null>(null);
+  const [visionAnalyzing, setVisionAnalyzing] = useState<boolean>(false);
+
+  // SQL Lab Selected Preset (Tab 3)
+  const [selectedSqlPresetIdx, setSelectedSqlPresetIdx] = useState<number>(0);
+
+  // AI PM Voice War Room (Tab 5)
+  const [voiceMessages, setVoiceMessages] = useState<
+    { sender: "user" | "ai"; text: string; timestamp: string }[]
+  >([
     {
-      id: "rental-101",
-      itemId: "item-1",
-      itemTitle: "BenQ 1080p Portable Movie Projector",
-      itemImage: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=600&q=80",
-      role: "borrower",
-      partnerName: "Aarav S. (Dwarka Sec 3)",
-      rentTotal: 350,
-      depositLocked: 2000,
-      otp: "8492",
-      status: "Active in Hand",
-      expiresIn: "18h 40m remaining",
+      sender: "ai",
+      text: "Hello! I am your Autonomous Principal AI PM. I've correlated your Step 4 drop-off telemetry with the mobile UI vision x-ray. What would you like to drill into?",
+      timestamp: "Just now",
     },
   ]);
-  const [escrowLockedBalance, setEscrowLockedBalance] = useState<number>(2000);
+  const [chatInput, setChatInput] = useState<string>("");
+  const [isListeningVoice, setIsListeningVoice] = useState<boolean>(false);
+  const [isSpeakingAudio, setIsSpeakingAudio] = useState<boolean>(false);
 
-  // AI Concierge State
-  const [conciergePrompt, setConciergePrompt] = useState<string>("");
-  const [conciergeLoading, setConciergeLoading] = useState<boolean>(false);
-  const [conciergeResult, setConciergeResult] = useState<{
-    bundleTitle: string;
-    description: string;
-    bundledItems: RentalItem[];
-    originalTotal: number;
-    discountedTotal: number;
-    savings: number;
-  } | null>(null);
+  // ROI Calculator Sliders (Website Part 1)
+  const [calcVisitors, setCalcVisitors] = useState<number>(100000);
+  const [calcDropRate, setCalcDropRate] = useState<number>(71);
+  const [calcAov, setCalcAov] = useState<number>(1850);
 
-  // 1-Snap AI Listing Studio State
-  const [snapImage, setSnapImage] = useState<string | null>(null);
-  const [snapAnalyzing, setSnapAnalyzing] = useState<boolean>(false);
-  const [snapResult, setSnapResult] = useState<{
-    title: string;
-    category: RentalItem["category"];
-    estimatedRetail: number;
-    suggestedDailyRent: number;
-    suggestedHourlyRent: number;
-    suggestedDeposit: number;
-    conditionScore: number;
-    conditionNotes: string;
-    safetyTip: string;
-  } | null>(null);
+  // 60-Sec Judge Pitch Script Modal
+  const [showPitchModal, setShowPitchModal] = useState<boolean>(false);
 
-  // AI Scanner (Damage Verification) State
-  const [scannerCheckinPhoto, setScannerCheckinPhoto] = useState<string | null>(null);
-  const [scannerCheckoutPhoto, setScannerCheckoutPhoto] = useState<string | null>(null);
-  const [scannerAnalyzing, setScannerAnalyzing] = useState<boolean>(false);
-  const [scannerResult, setScannerResult] = useState<{
-    status: "PASS_VERIFIED" | "DAMAGE_DETECTED";
-    matchConfidence: number;
-    verdictTitle: string;
-    verdictExplanation: string;
-    escrowRefundAmount: number;
-    repairDeduction: number;
-  } | null>(null);
+  // Toast Notification System
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Initialize API Key from localStorage
+  const dataset = DATASETS[activeDatasetId];
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Sync API Key from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("rentnear_gemini_api_key");
+    const saved = localStorage.getItem("funneldoctor_gemini_key");
     if (saved) {
       setGeminiApiKey(saved);
       setTempApiKeyInput(saved);
@@ -299,1327 +617,1767 @@ export default function RentNearApp() {
   }, []);
 
   const handleSaveApiKey = () => {
-    localStorage.setItem("rentnear_gemini_api_key", tempApiKeyInput.trim());
+    localStorage.setItem("funneldoctor_gemini_key", tempApiKeyInput.trim());
     setGeminiApiKey(tempApiKeyInput.trim());
     setShowSettingsModal(false);
+    showToast("Gemini 2.5 API Key Saved Successfully");
   };
 
-  // Filter items by category, radius, and search query
-  const filteredItems = items.filter((item) => {
-    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
-    const matchesRadius = item.distanceMeters <= radiusMeters;
-    const matchesSearch =
-      searchQuery === "" ||
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.aiConditionNotes.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesRadius && matchesSearch;
-  });
+  // Launch Live AI Diagnosis from Website Hero
+  const handleLaunchHeroDiagnosis = (targetDataset: DatasetId = "d2c") => {
+    setActiveDatasetId(targetDataset);
+    setIsAuditingHero(true);
+    setAuditProgressStep(1);
 
-  // ==========================================
-  // WORKFLOW 1: RENT BOOKING & ESCROW LOCK
-  // ==========================================
-  const handleOpenBooking = (item: RentalItem) => {
-    setBookingItem(item);
-    setBookingDuration(1);
-    setBookingConfirmed(false);
-    setGeneratedOtp(Math.floor(1000 + Math.random() * 9000).toString());
+    setTimeout(() => setAuditProgressStep(2), 700);
+    setTimeout(() => setAuditProgressStep(3), 1400);
+    setTimeout(() => {
+      setIsAuditingHero(false);
+      setViewMode("workspace");
+      setActiveTab("telemetry");
+      showToast(`Audit Complete: Loaded ${DATASETS[targetDataset].name}`);
+    }, 2100);
   };
 
-  const handleConfirmRental = () => {
-    if (!bookingItem) return;
-    const rentCost = bookingItem.rentDaily * bookingDuration;
-    const newRental: ActiveRental = {
-      id: `rental-${Date.now()}`,
-      itemId: bookingItem.id,
-      itemTitle: bookingItem.title,
-      itemImage: bookingItem.image,
-      role: "borrower",
-      partnerName: `${bookingItem.lenderName} (${bookingItem.distanceLabel})`,
-      rentTotal: rentCost,
-      depositLocked: bookingItem.deposit,
-      otp: generatedOtp,
-      status: "Handover Pending",
-      expiresIn: `${bookingDuration * 24}h remaining`,
-    };
-
-    setActiveRentals((prev) => [newRental, ...prev]);
-    setEscrowLockedBalance((prev) => prev + bookingItem.deposit);
-    setBookingConfirmed(true);
+  // Copy helpers
+  const copyToClipboard = (text: string, label: string = "Content") => {
+    navigator.clipboard.writeText(text);
+    showToast(`${label} copied to clipboard!`);
   };
 
-  // ==========================================
-  // WORKFLOW 2: AI CONCIERGE (PROBLEM TO BUNDLE)
-  // ==========================================
-  const handleRunConcierge = async (situationQuery: string) => {
-    setConciergePrompt(situationQuery);
-    setConciergeLoading(true);
-    setConciergeResult(null);
+  // Browser Voice Input (SpeechRecognition) & Output (SpeechSynthesis)
+  const handleToggleVoiceRecording = () => {
+    if (typeof window === "undefined") return;
 
-    // If API key is set, call Gemini. If not, use high-intelligence simulation
-    if (geminiApiKey) {
-      try {
-        const prompt = `You are RentNear AI's hyper-local concierge. A user in a college campus/neighborhood says: "${situationQuery}".
-Here is the available inventory JSON:
-${JSON.stringify(items.map((i) => ({ id: i.id, title: i.title, category: i.category, rentDaily: i.rentDaily, deposit: i.deposit })))}
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-Pick 2 items that solve their problem, explain why, calculate a 10% bundle discount, and output STRICT JSON format:
-{
-  "bundleTitle": "Catchy Bundle Name",
-  "description": "Short explanation of why these items solve the problem",
-  "itemIds": ["id1", "id2"]
-}`;
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-            }),
-          }
-        );
-        const data = await response.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-        const cleanedJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-        const parsed = JSON.parse(cleanedJson);
-
-        const matchedItems = items.filter((i) => parsed.itemIds?.includes(i.id));
-        if (matchedItems.length > 0) {
-          const original = matchedItems.reduce((acc, i) => acc + i.rentDaily, 0);
-          const discounted = Math.round(original * 0.9);
-          setConciergeResult({
-            bundleTitle: parsed.bundleTitle || "AI Curated Solution Bundle",
-            description: parsed.description || "Optimized items for your specific situation.",
-            bundledItems: matchedItems,
-            originalTotal: original,
-            discountedTotal: discounted,
-            savings: original - discounted,
-          });
-          setConciergeLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.warn("Gemini call failed, using smart fallback:", err);
-      }
+    if (!SpeechRecognition) {
+      showToast("Web Speech API not supported in this browser. Use text input!");
+      return;
     }
 
-    // Smart Fallback Simulation
-    setTimeout(() => {
-      let matchedIds: string[] = [];
-      let title = "Neighborhood Solution Bundle";
-      let desc = "Curated high-utility rental gear within 300m of you.";
-
-      const q = situationQuery.toLowerCase();
-      if (q.includes("interview") || q.includes("placement") || q.includes("sharp")) {
-        matchedIds = ["item-4", "item-3"]; // Blazer + Steamer
-        title = "👔 Placement Interview Ready Bundle";
-        desc = "Tailored Raymond blazer (Size 40/M) paired with Philips garment steamer to ensure you walk in crisp and crease-free.";
-      } else if (q.includes("party") || q.includes("match") || q.includes("terrace") || q.includes("watch")) {
-        matchedIds = ["item-1", "item-8"]; // Projector + PartyBox
-        title = "🎉 Ultimate Terrace Watch Party Kit";
-        desc = "1080p BenQ Portable Cinema Projector with 160W JBL PartyBox 110 for stadium-grade sound and screen.";
-      } else if (q.includes("bookshelf") || q.includes("curtains") || q.includes("fix") || q.includes("tool")) {
-        matchedIds = ["item-2"]; // Drill + tools
-        title = "🛠️ Home Repair & Mounting Essentials";
-        desc = "Bosch 18V Cordless Impact Drill with complete masonry and wood bit kit for clean drywall and curtain rod mounting.";
-      } else {
-        matchedIds = ["item-1", "item-5"];
-        title = "🎮 Weekend Entertainment Setup";
-        desc = "Big-screen projector paired with dual PS5 controllers for multiplayer gaming.";
-      }
-
-      const matched = items.filter((i) => matchedIds.includes(i.id));
-      const original = matched.reduce((acc, i) => acc + i.rentDaily, 0);
-      const discounted = Math.round(original * 0.9);
-
-      setConciergeResult({
-        bundleTitle: title,
-        description: desc,
-        bundledItems: matched,
-        originalTotal: original,
-        discountedTotal: discounted,
-        savings: original - discounted,
-      });
-      setConciergeLoading(false);
-    }, 1200);
-  };
-
-  // ==========================================
-  // WORKFLOW 3: 1-SNAP AI LISTING STUDIO
-  // ==========================================
-  const handleSelectDemoPhoto = (photoUrl: string, samplePreset: any) => {
-    setSnapImage(photoUrl);
-    setSnapAnalyzing(true);
-    setSnapResult(null);
-
-    setTimeout(() => {
-      setSnapResult(samplePreset);
-      setSnapAnalyzing(false);
-    }, 1500);
-  };
-
-  const handlePublishNewItem = () => {
-    if (!snapResult || !snapImage) return;
-
-    const newItem: RentalItem = {
-      id: `item-${Date.now()}`,
-      title: snapResult.title,
-      category: snapResult.category,
-      rentDaily: snapResult.suggestedDailyRent,
-      rentHourly: snapResult.suggestedHourlyRent,
-      deposit: snapResult.suggestedDeposit,
-      retailValue: snapResult.estimatedRetail,
-      distanceMeters: 60,
-      distanceLabel: "60m away (Your Flat)",
-      lenderName: "You (⭐ 100% Verified)",
-      lenderTrust: 100,
-      aiConditionScore: snapResult.conditionScore,
-      aiConditionNotes: snapResult.conditionNotes,
-      image: snapImage,
-      isPopular: true,
-    };
-
-    setItems((prev) => [newItem, ...prev]);
-    setSnapImage(null);
-    setSnapResult(null);
-    setCurrentTab("explore");
-  };
-
-  // ==========================================
-  // WORKFLOW 4: AI DAMAGE VERIFICATION SCANNER
-  // ==========================================
-  const handleRunDamageScan = (scenario: "clean" | "damage") => {
-    setScannerAnalyzing(true);
-    setScannerResult(null);
-
-    if (scenario === "clean") {
-      setScannerCheckinPhoto("https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80");
-      setScannerCheckoutPhoto("https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80");
-    } else {
-      setScannerCheckinPhoto("https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80");
-      setScannerCheckoutPhoto("https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=400&q=80");
+    if (isListeningVoice) {
+      setIsListeningVoice(false);
+      return;
     }
 
-    setTimeout(() => {
-      if (scenario === "clean") {
-        setScannerResult({
-          status: "PASS_VERIFIED",
-          matchConfidence: 99.4,
-          verdictTitle: "Zero Wear or Damage Detected",
-          verdictExplanation: "Multimodal pixel matching verified zero scratches on optical glass lens, intact casing seals, and matching serial stamps.",
-          escrowRefundAmount: 2000,
-          repairDeduction: 0,
-        });
-      } else {
-        setScannerResult({
-          status: "DAMAGE_DETECTED",
-          matchConfidence: 96.8,
-          verdictTitle: "Impact Scuff Detected on Chuck Casing",
-          verdictExplanation: "Comparison identified a 2.4cm deep hairline scratch and chuck abrasion not present in the Check-In baseline photo.",
-          escrowRefundAmount: 550,
-          repairDeduction: 250,
-        });
-      }
-      setScannerAnalyzing(false);
-    }, 1800);
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsListeningVoice(true);
+      recognition.onend = () => setIsListeningVoice(false);
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        handleSendVoiceQuery(transcript);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.warn("Speech recognition error:", err);
+      setIsListeningVoice(false);
+    }
   };
+
+  const handleSendVoiceQuery = (queryText: string) => {
+    if (!queryText.trim()) return;
+
+    const newMsg = {
+      sender: "user" as const,
+      text: queryText,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setVoiceMessages((prev) => [...prev, newMsg]);
+    setChatInput("");
+
+    // Simulate AI response based on dataset context
+    setTimeout(() => {
+      let reply = "";
+      const q = queryText.toLowerCase();
+
+      if (q.includes("summary") || q.includes("executive") || q.includes("why")) {
+        reply = `Executive Summary: At Step 4 (${dataset.bleedingStepName}), you are losing ${dataset.bleedingDropRate}% of prospective users. Correlating SQL telemetry with Gemini Vision reveals that 64% of users exit due to the forced login wall and hidden fees. Deploying our fixed 1-Tap UPI component will recover an estimated ${dataset.recoverableRevenue}.`;
+      } else if (q.includes("first") || q.includes("deploy") || q.includes("fix") || q.includes("engineer")) {
+        reply = `Top Engineering Priority: Implement the Sticky 1-Tap UPI Bottom Bar (P0 RICE score 13,770). It immediately bypasses keyboard occlusion on Android 13/14 and stops the 71.7% drop-off in less than 2 days of dev effort.`;
+      } else {
+        reply = `Understood. Cross-referencing your event telemetry logs with the Gemini Vision X-Ray confirms this friction point directly accounts for ${dataset.monthlyLeakedRevenue} in leaked revenue. Review the Auto-PRD tab for exact technical acceptance criteria.`;
+      }
+
+      setVoiceMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+
+      // Speak reply via SpeechSynthesis
+      if ("speechSynthesis" in window) {
+        setIsSpeakingAudio(true);
+        const utterance = new SpeechSynthesisUtterance(reply);
+        utterance.rate = 1.05;
+        utterance.onend = () => setIsSpeakingAudio(false);
+        window.speechSynthesis.speak(utterance);
+      }
+    }, 900);
+  };
+
+  // Custom Screenshot Upload Simulation for Tab 2
+  const handleUploadCustomScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVisionAnalyzing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setUploadedVisionImage(event.target?.result as string);
+      setTimeout(() => {
+        setVisionAnalyzing(false);
+        showToast("Gemini Vision X-Ray Analysis Complete!");
+      }, 1600);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ROI Math
+  const calculatedLeaked = Math.round(calcVisitors * (calcDropRate / 100) * calcAov);
+  const calculatedRecoverable = Math.round(calculatedLeaked * 0.22); // Conservative 22% lift
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans pb-24 md:pb-8 selection:bg-emerald-500 selection:text-white">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+      {/* Toast Notification Container */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-2xl border border-indigo-400 flex items-center gap-2 animate-fadeIn">
+          <Sparkles className="w-4 h-4 text-yellow-300" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* ========================================== */}
-      {/* 1. TOP HEADER / APP BAR                     */}
+      {/* GLOBAL PERSISTENT HEADER (TOP BAR)          */}
       {/* ========================================== */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm px-4 md:px-8 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          {/* Logo & Slogan */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentTab("explore")}>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 p-0.5 shadow-md shadow-emerald-500/20">
-              <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-                <Zap className="w-5 h-5 text-emerald-600 fill-emerald-600" />
+      <header className="sticky top-0 z-40 bg-[#090D16]/90 backdrop-blur-md border-b border-slate-800/80 px-4 md:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          {/* Logo */}
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setViewMode("website")}
+          >
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20">
+              <div className="w-full h-full bg-[#090D16] rounded-[14px] flex items-center justify-center">
+                <Activity className="w-5 h-5 text-emerald-400" />
               </div>
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  RentNear<span className="text-emerald-600 font-black">.ai</span>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base tracking-tight text-white">
+                  FunnelDoctor<span className="text-indigo-400 font-black">.ai</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200/80">
-                  Buildathon 2026
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hidden sm:inline">
+                  Google Gemini 2.5
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">Hyper-Local P2P Daily Utility Rentals</p>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Autonomous Multimodal Conversion & RCA Agent
+              </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200">
-            <button
-              onClick={() => setCurrentTab("explore")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                currentTab === "explore" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Explore Feed
-            </button>
-            <button
-              onClick={() => setCurrentTab("concierge")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
-                currentTab === "concierge" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-600 hover:text-indigo-600"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>AI Concierge</span>
-            </button>
-            <button
-              onClick={() => setCurrentTab("snap")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
-                currentTab === "snap" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:text-emerald-600"
-              }`}
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Snap & Lend</span>
-            </button>
-            <button
-              onClick={() => setCurrentTab("scanner")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ${
-                currentTab === "scanner" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>AI Damage Scanner</span>
-            </button>
-            <button
-              onClick={() => setCurrentTab("hub")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
-                currentTab === "hub" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Wallet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>My Hub ({activeRentals.length})</span>
-            </button>
-          </nav>
+          {/* Persistent Mode Switcher: Website vs App Workspace */}
+          <div className="flex items-center gap-2">
+            <div className="bg-slate-900 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
+              <button
+                onClick={() => setViewMode("website")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                  viewMode === "website"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Product Website</span>
+              </button>
+              <button
+                onClick={() => setViewMode("workspace")}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                  viewMode === "workspace"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 fill-current" />
+                <span>Live App Workspace</span>
+              </button>
+            </div>
 
-          {/* Right Header Controls (API Key Badge & Wallet) */}
-          <div className="flex items-center gap-2.5">
+            {/* Gemini API Key Button */}
             <button
               onClick={() => setShowSettingsModal(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
                 geminiApiKey
-                  ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
-                  : "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/20"
               }`}
             >
-              <Zap className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">
-                {geminiApiKey ? "⚡ Gemini 2.5 Flash Active" : "⚡ Demo Simulation Mode"}
+              <Key className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">
+                {geminiApiKey ? "Gemini Active" : "API Key"}
               </span>
-              <Settings className="w-3 h-3 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => setCurrentTab("hub")}
-              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition shadow-sm"
-            >
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>₹{escrowLockedBalance} Escrow</span>
+              <Settings className="w-3 h-3 text-slate-500" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* ========================================== */}
-      {/* VIEW 1: HOME / HYPER-LOCAL EXPLORE FEED   */}
-      {/* ========================================== */}
-      {currentTab === "explore" && (
-        <div className="max-w-6xl mx-auto w-full px-4 md:px-8 pt-5 flex flex-col gap-5">
-          {/* Hero AI Search Bar + Neighborhood Radius */}
-          <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-emerald-950/10 relative overflow-hidden">
-            <div className="absolute right-0 top-0 translate-x-12 -translate-y-8 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="relative z-10 max-w-2xl">
-              <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-white/20">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
-                Borrow Anything in 15 Minutes • Zero Ownership Burden
-              </span>
-              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight">
-                Don't Buy What You Only Need For A Day.
-              </h2>
-              <p className="text-xs md:text-sm text-emerald-100 mt-1 mb-5">
-                Projectors, drill machines, interview suits, and cameras available within 500m of your door.
+      {/* ========================================================================= */}
+      {/* VIEW MODE A: THE PUBLIC SAAS MARKETING WEBSITE (STORYTELLING LANDING PAGE) */}
+      {/* ========================================================================= */}
+      {viewMode === "website" && (
+        <div className="flex-1 flex flex-col">
+          {/* HERO SECTION */}
+          <section className="relative pt-12 pb-20 px-4 md:px-8 overflow-hidden border-b border-slate-800/80">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-tr from-indigo-600/20 via-purple-600/10 to-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="max-w-5xl mx-auto text-center relative z-10 flex flex-col items-center">
+              {/* Top Pill Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs font-semibold text-slate-300 mb-6 shadow-xl">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>🏆 Built for Startup Buildathon India 2026</span>
+                <span className="text-slate-500">•</span>
+                <span className="text-indigo-400 font-bold">Multimodal AI Product Analyst</span>
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.15]">
+                Your Checkout Funnel Is Leaking Revenue.{" "}
+                <span className="bg-gradient-to-r from-rose-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent">
+                  Our Multimodal AI Finds Why
+                </span>
+                —And Writes The Fix in 60 Seconds.
+              </h1>
+
+              {/* Subheadline */}
+              <p className="mt-5 text-sm md:text-base text-slate-400 max-w-2xl leading-relaxed">
+                FunnelDoctor AI combines <strong>Quantitative Funnel Telemetry</strong> (SQL & Event Logs) with{" "}
+                <strong>Qualitative Gemini Vision</strong> (UI Screenshot X-Rays) to pinpoint exact drop-off root causes, generate an executive PRD, and output ready-to-ship redesigned UI code.
               </p>
 
-              {/* Natural Language Prompt Search Bar */}
-              <div className="bg-white rounded-2xl p-2 shadow-2xl flex items-center gap-2">
-                <Search className="w-5 h-5 text-slate-400 ml-2 shrink-0" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search gear or say: 'need projector for watch party'..."
-                  className="w-full text-slate-800 placeholder-slate-400 text-xs md:text-sm bg-transparent focus:outline-none"
-                />
+              {/* Interactive Hero Audit Bar */}
+              <div className="w-full max-w-2xl mt-8 bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2.5 shadow-2xl flex flex-col sm:flex-row items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 w-full px-2">
+                  <Search className="w-4 h-4 text-slate-500 shrink-0" />
+                  <input
+                    type="text"
+                    value={heroUrlInput}
+                    onChange={(e) => setHeroUrlInput(e.target.value)}
+                    placeholder="https://quickstyle-d2c.in/checkout"
+                    className="w-full bg-transparent text-xs md:text-sm text-slate-200 focus:outline-none font-mono"
+                  />
+                </div>
                 <button
-                  onClick={() => {
-                    if (searchQuery.length > 3) {
-                      handleRunConcierge(searchQuery);
-                      setCurrentTab("concierge");
-                    } else {
-                      setCurrentTab("concierge");
-                    }
-                  }}
-                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5 shrink-0"
+                  onClick={() => handleLaunchHeroDiagnosis(activeDatasetId)}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white font-bold text-xs md:text-sm shadow-lg shadow-indigo-600/30 transition flex items-center justify-center gap-2 shrink-0 active:scale-95"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Ask AI Concierge</span>
+                  <Sparkles className="w-4 h-4" />
+                  <span>Run Live AI Diagnosis ➔</span>
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Interactive Neighborhood Radius & Location Filter */}
-          <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs text-slate-700 font-semibold">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="leading-tight">Dwarka Sector 3 / University Campus</p>
-                <p className="text-[11px] text-slate-400 font-normal">Active Hyper-Local Node #ND-42</p>
-              </div>
-            </div>
-
-            {/* Radius Slider */}
-            <div className="w-full sm:w-72 flex items-center gap-3">
-              <span className="text-xs text-slate-500 whitespace-nowrap font-medium">Radius:</span>
-              <input
-                type="range"
-                min="200"
-                max="3000"
-                step="100"
-                value={radiusMeters}
-                onChange={(e) => setRadiusMeters(Number(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-              />
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md whitespace-nowrap border border-emerald-200">
-                {(radiusMeters / 1000).toFixed(1)} km
-              </span>
-            </div>
-
-            {/* Pricing Toggle: Daily vs Hourly */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-end sm:self-auto border border-slate-200">
-              <button
-                onClick={() => setPricingMode("daily")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                  pricingMode === "daily" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600"
-                }`}
-              >
-                Per Day
-              </button>
-              <button
-                onClick={() => setPricingMode("hourly")}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
-                  pricingMode === "hourly" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-600"
-                }`}
-              >
-                Per Hour
-              </button>
-            </div>
-          </div>
-
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {[
-              "All",
-              "Hostel & Daily",
-              "DIY & Tools",
-              "Party & Media",
-              "Cameras",
-              "Gaming",
-              "Trekking & Sports",
-            ].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
-                  selectedCategory === cat
-                    ? "bg-slate-900 border-slate-900 text-white shadow-sm"
-                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900"
-                }`}
-              >
-                {cat === "All" ? "🔥 All Nearby" : cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Product Feed Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {filteredItems.map((item) => {
-              const priceDisplay =
-                pricingMode === "hourly" && item.rentHourly
-                  ? `₹${item.rentHourly}/hr`
-                  : `₹${item.rentDaily}/day`;
-
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden group hover:border-emerald-300"
+              {/* Instant 3 Demo Dataset Chips */}
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+                <span className="text-slate-500 font-medium">Or test real startup data:</span>
+                <button
+                  onClick={() => handleLaunchHeroDiagnosis("d2c")}
+                  className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition flex items-center gap-1.5"
                 >
-                  {/* Image Container with Badges */}
-                  <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                  <span>🛍️ D2C Fashion Checkout</span>
+                  <span className="text-rose-400 font-bold font-mono">(-71.7% Drop)</span>
+                </button>
+                <button
+                  onClick={() => handleLaunchHeroDiagnosis("kyc")}
+                  className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition flex items-center gap-1.5"
+                >
+                  <span>💳 Fintech Video-KYC</span>
+                  <span className="text-rose-400 font-bold font-mono">(-74.8% Drop)</span>
+                </button>
+                <button
+                  onClick={() => handleLaunchHeroDiagnosis("edtech")}
+                  className="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 transition flex items-center gap-1.5"
+                >
+                  <span>🎓 EdTech Paywall</span>
+                  <span className="text-rose-400 font-bold font-mono">(-96.5% Drop)</span>
+                </button>
+              </div>
 
-                    {/* Distance Pill */}
-                    <div className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-lg text-[10px] font-bold text-slate-800 shadow-sm flex items-center gap-1 border border-slate-200/80">
-                      <MapPin className="w-3 h-3 text-emerald-600" />
-                      <span>{item.distanceLabel}</span>
+              {/* Floating Hero Visual Preview Card */}
+              <div className="mt-12 w-full max-w-4xl bg-slate-900/80 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-5 text-xs text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-rose-500/80" />
+                    <span className="w-3 h-3 rounded-full bg-amber-500/80" />
+                    <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                    <span className="ml-2 font-mono text-slate-300 font-semibold">
+                      Live Telemetry + Vision Fusion Engine
+                    </span>
+                  </div>
+                  <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    +38% Projected Conversion Lift
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                  {/* Left: Bleeding Funnel Chart Card */}
+                  <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] text-rose-400 font-mono font-bold uppercase">
+                        1. Quantitative Telemetry
+                      </span>
+                      <h4 className="font-bold text-sm text-slate-200 mt-1">Bleeding Step 4</h4>
+                      <p className="text-xs text-slate-400 mt-1">
+                        18,000 Bag Visitors ➔ 5,100 Address Checkouts (<strong>-71.7% Churn</strong>).
+                      </p>
                     </div>
-
-                    {/* AI Condition Score Badge */}
-                    <div className="absolute top-2.5 right-2.5 bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-[10px] font-extrabold shadow-sm flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-yellow-300" />
-                      <span>{item.aiConditionScore}/10</span>
-                    </div>
-
-                    {/* Category Tag */}
-                    <div className="absolute bottom-2.5 left-2.5 bg-slate-900/80 backdrop-blur-md text-white px-2 py-0.5 rounded-md text-[9px] font-medium tracking-wide">
-                      {item.category}
+                    <div className="mt-3 pt-3 border-t border-slate-800/80">
+                      <span className="text-[10px] text-slate-500">Revenue Leaked:</span>
+                      <p className="text-base font-extrabold text-rose-400">₹68.4 Lakhs/mo</p>
                     </div>
                   </div>
 
-                  {/* Body Content */}
-                  <div className="p-4 flex-1 flex flex-col justify-between">
+                  {/* Middle: Screen X-Ray with Red Hotspot Pins */}
+                  <div className="p-4 bg-slate-950/70 rounded-2xl border border-rose-500/30 flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-2 right-2 bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-500/40">
+                      Gemini Vision X-Ray
+                    </div>
                     <div>
-                      <h3 className="font-bold text-sm text-slate-900 line-clamp-1 group-hover:text-emerald-700 transition">
-                        {item.title}
-                      </h3>
-
-                      {/* AI Verified Condition Note */}
-                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 flex items-center gap-1 font-medium">
-                        <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-                        <span>{item.aiConditionNotes}</span>
+                      <span className="text-[10px] text-indigo-400 font-mono font-bold uppercase">
+                        2. Qualitative Spatial X-Ray
+                      </span>
+                      <h4 className="font-bold text-sm text-slate-200 mt-1">3 Visual Friction Pins</h4>
+                      <p className="text-xs text-slate-400 mt-1">
+                        • #1 Forced Account Login Wall
+                        <br />
+                        • #2 Hidden ₹149 Convenience Surcharge
+                        <br />• #3 UPI CTA Below Virtual Keyboard
                       </p>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400">Nielsen Heuristics:</span>
+                      <span className="text-rose-400 font-bold">3 Violations</span>
+                    </div>
+                  </div>
 
-                      {/* Lender Info & Trust Score */}
-                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-600 font-medium">{item.lenderName}</span>
-                        <span className="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                          ⭐ {item.lenderTrust}% Trust
+                  {/* Right: Auto-Generated Redesign & Code */}
+                  <div className="p-4 bg-slate-950/70 rounded-2xl border border-emerald-500/30 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase">
+                        3. Auto-Remediation
+                      </span>
+                      <h4 className="font-bold text-sm text-slate-200 mt-1">Ready-to-Ship Code Fix</h4>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Sticky 1-Tap UPI Express component + complete engineering PRD generated in 60s.
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-800/80">
+                      <span className="text-[10px] text-slate-500">Recoverable Revenue:</span>
+                      <p className="text-base font-extrabold text-emerald-400">₹26.0 Lakhs/mo</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 2: THE OLD BROKEN WAY VS. FUNNELDOCTOR AI */}
+          <section id="problem" className="py-20 px-4 md:px-8 border-b border-slate-800/80">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-xs uppercase font-bold text-indigo-400 tracking-wider">
+                  The Workflow Revolution
+                </span>
+                <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-2">
+                  The Old Broken Way vs. The FunnelDoctor AI Way
+                </h2>
+                <p className="text-sm text-slate-400 mt-2">
+                  Why traditional analytics dashboards leave founders stuck guessing.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* The Old Broken Way */}
+                <div className="bg-slate-900/50 border border-rose-500/30 rounded-3xl p-6 md:p-8 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-rose-400 font-bold text-sm mb-4">
+                      <X className="w-5 h-5" />
+                      <span>THE OLD BROKEN WORKFLOW (Takes 3 Weeks)</span>
+                    </div>
+                    <ul className="flex flex-col gap-3.5 text-xs text-slate-300">
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 shrink-0 font-bold font-mono">1.</span>
+                        <span>
+                          <strong>Mixpanel / GA4 only show the number:</strong> They tell you 70% of people left, but never explain *why* or what visual bug caused it.
                         </span>
-                      </div>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 shrink-0 font-bold font-mono">2.</span>
+                        <span>
+                          <strong>Watching 50+ Hours of Replay Videos:</strong> Founders and PMs spend weeks watching session replays in Hotjar trying to spot patterns manually.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 shrink-0 font-bold font-mono">3.</span>
+                        <span>
+                          <strong>Weeks of Internal Debate:</strong> Designers argue about button colors while engineers argue about API latency.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-rose-400 shrink-0 font-bold font-mono">4.</span>
+                        <span>
+                          <strong>Manual PRD Writing:</strong> Writing requirements, user stories, and acceptance criteria drags on for 2 sprints before code is touched.
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-rose-400 font-mono">
+                    Avg. Time to Ship Fix: 18 - 24 Days
+                  </div>
+                </div>
+
+                {/* The FunnelDoctor AI Way */}
+                <div className="bg-slate-900/90 border border-emerald-500/40 rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                  <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                  <div>
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-4">
+                      <Check className="w-5 h-5" />
+                      <span>THE FUNNELDOCTOR AI WORKFLOW (Takes 60 Seconds)</span>
+                    </div>
+                    <ul className="flex flex-col gap-3.5 text-xs text-slate-200">
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 shrink-0 font-bold font-mono">1.</span>
+                        <span>
+                          <strong>Upload Funnel Data + Screen:</strong> Simply paste your checkout URL and funnel numbers or sync with your existing analytics.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 shrink-0 font-bold font-mono">2.</span>
+                        <span>
+                          <strong>Gemini Omni Vision Spots Visual Friction:</strong> Instantly detects keyboard occlusion, surprise shipping fees, and dark pattern layout shifts.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 shrink-0 font-bold font-mono">3.</span>
+                        <span>
+                          <strong>Google Agent Skills SQL Verification:</strong> Writes and executes segmented queries across OS versions and API response times.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="text-emerald-400 shrink-0 font-bold font-mono">4.</span>
+                        <span>
+                          <strong>Ready-to-Ship Code + PRD in 60s:</strong> Generates a full engineering PRD with RICE prioritization and copyable React + Tailwind code.
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-emerald-400 font-mono font-bold">
+                    Avg. Time to Ship Fix: 60 Seconds ⚡
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 3: 4-STAGE GOOGLE AI ARCHITECTURE */}
+          <section id="architecture" className="py-20 px-4 md:px-8 border-b border-slate-800/80 bg-slate-950/40">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-xs uppercase font-bold text-indigo-400 tracking-wider">
+                  Technical Innovation
+                </span>
+                <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-2">
+                  Our 4-Stage Google AI Architecture
+                </h2>
+                <p className="text-sm text-slate-400 mt-2">
+                  Built on Google Cloud and Gemini 2.5 multimodal foundational models.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-mono font-bold mb-3">
+                      01
+                    </div>
+                    <h3 className="font-bold text-sm text-white">Funnel & Cohort Telemetry</h3>
+                    <p className="text-xs text-indigo-400 font-mono mt-0.5">Cloud SQL + BigQuery</p>
+                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                      Ingests event drops and isolates the exact cohort, OS version, and checkout step bleeding revenue.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono font-bold mb-3">
+                      02
+                    </div>
+                    <h3 className="font-bold text-sm text-white">Multimodal Vision X-Ray</h3>
+                    <p className="text-xs text-emerald-400 font-mono mt-0.5">Gemini 2.5 Flash Vision</p>
+                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                      Scans mobile and desktop viewports to spot dark patterns, keyboard occlusion, and Nielsen heuristic flaws.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-mono font-bold mb-3">
+                      03
+                    </div>
+                    <h3 className="font-bold text-sm text-white">Root-Cause SQL Lab</h3>
+                    <p className="text-xs text-amber-400 font-mono mt-0.5">Google Agent Skills</p>
+                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                      Autonomously generates and executes segmented SQL queries to prove whether drops are UX- or latency-driven.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-mono font-bold mb-3">
+                      04
+                    </div>
+                    <h3 className="font-bold text-sm text-white">Auto-PRD & Code Fix</h3>
+                    <p className="text-xs text-purple-400 font-mono mt-0.5">Gemini Code Synthesis</p>
+                    <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
+                      Outputs a production-grade Product Requirements Document and copyable React + Tailwind component.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 4: INTERACTIVE REVENUE LEAKAGE & ROI CALCULATOR */}
+          <section id="calculator" className="py-20 px-4 md:px-8 border-b border-slate-800/80">
+            <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-900 to-indigo-950/40 border border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl">
+              <div className="text-center mb-8">
+                <span className="text-xs uppercase font-bold text-emerald-400 tracking-wider">
+                  Interactive Financial Model
+                </span>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-white mt-1">
+                  How Much Revenue Is Your Checkout Funnel Leaking?
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Adjust your metrics to calculate monthly leaked revenue and your conservative recovery potential.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                {/* Sliders */}
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
+                      <span>Monthly Funnel Visitors</span>
+                      <span className="text-indigo-400 font-mono">{calcVisitors.toLocaleString()}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="10000"
+                      max="500000"
+                      step="10000"
+                      value={calcVisitors}
+                      onChange={(e) => setCalcVisitors(Number(e.target.value))}
+                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
+                      <span>Checkout Drop-Off Rate (%)</span>
+                      <span className="text-rose-400 font-mono">{calcDropRate}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="30"
+                      max="90"
+                      step="1"
+                      value={calcDropRate}
+                      onChange={(e) => setCalcDropRate(Number(e.target.value))}
+                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-300 font-semibold mb-1">
+                      <span>Average Order Value (₹)</span>
+                      <span className="text-emerald-400 font-mono">₹{calcAov.toLocaleString()}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="500"
+                      max="10000"
+                      step="250"
+                      value={calcAov}
+                      onChange={(e) => setCalcAov(Number(e.target.value))}
+                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Calculation Output Card */}
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center flex flex-col justify-between shadow-xl">
+                  <div>
+                    <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">
+                      Monthly Revenue Leaked
+                    </span>
+                    <p className="text-2xl md:text-3xl font-extrabold text-rose-400 mt-1">
+                      ₹{(calculatedLeaked / 100000).toFixed(1)} Lakhs
+                      <span className="text-xs font-normal text-slate-500"> / month</span>
+                    </p>
+                  </div>
+
+                  <div className="my-5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="text-[11px] text-emerald-300 uppercase font-extrabold">
+                      Recoverable with FunnelDoctor AI (+22% lift)
+                    </span>
+                    <p className="text-xl md:text-2xl font-black text-emerald-400 mt-1">
+                      +₹{(calculatedRecoverable / 100000).toFixed(1)} Lakhs/mo
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setViewMode("workspace");
+                      setActiveTab("prd");
+                    }}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-extrabold text-xs shadow-lg transition flex items-center justify-center gap-1.5"
+                  >
+                    <span>Recover This Revenue Now ➔</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 5: TRANSPARENT SAAS PRICING TIERS */}
+          <section id="pricing" className="py-20 px-4 md:px-8">
+            <div className="max-w-5xl mx-auto text-center">
+              <span className="text-xs uppercase font-bold text-indigo-400 tracking-wider">
+                Simple Pricing
+              </span>
+              <h2 className="text-2xl md:text-4xl font-extrabold text-white mt-1">
+                Predictable Pricing for High-Growth Startups
+              </h2>
+              <p className="text-sm text-slate-400 mt-1 mb-12">
+                100x cheaper than hiring an agency. 100x faster than traditional analytics.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                {/* Tier 1: Starter */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-base text-white">Starter Sandbox</h3>
+                    <p className="text-xs text-slate-400 mt-1">For early-stage side projects</p>
+                    <div className="mt-4 mb-6">
+                      <span className="text-2xl font-black text-white">Free</span>
+                      <span className="text-xs text-slate-400"> / forever</span>
+                    </div>
+                    <ul className="flex flex-col gap-2.5 text-xs text-slate-300">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>1 Funnel Audit per month</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Gemini Vision UI X-Ray</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Basic RCA Diagnostics</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setViewMode("workspace")}
+                    className="mt-6 w-full py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-xs font-bold text-white transition"
+                  >
+                    Start Free
+                  </button>
+                </div>
+
+                {/* Tier 2: Growth Pro (POPULAR) */}
+                <div className="bg-gradient-to-b from-indigo-900/60 to-slate-900 border-2 border-indigo-500 rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] uppercase font-black px-3 py-0.5 rounded-full shadow-md">
+                    MOST POPULAR
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-white">Growth Pro</h3>
+                    <p className="text-xs text-slate-400 mt-1">For scaling D2C, SaaS & Fintech apps</p>
+                    <div className="mt-4 mb-6">
+                      <span className="text-2xl font-black text-white">₹4,999</span>
+                      <span className="text-xs text-slate-400"> ($59) / mo</span>
+                    </div>
+                    <ul className="flex flex-col gap-2.5 text-xs text-slate-200">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Unlimited Funnel Audits</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Natural-Language-to-SQL Lab</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Auto-PRD & React Code Fix Studio</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Gemini Live Voice PM War Room</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setViewMode("workspace")}
+                    className="mt-6 w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg transition"
+                  >
+                    Launch Pro Workspace
+                  </button>
+                </div>
+
+                {/* Tier 3: Enterprise */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-base text-white">Enterprise Autopilot</h3>
+                    <p className="text-xs text-slate-400 mt-1">For enterprise data engineering teams</p>
+                    <div className="mt-4 mb-6">
+                      <span className="text-2xl font-black text-white">₹19,999</span>
+                      <span className="text-xs text-slate-400"> ($249) / mo</span>
+                    </div>
+                    <ul className="flex flex-col gap-2.5 text-xs text-slate-300">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Real-time GA4/PostHog Webhook Sync</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Weekly Slack Root-Cause Alerts</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Custom Cloud SQL / BigQuery Pipelines</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setViewMode("workspace")}
+                    className="mt-6 w-full py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-xs font-bold text-white transition"
+                  >
+                    Contact Enterprise
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="border-t border-slate-800/80 px-6 py-8 text-center text-xs text-slate-500 bg-slate-950">
+            FunnelDoctor AI &copy; 2026 &bull; Built for Startup Buildathon India 2026 &bull; Powered by Google DeepMind & Google Cloud
+          </footer>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* VIEW MODE B: THE INTERACTIVE 5-TAB PRODUCT WORKSPACE (SAAS APP VIEW)      */}
+      {/* ========================================================================= */}
+      {viewMode === "workspace" && (
+        <div className="flex-1 flex flex-col md:flex-row">
+          {/* LEFT SIDEBAR (Dark Slate w-64) */}
+          <aside className="w-full md:w-64 bg-slate-950 border-r border-slate-800/80 p-4 flex flex-col justify-between shrink-0">
+            <div className="flex flex-col gap-6">
+              {/* Dataset Switcher Dropdown */}
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block mb-1.5">
+                  Select Active Startup Funnel
+                </label>
+                <div className="relative">
+                  <select
+                    value={activeDatasetId}
+                    onChange={(e) => {
+                      setActiveDatasetId(e.target.value as DatasetId);
+                      setSelectedPinId(1);
+                      showToast(`Switched Dataset to ${DATASETS[e.target.value as DatasetId].name}`);
+                    }}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer pr-8"
+                  >
+                    <option value="d2c">🛍️ QuickStyle D2C Fashion (-71.7%)</option>
+                    <option value="kyc">💳 FinPulse Neo-KYC (-74.8%)</option>
+                    <option value="edtech">🎓 PrepMate IIT Paywall (-96.5%)</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* 5 Navigation Tabs */}
+              <nav className="flex flex-col gap-1 text-xs font-semibold">
+                <button
+                  onClick={() => setActiveTab("telemetry")}
+                  className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
+                    activeTab === "telemetry"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                  }`}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span>1. Funnel Telemetry</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("vision")}
+                  className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
+                    activeTab === "vision"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                  }`}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>2. Gemini Vision X-Ray</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("rca")}
+                  className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
+                    activeTab === "rca"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                  }`}
+                >
+                  <Database className="w-4 h-4" />
+                  <span>3. Root-Cause & SQL Lab</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("prd")}
+                  className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
+                    activeTab === "prd"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>4. Auto-PRD & UI Fix</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("warroom")}
+                  className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition ${
+                    activeTab === "warroom"
+                      ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20 font-bold"
+                      : "text-emerald-400 hover:bg-emerald-500/10"
+                  }`}
+                >
+                  <Volume2 className="w-4 h-4" />
+                  <span>5. Live AI PM War Room</span>
+                </button>
+              </nav>
+            </div>
+
+            {/* Sidebar Bottom Controls */}
+            <div className="flex flex-col gap-2 pt-4 border-t border-slate-900">
+              <button
+                onClick={() => setShowPitchModal(true)}
+                className="w-full py-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>🎤 60-Sec Judge Pitch Guide</span>
+              </button>
+
+              <button
+                onClick={() => setViewMode("website")}
+                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5"
+              >
+                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+                <span>Back to Website</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* MAIN PRODUCT WORKSPACE AREA */}
+          <main className="flex-1 p-4 md:p-8 flex flex-col gap-6 overflow-y-auto max-w-6xl">
+            {/* Top Overview KPI Banner */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">
+                  Active Audit Target
+                </span>
+                <h2 className="text-xl font-extrabold text-white mt-0.5">{dataset.name}</h2>
+                <p className="text-xs text-slate-400">{dataset.tagline}</p>
+              </div>
+
+              {/* 4 Quick KPI Badges */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full md:w-auto">
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 block font-medium">Conversion</span>
+                  <span className="text-xs font-extrabold text-emerald-400 font-mono">
+                    {dataset.overallConversion}%
+                  </span>
+                </div>
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-rose-500/30 text-center">
+                  <span className="text-[10px] text-rose-400 block font-bold">Bleeding Step</span>
+                  <span className="text-xs font-extrabold text-rose-400 font-mono">
+                    -{dataset.bleedingDropRate}% Drop
+                  </span>
+                </div>
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                  <span className="text-[10px] text-slate-500 block font-medium">Leaked Revenue</span>
+                  <span className="text-xs font-extrabold text-white font-mono">
+                    {dataset.monthlyLeakedRevenue}
+                  </span>
+                </div>
+                <div className="bg-slate-950 p-2.5 rounded-xl border border-emerald-500/30 text-center">
+                  <span className="text-[10px] text-emerald-400 block font-bold">AI Recovery</span>
+                  <span className="text-xs font-extrabold text-emerald-400 font-mono">
+                    {dataset.recoverableRevenue}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* TAB 1: 📊 FUNNEL & COHORT TELEMETRY */}
+            {activeTab === "telemetry" && (
+              <div className="flex flex-col gap-6">
+                {/* 5-Step Visual Funnel Visualization */}
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                        <TrendingDown className="w-4 h-4 text-rose-400" />
+                        <span>Step-by-Step Conversion Funnel Drop-off Velocity</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        {dataset.monthlyVisitors.toLocaleString()} Total Funnel Sessions Analyzed via Cloud SQL
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    {dataset.steps.map((st, i) => {
+                      const widthPercent = Math.max(10, (st.visitors / dataset.steps[0].visitors) * 100);
+
+                      return (
+                        <div
+                          key={st.id}
+                          className={`p-3.5 rounded-xl border transition ${
+                            st.isBleedingBottleneck
+                              ? "bg-rose-950/20 border-rose-500/50 shadow-lg shadow-rose-950/30"
+                              : "bg-slate-950/60 border-slate-800"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-xs mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-slate-400 font-bold">{i + 1}.</span>
+                              <span className="font-bold text-slate-200">{st.name}</span>
+                              {st.isBleedingBottleneck && (
+                                <span className="text-[9px] uppercase font-black px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+                                  CRITICAL BOTTLENECK LEAK
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <span className="text-slate-400 font-mono font-medium">
+                                {st.visitors.toLocaleString()} users
+                              </span>
+                              {i < dataset.steps.length - 1 && (
+                                <span
+                                  className={`font-mono font-bold ${
+                                    st.isBleedingBottleneck ? "text-rose-400" : "text-amber-400"
+                                  }`}
+                                >
+                                  -{(st.dropoffRate * 100).toFixed(1)}% drop
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="w-full h-3 bg-slate-900 rounded-full overflow-hidden flex items-center">
+                            <div
+                              className={`h-full rounded-full transition-all duration-700 ${
+                                st.isBleedingBottleneck
+                                  ? "bg-gradient-to-r from-rose-500 via-rose-400 to-amber-500"
+                                  : "bg-gradient-to-r from-indigo-500 to-teal-400"
+                              }`}
+                              style={{ width: `${widthPercent}%` }}
+                            />
+                          </div>
+
+                          {st.isBleedingBottleneck && (
+                            <div className="mt-3 pt-2.5 border-t border-rose-500/20 flex items-center justify-between">
+                              <span className="text-[11px] text-rose-300">
+                                🚨 <strong>{st.dropoffCount.toLocaleString()} dropped users</strong> at this single step!
+                              </span>
+                              <button
+                                onClick={() => setActiveTab("vision")}
+                                className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-sm"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>X-Ray This Step with Gemini Vision ➔</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Cohort Retention Heatmap Matrix */}
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                        <Users className="w-4 h-4 text-indigo-400" />
+                        <span>Weekly User Retention Heatmap Matrix</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Cohort retention decay tracking conversion health over 5 weeks
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-center border-collapse">
+                      <thead>
+                        <tr className="text-slate-400 border-b border-slate-800 font-mono">
+                          <th className="py-2 text-left">Cohort</th>
+                          <th className="py-2">Week 0</th>
+                          <th className="py-2">Week 1</th>
+                          <th className="py-2">Week 2</th>
+                          <th className="py-2">Week 3</th>
+                          <th className="py-2">Week 4</th>
+                          <th className="py-2">Week 5</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dataset.retentionMatrix.map((r, idx) => (
+                          <tr key={idx} className="border-b border-slate-900 font-mono text-[11px]">
+                            <td className="py-2.5 text-left font-semibold text-slate-300">{r.cohort}</td>
+                            <td className="py-2 bg-emerald-600/40 text-emerald-200 font-bold">{r.w0}%</td>
+                            <td className="py-2 bg-emerald-600/20 text-emerald-300">{r.w1}%</td>
+                            <td className="py-2 bg-indigo-600/20 text-indigo-300">{r.w2}%</td>
+                            <td className="py-2 bg-indigo-600/10 text-indigo-400">{r.w3}%</td>
+                            <td className="py-2 bg-slate-900 text-slate-400">{r.w4}%</td>
+                            <td className="py-2 bg-slate-900/60 text-slate-500">{r.w5}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: 👁️ MULTIMODAL VISION UX X-RAY */}
+            {activeTab === "vision" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left 5 Cols: Interactive Mobile Screen Inspector with Hotspot Pins */}
+                <div className="lg:col-span-5 bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col items-center">
+                  <div className="w-full flex items-center justify-between mb-4 border-b border-slate-800 pb-2.5">
+                    <div>
+                      <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">
+                        Bleeding Step Visual Capture
+                      </span>
+                      <h4 className="font-bold text-sm text-white">{dataset.bleedingStepName}</h4>
+                    </div>
+                    <span className="text-xs text-indigo-400 font-mono">Mobile 390px</span>
+                  </div>
+
+                  {/* Device Wireframe Frame */}
+                  <div className="relative w-[280px] h-[520px] bg-slate-950 border-[6px] border-slate-800 rounded-[38px] p-3 shadow-2xl flex flex-col justify-between overflow-hidden">
+                    {/* Speaker / Dynamic Island */}
+                    <div className="w-20 h-3.5 bg-slate-900 rounded-full mx-auto mb-2 shrink-0 flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
                     </div>
 
-                    {/* Price, Refundable Deposit & Rent CTA */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <div>
-                        <div className="text-base font-extrabold text-slate-900">{priceDisplay}</div>
-                        <div className="text-[10px] text-slate-400 font-medium">
-                          Deposit: ₹{item.deposit} <span className="text-emerald-600">(Refundable)</span>
+                    {/* Simulated Screen Content */}
+                    <div className="relative flex-1 bg-slate-900 rounded-xl p-3 border border-slate-800/80 flex flex-col justify-between text-xs overflow-hidden">
+                      {uploadedVisionImage ? (
+                        <img
+                          src={uploadedVisionImage}
+                          alt="Custom Upload"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="flex flex-col gap-2 my-auto">
+                          <div className="p-2 bg-slate-950 rounded-lg border border-slate-800 text-[11px]">
+                            <p className="font-bold text-slate-200">{dataset.name}</p>
+                            <p className="text-[10px] text-slate-400">Order Verification</p>
+                          </div>
+
+                          <div className="p-2.5 bg-rose-950/40 border border-rose-500/50 rounded-lg text-[10px] text-rose-200">
+                            <span className="font-bold">⚠️ Friction Modal:</span>
+                            <p className="text-slate-300 mt-0.5">
+                              {dataset.hotspots[0]?.title}
+                            </p>
+                          </div>
+
+                          <div className="h-8 bg-slate-950/60 border border-dashed border-slate-800 rounded flex items-center justify-center text-[9px] text-slate-500 font-mono">
+                            [Virtual Keyboard Input Boundary]
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Numbered Hotspot Pins */}
+                      {dataset.hotspots.map((pin) => (
+                        <button
+                          key={pin.id}
+                          onClick={() => setSelectedPinId(pin.id)}
+                          style={{ top: `${pin.yPercent}%`, left: `${pin.xPercent}%` }}
+                          className={`absolute -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-xl cursor-pointer transition-transform ${
+                            selectedPinId === pin.id
+                              ? "bg-rose-500 text-white scale-125 ring-4 ring-rose-500/30"
+                              : "bg-rose-600 text-white opacity-85 hover:scale-110"
+                          }`}
+                        >
+                          {pin.label}
+                        </button>
+                      ))}
+
+                      <div className="border-t border-slate-800 pt-1.5 text-[9px] text-slate-500 flex justify-between">
+                        <span>SSL Verified</span>
+                        <span className="text-indigo-400 font-mono">Gemini Vision Grounding</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Upload Any UI Screenshot Button */}
+                  <label className="mt-4 w-full py-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                    <Camera className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Upload Custom Screenshot for Gemini Audit</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadCustomScreenshot}
+                      className="hidden"
+                    />
+                  </label>
+                  {visionAnalyzing && (
+                    <p className="text-[11px] text-indigo-400 mt-2 animate-pulse flex items-center gap-1 font-semibold">
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      Gemini 2.5 Flash analyzing UI wireframe...
+                    </p>
+                  )}
+                </div>
+
+                {/* Right 7 Cols: Correlated Multimodal Findings linked to Pins */}
+                <div className="lg:col-span-7 flex flex-col gap-4">
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                      Correlated Multimodal Diagnostics
+                    </span>
+                    <h3 className="text-base font-extrabold text-white mt-0.5">
+                      Pin Details & Heuristic Violations
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Click any pin on the mobile screen to inspect the exact heuristic and quantitative evidence.
+                    </p>
+
+                    <div className="mt-4 flex flex-col gap-3">
+                      {dataset.hotspots.map((pin) => {
+                        const isSelected = selectedPinId === pin.id;
+
+                        return (
+                          <div
+                            key={pin.id}
+                            onClick={() => setSelectedPinId(pin.id)}
+                            className={`p-4 rounded-xl border transition cursor-pointer ${
+                              isSelected
+                                ? "bg-slate-950 border-indigo-500 ring-1 ring-indigo-500/50"
+                                : "bg-slate-950/60 border-slate-800 hover:border-slate-700"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-mono font-bold text-xs">
+                                  {pin.label}
+                                </span>
+                                <h4 className="font-bold text-xs text-white">{pin.title}</h4>
+                              </div>
+                              <span
+                                className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+                                  pin.severity === "CRITICAL"
+                                    ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
+                                    : "bg-amber-500/20 text-amber-400 border border-amber-500/40"
+                                }`}
+                              >
+                                {pin.severity}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                              {pin.geminiVisionFinding}
+                            </p>
+
+                            <div className="mt-2.5 pt-2 border-t border-slate-900 grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+                              <div className="bg-slate-900 p-2 rounded-lg text-slate-400">
+                                <span className="font-bold text-rose-400 block">Telemetry Evidence:</span>
+                                {pin.telemetryEvidence}
+                              </div>
+                              <div className="bg-slate-900 p-2 rounded-lg text-slate-400">
+                                <span className="font-bold text-indigo-400 block">Heuristic Violated:</span>
+                                {pin.heuristicViolated}
+                              </div>
+                            </div>
+
+                            <div className="mt-2.5 p-2 bg-emerald-950/20 border border-emerald-500/30 rounded-lg text-xs text-emerald-300 flex items-start gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                              <span>
+                                <strong>Prescribed Engineering Fix:</strong> {pin.prescribedFix}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: 🧠 ROOT CAUSE ANALYSIS (RCA) & SQL LAB */}
+            {activeTab === "rca" && (
+              <div className="flex flex-col gap-6">
+                {/* 4-Pillar Weighted RCA Breakdown */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2 mb-1">
+                    <Database className="w-4 h-4 text-indigo-400" />
+                    <span>4-Pillar Weighted Root-Cause Attribution</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mb-5">
+                    Multimodal weighted attribution isolating the exact drivers of the {dataset.bleedingDropRate}% drop-off.
+                  </p>
+
+                  <div className="flex flex-col gap-3">
+                    {dataset.weightedRca.map((item, idx) => (
+                      <div key={idx} className="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span className="font-bold text-slate-200">{item.pillar}</span>
+                          <span className="font-mono font-black text-indigo-400">{item.weight}% Weight</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden mb-2">
+                          <div
+                            className={`h-full ${item.color} rounded-full`}
+                            style={{ width: `${item.weight}%` }}
+                          />
+                        </div>
+                        <p className="text-[11px] text-slate-400">{item.explanation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Natural-Language-to-SQL Lab */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                        <Terminal className="w-4 h-4 text-emerald-400" />
+                        <span>Interactive Natural-Language-to-SQL Lab</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Ask questions in plain English. Google Agent Skills executes segmented queries on Cloud SQL telemetry.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Preset Query Chips */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {dataset.sqlPresets.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedSqlPresetIdx(idx)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+                          selectedSqlPresetIdx === idx
+                            ? "bg-indigo-600 border-indigo-500 text-white shadow-sm"
+                            : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        💬 "{preset.prompt}"
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Generated SQL Block */}
+                  {dataset.sqlPresets[selectedSqlPresetIdx] && (
+                    <div className="flex flex-col gap-4">
+                      <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-emerald-400 overflow-x-auto relative">
+                        <button
+                          onClick={() =>
+                            copyToClipboard(
+                              dataset.sqlPresets[selectedSqlPresetIdx].sql,
+                              "SQL Query"
+                            )
+                          }
+                          className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <pre>{dataset.sqlPresets[selectedSqlPresetIdx].sql}</pre>
+                      </div>
+
+                      {/* Executed Data Table */}
+                      <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
+                        <table className="w-full text-xs text-left">
+                          <thead className="bg-slate-900 text-slate-400 font-mono text-[11px] border-b border-slate-800">
+                            <tr>
+                              {Object.keys(
+                                dataset.sqlPresets[selectedSqlPresetIdx].resultRows[0] || {}
+                              ).map((col) => (
+                                <th key={col} className="p-2.5">
+                                  {col}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {dataset.sqlPresets[selectedSqlPresetIdx].resultRows.map((row, rIdx) => (
+                              <tr key={rIdx} className="border-b border-slate-900 font-mono text-slate-300">
+                                {Object.values(row).map((val, cIdx) => (
+                                  <td key={cIdx} className="p-2.5">
+                                    {String(val)}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Gemini Data Scientist Takeaway */}
+                      <div className="p-3.5 bg-indigo-950/30 border border-indigo-500/30 rounded-xl text-xs text-indigo-200 flex items-start gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-indigo-400 block mb-0.5">
+                            Gemini Data Scientist Takeaway:
+                          </strong>
+                          <span>{dataset.sqlPresets[selectedSqlPresetIdx].geminiTakeaway}</span>
                         </div>
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
+            {/* TAB 4: 🛠️ AUTO-PRD & UI FIX STUDIO */}
+            {activeTab === "prd" && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left 6 Cols: Complete Structured PRD */}
+                <div className="lg:col-span-6 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                      <div>
+                        <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
+                          1-Click Deliverable
+                        </span>
+                        <h3 className="font-extrabold text-sm text-white">
+                          RICE-Prioritized Engineering PRD
+                        </h3>
+                      </div>
                       <button
-                        onClick={() => handleOpenBooking(item)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1 active:scale-95"
+                        onClick={() => copyToClipboard(dataset.prdMarkdown, "PRD Document")}
+                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition flex items-center gap-1.5"
                       >
-                        <span>Rent Now</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Markdown</span>
                       </button>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
-      {/* ========================================== */}
-      {/* VIEW 2: "AI CONCIERGE" (BUNDLE FINDER)     */}
-      {/* ========================================== */}
-      {currentTab === "concierge" && (
-        <div className="max-w-4xl mx-auto w-full px-4 md:px-8 pt-6 flex flex-col gap-6">
-          <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-violet-900 text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden">
-            <div className="max-w-xl">
-              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-yellow-300 mb-2">
-                <Sparkles className="w-3.5 h-3.5" />
-                Autonomous Bundle Problem Solver
-              </span>
-              <h2 className="text-2xl font-extrabold tracking-tight">AI Rental Concierge</h2>
-              <p className="text-xs md:text-sm text-indigo-200 mt-1">
-                Tell the AI your exact situation or task. It searches your 1km neighborhood radius and bundles the right gear with a <strong>10% instant discount</strong>.
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Situation Prompts */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col gap-3">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Try Preset Situations (Click to Test):
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-              <button
-                onClick={() =>
-                  handleRunConcierge("I have a placement interview tomorrow morning and need to look sharp.")
-                }
-                className="text-left p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs text-slate-700 transition flex flex-col justify-between"
-              >
-                <span className="font-bold text-slate-900 mb-1">👔 Placement Interview</span>
-                <span className="text-[11px] text-slate-500">
-                  "I have a placement interview tomorrow morning and need to look sharp."
-                </span>
-              </button>
-
-              <button
-                onClick={() =>
-                  handleRunConcierge("Hosting a champion's league watch party on my terrace tonight.")
-                }
-                className="text-left p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs text-slate-700 transition flex flex-col justify-between"
-              >
-                <span className="font-bold text-slate-900 mb-1">🎉 Terrace Match Screening</span>
-                <span className="text-[11px] text-slate-500">
-                  "Hosting a champion's league watch party on my terrace tonight."
-                </span>
-              </button>
-
-              <button
-                onClick={() =>
-                  handleRunConcierge("Need to fix a loose bookshelf and hang curtains in my flat.")
-                }
-                className="text-left p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 text-xs text-slate-700 transition flex flex-col justify-between"
-              >
-                <span className="font-bold text-slate-900 mb-1">🛠️ Flat DIY & Curtain Mounting</span>
-                <span className="text-[11px] text-slate-500">
-                  "Need to fix a loose bookshelf and hang curtains in my flat."
-                </span>
-              </button>
-            </div>
-
-            {/* Custom Input */}
-            <div className="mt-3 flex items-center gap-2">
-              <input
-                type="text"
-                value={conciergePrompt}
-                onChange={(e) => setConciergePrompt(e.target.value)}
-                placeholder="Or type anything: 'Going on a 2-day weekend trek in Himachal'..."
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-              />
-              <button
-                onClick={() => handleRunConcierge(conciergePrompt)}
-                disabled={conciergeLoading || !conciergePrompt}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 shrink-0"
-              >
-                {conciergeLoading ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Analyzing Gear...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Find Bundle</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* AI Recommended Bundle Result */}
-          {conciergeResult && (
-            <div className="bg-white rounded-3xl border border-indigo-200 p-6 shadow-xl animate-fadeIn flex flex-col gap-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
-                    Gemini Solution Match
-                  </span>
-                  <h3 className="text-lg font-extrabold text-slate-900 mt-1">{conciergeResult.bundleTitle}</h3>
-                  <p className="text-xs text-slate-600 mt-0.5">{conciergeResult.description}</p>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs text-slate-400 line-through">₹{conciergeResult.originalTotal}/day</div>
-                  <div className="text-xl font-extrabold text-emerald-600">
-                    ₹{conciergeResult.discountedTotal}/day
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    Save ₹{conciergeResult.savings} (10% Bundle Off)
-                  </span>
-                </div>
-              </div>
-
-              {/* Bundled Items Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {conciergeResult.bundledItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200"
-                  >
-                    <img src={item.image} alt={item.title} className="w-16 h-16 rounded-xl object-cover" />
-                    <div className="flex-1">
-                      <h4 className="text-xs font-bold text-slate-900 line-clamp-1">{item.title}</h4>
-                      <p className="text-[11px] text-slate-500">
-                        {item.distanceLabel} • Lender: {item.lenderName}
-                      </p>
-                      <div className="text-xs font-bold text-emerald-600 mt-1">₹{item.rentDaily}/day</div>
+                    <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 text-xs font-mono text-slate-300 leading-relaxed max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+                      {dataset.prdMarkdown}
                     </div>
                   </div>
-                ))}
-              </div>
-
-              {/* 1-Click Bundle Booking Action */}
-              <button
-                onClick={() => {
-                  const bundleItem: RentalItem = {
-                    id: `bundle-${Date.now()}`,
-                    title: conciergeResult.bundleTitle,
-                    category: "Hostel & Daily",
-                    rentDaily: conciergeResult.discountedTotal,
-                    deposit: conciergeResult.bundledItems.reduce((acc, i) => acc + i.deposit, 0),
-                    retailValue: conciergeResult.bundledItems.reduce((acc, i) => acc + i.retailValue, 0),
-                    distanceMeters: 150,
-                    distanceLabel: "Within 250m",
-                    lenderName: "Neighborhood Bundle Host",
-                    lenderTrust: 99,
-                    aiConditionScore: 9.7,
-                    aiConditionNotes: "Pre-verified paired bundle",
-                    image: conciergeResult.bundledItems[0]?.image || "",
-                  };
-                  handleOpenBooking(bundleItem);
-                }}
-                className="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold rounded-2xl text-xs md:text-sm shadow-lg transition flex items-center justify-center gap-2"
-              >
-                <Zap className="w-4 h-4 text-yellow-300" />
-                <span>Rent This Entire Bundle (1-Click Escrow Lock)</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* VIEW 3: "1-SNAP AI LISTING STUDIO" (LEND)  */}
-      {/* ========================================== */}
-      {currentTab === "snap" && (
-        <div className="max-w-3xl mx-auto w-full px-4 md:px-8 pt-6 flex flex-col gap-6">
-          <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white rounded-3xl p-6 md:p-8 shadow-xl">
-            <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold mb-2">
-              <Camera className="w-3.5 h-3.5 text-yellow-300" />
-              Lender Flow Powered by Gemini Vision
-            </span>
-            <h2 className="text-2xl font-extrabold tracking-tight">1-Snap AI Listing Studio</h2>
-            <p className="text-xs md:text-sm text-emerald-100 mt-1">
-              Snap a single photo of any idle product in your room. Gemini Vision identifies the model, rates its physical condition, and suggests optimal hourly & daily rental pricing.
-            </p>
-          </div>
-
-          {/* Upload / Demo Photos Selection */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              <span>Select A Sample Product Photo To Test:</span>
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Demo Sample 1 */}
-              <button
-                onClick={() =>
-                  handleSelectDemoPhoto(
-                    "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=500&q=80",
-                    {
-                      title: "Havells Aqua Plus 1.5L Stainless Steel Kettle",
-                      category: "Hostel & Daily",
-                      estimatedRetail: 1899,
-                      suggestedDailyRent: 35,
-                      suggestedHourlyRent: 10,
-                      suggestedDeposit: 300,
-                      conditionScore: 9.6,
-                      conditionNotes: "Stainless steel interior spotless • Heating base intact • Auto-cut verified",
-                      safetyTip: "Inspect cord before handover; remind borrower not to immerse base in water.",
-                    }
-                  )
-                }
-                className="p-3 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-400 rounded-2xl text-left transition flex items-center gap-3"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=200&q=80"
-                  alt="Electric Kettle"
-                  className="w-12 h-12 rounded-xl object-cover shrink-0"
-                />
-                <div>
-                  <p className="text-xs font-bold text-slate-900">Electric Kettle</p>
-                  <p className="text-[10px] text-slate-500">Hostel & Daily</p>
                 </div>
-              </button>
 
-              {/* Demo Sample 2 */}
-              <button
-                onClick={() =>
-                  handleSelectDemoPhoto(
-                    "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=500&q=80",
-                    {
-                      title: "Yonex Nanoray Carbon Badminton Pair + 3 Shuttles",
-                      category: "Trekking & Sports",
-                      estimatedRetail: 3200,
-                      suggestedDailyRent: 80,
-                      suggestedHourlyRent: 20,
-                      suggestedDeposit: 400,
-                      conditionScore: 9.3,
-                      conditionNotes: "Grip freshly wrapped • 24 lbs string tension intact • Zero frame warps",
-                      safetyTip: "Remind borrower to use non-marking shoes on indoor badminton court.",
-                    }
-                  )
-                }
-                className="p-3 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-400 rounded-2xl text-left transition flex items-center gap-3"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=200&q=80"
-                  alt="Badminton Set"
-                  className="w-12 h-12 rounded-xl object-cover shrink-0"
-                />
-                <div>
-                  <p className="text-xs font-bold text-slate-900">Badminton Set</p>
-                  <p className="text-[10px] text-slate-500">Sports & Fitness</p>
-                </div>
-              </button>
-
-              {/* Demo Sample 3 */}
-              <button
-                onClick={() =>
-                  handleSelectDemoPhoto(
-                    "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=500&q=80",
-                    {
-                      title: "Neewer 18-inch Dimmable LED Ring Light + 6ft Tripod",
-                      category: "Party & Media",
-                      estimatedRetail: 4200,
-                      suggestedDailyRent: 150,
-                      suggestedHourlyRent: 35,
-                      suggestedDeposit: 800,
-                      conditionScore: 9.5,
-                      conditionNotes: "All 240 LED diodes operational • Bi-color dimmer smooth • Phone mount sturdy",
-                      safetyTip: "Pack tripod legs fully collapsed in protective canvas sleeve.",
-                    }
-                  )
-                }
-                className="p-3 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-400 rounded-2xl text-left transition flex items-center gap-3"
-              >
-                <img
-                  src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=200&q=80"
-                  alt="Ring Light"
-                  className="w-12 h-12 rounded-xl object-cover shrink-0"
-                />
-                <div>
-                  <p className="text-xs font-bold text-slate-900">LED Ring Light</p>
-                  <p className="text-[10px] text-slate-500">Content / Media</p>
-                </div>
-              </button>
-            </div>
-
-            {/* Custom Upload Area */}
-            <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-emerald-500 transition cursor-pointer bg-slate-50/50">
-              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-xs font-bold text-slate-700">Drag & Drop or Choose an Image from your Device</p>
-              <p className="text-[10px] text-slate-400 mt-1">PNG, JPG up to 10MB • Evaluated via Gemini Vision</p>
-            </div>
-          </div>
-
-          {/* Analyzing State */}
-          {snapAnalyzing && (
-            <div className="bg-white rounded-3xl p-8 border border-indigo-200 shadow-lg text-center flex flex-col items-center justify-center animate-pulse">
-              <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mb-3">
-                <RefreshCw className="w-6 h-6 animate-spin" />
-              </div>
-              <h3 className="font-bold text-sm text-slate-900">Gemini 2.5 Flash Vision Auditing Photo...</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Detecting model number, inspecting scratches, computing fair neighborhood rental pricing.
-              </p>
-            </div>
-          )}
-
-          {/* Generated AI Listing Result */}
-          {snapResult && (
-            <div className="bg-white rounded-3xl p-6 border border-emerald-300 shadow-xl flex flex-col gap-5 animate-fadeIn">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-                    AI Listing Ready For Review
-                  </span>
-                </div>
-                <span className="text-xs font-extrabold bg-indigo-50 text-indigo-600 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                  AI Condition Score: {snapResult.conditionScore}/10
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <img
-                  src={snapImage || ""}
-                  alt="Uploaded Product"
-                  className="w-full h-44 rounded-2xl object-cover border border-slate-200 shadow-sm"
-                />
-
-                <div className="md:col-span-2 flex flex-col justify-between">
+                {/* Right 6 Cols: Before vs. After UI Transformation & Code */}
+                <div className="lg:col-span-6 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
                   <div>
-                    <h3 className="text-base font-extrabold text-slate-900">{snapResult.title}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5 font-medium">Category: {snapResult.category}</p>
-
-                    <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                      <span className="font-bold text-slate-700 block mb-0.5">Gemini Vision Condition Audit:</span>
-                      <p className="text-slate-600">{snapResult.conditionNotes}</p>
-                    </div>
-
-                    <div className="mt-2 text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
-                      <strong>Packaging Tip:</strong> {snapResult.safetyTip}
-                    </div>
-                  </div>
-
-                  {/* Pricing Overview */}
-                  <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100 text-center">
-                    <div className="bg-slate-50 p-2 rounded-xl">
-                      <span className="text-[10px] text-slate-400 font-medium">Suggested Daily</span>
-                      <p className="text-sm font-extrabold text-emerald-600">₹{snapResult.suggestedDailyRent}</p>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-xl">
-                      <span className="text-[10px] text-slate-400 font-medium">Hourly Rent</span>
-                      <p className="text-sm font-extrabold text-slate-800">₹{snapResult.suggestedHourlyRent}</p>
-                    </div>
-                    <div className="bg-slate-50 p-2 rounded-xl">
-                      <span className="text-[10px] text-slate-400 font-medium">Escrow Deposit</span>
-                      <p className="text-sm font-extrabold text-indigo-600">₹{snapResult.suggestedDeposit}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Publish Button */}
-              <button
-                onClick={handlePublishNewItem}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs md:text-sm shadow-md transition flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4" />
-                <span>Publish to Neighborhood Feed (Instant Live)</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* VIEW 4: "AI SCANNER" (DAMAGE VERIFICATION) */}
-      {/* ========================================== */}
-      {currentTab === "scanner" && (
-        <div className="max-w-3xl mx-auto w-full px-4 md:px-8 pt-6 flex flex-col gap-6">
-          <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 shadow-xl">
-            <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              Automated P2P Trust Protocol
-            </span>
-            <h2 className="text-2xl font-extrabold tracking-tight">AI Return & Damage Scanner</h2>
-            <p className="text-xs md:text-sm text-slate-300 mt-1">
-              Solves the #1 fear in peer-to-peer rentals: <em>"What if the borrower breaks my gear?"</em>. Gemini Vision compares the Handover Check-In photo against the Return Check-Out photo to instantly authorize escrow release.
-            </p>
-          </div>
-
-          {/* Test Scenarios Selector */}
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col gap-3">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              Select A Demonstration Return Scenario:
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => handleRunDamageScan("clean")}
-                className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 text-left transition flex items-start gap-3"
-              >
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-slate-900">Scenario A: Pristine Return</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    BenQ Projector returned in original condition. 100% of ₹2,000 escrow unlocked.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleRunDamageScan("damage")}
-                className="p-4 rounded-2xl border border-rose-200 bg-rose-50/40 hover:bg-rose-50 text-left transition flex items-start gap-3"
-              >
-                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-slate-900">Scenario B: Abrasion / Chipped Return</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Bosch Drill returned with deep chuck scratches. Escrow docks ₹250 repair claim.
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Visual Comparison Splitter */}
-          {(scannerCheckinPhoto || scannerAnalyzing) && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xl flex flex-col gap-5">
-              <h3 className="text-sm font-bold text-slate-900">Computer Vision Pixel Comparison</h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Photo 1: Check-in baseline */}
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    1. Check-In Baseline Photo (Handover)
-                  </span>
-                  <div className="relative h-48 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-                    <img src={scannerCheckinPhoto || ""} alt="Check-in" className="w-full h-full object-cover" />
-                    <span className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-mono px-2 py-0.5 rounded">
-                      Timestamp: 10:14 AM
-                    </span>
-                  </div>
-                </div>
-
-                {/* Photo 2: Check-out return */}
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    2. Check-Out Return Photo (Return)
-                  </span>
-                  <div className="relative h-48 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-                    <img src={scannerCheckoutPhoto || ""} alt="Check-out" className="w-full h-full object-cover" />
-                    <span className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-mono px-2 py-0.5 rounded">
-                      Timestamp: 06:42 PM
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Analysis Loading */}
-              {scannerAnalyzing && (
-                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-200 text-center animate-pulse flex items-center justify-center gap-2 text-indigo-700 text-xs font-bold">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Gemini Vision comparing spatial features and surface integrity...</span>
-                </div>
-              )}
-
-              {/* Scanner Result Card */}
-              {scannerResult && (
-                <div
-                  className={`p-5 rounded-2xl border ${
-                    scannerResult.status === "PASS_VERIFIED"
-                      ? "bg-emerald-50/70 border-emerald-300"
-                      : "bg-rose-50/70 border-rose-300"
-                  } animate-fadeIn flex flex-col gap-3`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {scannerResult.status === "PASS_VERIFIED" ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                      ) : (
-                        <AlertTriangle className="w-5 h-5 text-rose-600" />
-                      )}
-                      <h4 className="font-extrabold text-sm text-slate-900">{scannerResult.verdictTitle}</h4>
-                    </div>
-                    <span className="text-[10px] font-mono bg-white px-2 py-0.5 rounded-full border border-slate-200 font-bold">
-                      Confidence: {scannerResult.matchConfidence}%
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-600 leading-relaxed">{scannerResult.verdictExplanation}</p>
-
-                  {/* Financial Escrow Verdict */}
-                  <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs font-semibold">
-                    <div>
-                      <span className="text-slate-500">Refund to Borrower: </span>
-                      <strong className="text-emerald-700">₹{scannerResult.escrowRefundAmount}</strong>
-                    </div>
-
-                    {scannerResult.repairDeduction > 0 && (
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
                       <div>
-                        <span className="text-slate-500">Deduction to Lender Escrow: </span>
-                        <strong className="text-rose-600">₹{scannerResult.repairDeduction}</strong>
+                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                          UI Remediation Studio
+                        </span>
+                        <h3 className="font-extrabold text-sm text-white">
+                          Before vs. After Code Fix
+                        </h3>
+                      </div>
+
+                      {/* 3-Way Segmented Toggle */}
+                      <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+                        <button
+                          onClick={() => setUiFixViewMode("broken")}
+                          className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                            uiFixViewMode === "broken"
+                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          ❌ Broken
+                        </button>
+                        <button
+                          onClick={() => setUiFixViewMode("redesigned")}
+                          className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                            uiFixViewMode === "redesigned"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          ✅ Redesigned
+                        </button>
+                        <button
+                          onClick={() => setUiFixViewMode("code")}
+                          className={`px-2.5 py-1 rounded-lg font-semibold transition ${
+                            uiFixViewMode === "code"
+                              ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          💻 Code
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Mode 1: Broken UI Preview */}
+                    {uiFixViewMode === "broken" && (
+                      <div className="bg-slate-950 rounded-2xl p-6 border border-rose-500/30 flex flex-col gap-3">
+                        <h4 className="font-bold text-sm text-rose-400">
+                          {dataset.brokenUiWireframeTitle}
+                        </h4>
+                        <ul className="flex flex-col gap-2 text-xs text-slate-300">
+                          {dataset.brokenUiItems.map((item, idx) => (
+                            <li key={idx} className="p-2 bg-slate-900 rounded-lg border border-slate-800">
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-3 p-3 bg-rose-950/20 border border-rose-500/30 rounded-xl text-xs text-rose-300 text-center font-bold">
+                          Causes {dataset.bleedingDropRate}% drop-off & ₹{dataset.monthlyLeakedRevenue} leakage.
+                        </div>
                       </div>
                     )}
 
-                    <button
-                      onClick={() => alert("Smart Escrow Disbursed via UPI Autopay!")}
-                      className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition shadow-sm"
-                    >
-                      Disburse Escrow Now
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* VIEW 5: "MY HUB" (ACTIVE ESCROW & PROFILE) */}
-      {/* ========================================== */}
-      {currentTab === "hub" && (
-        <div className="max-w-4xl mx-auto w-full px-4 md:px-8 pt-6 flex flex-col gap-6">
-          {/* User Trust & Escrow Header */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-indigo-600 p-0.5 shadow-md">
-                <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-white font-extrabold text-lg">
-                  KV
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <h2 className="font-extrabold text-lg text-slate-900">Krrish Vimal</h2>
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                </div>
-                <p className="text-xs text-slate-500">Dwarka Sec 3 Node • 14 Rentals Completed • 0 Claims</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                    ⭐ 99.8% Trust Score
-                  </span>
-                  <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200">
-                    DigiLocker Verified
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Escrow Wallet Card */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-2xl shadow-md min-w-[200px]">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                <Lock className="w-3 h-3 text-emerald-400" /> Escrow Balance
-              </span>
-              <p className="text-xl font-extrabold text-emerald-400 mt-1">₹{escrowLockedBalance}</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Automated UPI Release on Safe Return</p>
-            </div>
-          </div>
-
-          {/* Active Rentals List */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
-            <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-indigo-600" />
-              <span>Active Rentals in Hand ({activeRentals.length})</span>
-            </h3>
-
-            {activeRentals.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">No active rentals right now.</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {activeRentals.map((rental) => (
-                  <div
-                    key={rental.id}
-                    className="p-4 rounded-2xl border border-slate-200 hover:border-emerald-300 transition bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img src={rental.itemImage} alt={rental.itemTitle} className="w-16 h-16 rounded-xl object-cover" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-slate-900">{rental.itemTitle}</h4>
-                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                            {rental.status}
+                    {/* Mode 2: Redesigned UI Preview */}
+                    {uiFixViewMode === "redesigned" && (
+                      <div className="bg-slate-950 rounded-2xl p-6 border border-emerald-500/30 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-sm text-emerald-400">
+                            {dataset.redesignedUiTitle}
+                          </h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            +38% Conversion Lift
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{rental.partnerName}</p>
-                        <p className="text-[11px] text-indigo-600 font-semibold mt-1">⏳ {rental.expiresIn}</p>
+                        <ul className="flex flex-col gap-2 text-xs text-slate-300">
+                          {dataset.redesignedUiFeatures.map((item, idx) => (
+                            <li key={idx} className="p-2 bg-slate-900 rounded-lg border border-slate-800 flex items-center gap-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <button
+                          onClick={() => setUiFixViewMode("code")}
+                          className="mt-3 w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5"
+                        >
+                          <Code2 className="w-4 h-4" />
+                          <span>View Ready-to-Ship React Code ➔</span>
+                        </button>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                      <div className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-center">
-                        <span className="text-[9px] text-slate-400 block font-medium">HANDOVER OTP</span>
-                        <span className="font-mono font-extrabold text-sm text-slate-900">{rental.otp}</span>
+                    {/* Mode 3: Ready-to-Ship Code Block */}
+                    {uiFixViewMode === "code" && (
+                      <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-emerald-400 overflow-x-auto relative max-h-[460px]">
+                        <button
+                          onClick={() => copyToClipboard(dataset.codeDiff, "React Component")}
+                          className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <pre>{dataset.codeDiff}</pre>
                       </div>
-
-                      <button
-                        onClick={() => setCurrentTab("scanner")}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1"
-                      >
-                        <Camera className="w-3.5 h-3.5" />
-                        <span>Return & Verify</span>
-                      </button>
-                    </div>
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
             )}
+
+            {/* TAB 5: 🎙️ LIVE AI PM WAR ROOM (VOICE & CHAT) */}
+            {activeTab === "warroom" && (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Volume2 className="w-4 h-4 animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-white">Live AI PM War Room</h3>
+                      <p className="text-[11px] text-slate-400">
+                        Ask strategic root-cause questions via voice or text. Answers spoken live via browser audio.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                    SpeechSynthesis Active
+                  </span>
+                </div>
+
+                {/* Quick-Ask Chips */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() =>
+                      handleSendVoiceQuery("Give me a 30-second executive summary of why conversion dropped")
+                    }
+                    className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 transition"
+                  >
+                    💬 "30-sec executive summary of why conversion dropped"
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleSendVoiceQuery("What is the #1 code fix our engineers should deploy today?")
+                    }
+                    className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 transition"
+                  >
+                    💬 "What should our engineers deploy first today?"
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleSendVoiceQuery("Estimate the monthly revenue recovery after this sprint")
+                    }
+                    className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 transition"
+                  >
+                    💬 "Estimate monthly revenue recovery after this sprint"
+                  </button>
+                </div>
+
+                {/* Chat Log Window */}
+                <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 h-[380px] overflow-y-auto flex flex-col gap-3">
+                  {voiceMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex flex-col max-w-[85%] ${
+                        msg.sender === "user" ? "self-end items-end" : "self-start items-start"
+                      }`}
+                    >
+                      <div
+                        className={`p-3 rounded-2xl text-xs leading-relaxed ${
+                          msg.sender === "user"
+                            ? "bg-indigo-600 text-white rounded-br-none"
+                            : "bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-md"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                      <span className="text-[10px] text-slate-500 mt-1 px-1">{msg.timestamp}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Audio Input Controls */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleToggleVoiceRecording}
+                    className={`p-3 rounded-xl border transition shrink-0 ${
+                      isListeningVoice
+                        ? "bg-rose-500 border-rose-400 text-white animate-pulse"
+                        : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+                    }`}
+                    title={isListeningVoice ? "Listening... click to stop" : "Click to speak"}
+                  >
+                    {isListeningVoice ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-emerald-400" />}
+                  </button>
+
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSendVoiceQuery(chatInput);
+                    }}
+                    placeholder="Type or speak a question for the AI PM..."
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  />
+
+                  <button
+                    onClick={() => handleSendVoiceQuery(chatInput)}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl transition shrink-0"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MULTI-STEP HERO DIAGNOSIS PROGRESS MODAL                                  */}
+      {/* ========================================================================= */}
+      {isAuditingHero && (
+        <div className="fixed inset-0 z-50 bg-[#090D16]/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-4">
+              <RefreshCw className="w-7 h-7 animate-spin" />
+            </div>
+            <h3 className="font-extrabold text-base text-white">Synthesizing Multimodal RCA</h3>
+            <p className="text-xs text-slate-400 mt-1 mb-6 font-mono">{heroUrlInput}</p>
+
+            <div className="w-full flex flex-col gap-2.5 text-xs text-left">
+              <div
+                className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                  auditProgressStep >= 1
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-slate-950 border-slate-800 text-slate-500"
+                }`}
+              >
+                <span>1. Crawling Responsive UI Viewport (390px)...</span>
+                {auditProgressStep >= 1 && <Check className="w-4 h-4 text-emerald-400" />}
+              </div>
+
+              <div
+                className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                  auditProgressStep >= 2
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-slate-950 border-slate-800 text-slate-500"
+                }`}
+              >
+                <span>2. Querying Event Funnel Telemetry on Cloud SQL...</span>
+                {auditProgressStep >= 2 && <Check className="w-4 h-4 text-emerald-400" />}
+              </div>
+
+              <div
+                className={`p-2.5 rounded-xl border flex items-center justify-between ${
+                  auditProgressStep >= 3
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : "bg-slate-950 border-slate-800 text-slate-500"
+                }`}
+              >
+                <span>3. Running Gemini Vision UX Heuristic Audit...</span>
+                {auditProgressStep >= 3 && <Check className="w-4 h-4 text-emerald-400" />}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* BOOKING MODAL (ESCROW BREAKDOWN & CONFIRM) */}
-      {/* ========================================== */}
-      {bookingItem && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 relative">
+      {/* ========================================================================= */}
+      {/* 60-SEC JUDGE PITCH GUIDE MODAL                                            */}
+      {/* ========================================================================= */}
+      {showPitchModal && (
+        <div className="fixed inset-0 z-50 bg-[#090D16]/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 relative">
             <button
-              onClick={() => setBookingItem(null)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1"
+              onClick={() => setShowPitchModal(false)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-white p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            {!bookingConfirmed ? (
-              <>
-                <div className="flex items-center gap-3">
-                  <img
-                    src={bookingItem.image}
-                    alt={bookingItem.title}
-                    className="w-16 h-16 rounded-xl object-cover border border-slate-200"
-                  />
-                  <div>
-                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wide">
-                      Instant P2P Rental
-                    </span>
-                    <h3 className="font-extrabold text-sm text-slate-900 leading-tight">{bookingItem.title}</h3>
-                    <p className="text-xs text-slate-500">{bookingItem.distanceLabel}</p>
-                  </div>
-                </div>
+            <div className="flex items-center gap-2 text-indigo-400">
+              <Sparkles className="w-5 h-5" />
+              <h3 className="font-extrabold text-base text-white">60-Second Buildathon Pitch Script</h3>
+            </div>
 
-                {/* Duration Slider / Counter */}
-                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700">Rental Duration:</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setBookingDuration(Math.max(1, bookingDuration - 1))}
-                      className="w-7 h-7 bg-white rounded-lg border border-slate-300 font-bold text-slate-700 flex items-center justify-center hover:bg-slate-100"
-                    >
-                      -
-                    </button>
-                    <span className="text-xs font-bold text-slate-900 px-2">{bookingDuration} Day(s)</span>
-                    <button
-                      onClick={() => setBookingDuration(bookingDuration + 1)}
-                      className="w-7 h-7 bg-white rounded-lg border border-slate-300 font-bold text-slate-700 flex items-center justify-center hover:bg-slate-100"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 leading-relaxed overflow-y-auto max-h-[360px] whitespace-pre-wrap">
+{`"Good morning judges! Every startup founder and D2C brand watches users drop off in checkout—losing crores of rupees every month.
 
-                {/* Smart Escrow Breakdown */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col gap-2 text-xs">
-                  <div className="flex justify-between text-slate-600">
-                    <span>
-                      Daily Rent (₹{bookingItem.rentDaily} × {bookingDuration}d)
-                    </span>
-                    <span className="font-bold text-slate-900">₹{bookingItem.rentDaily * bookingDuration}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Refundable Escrow Deposit</span>
-                    <span className="font-bold text-indigo-600">₹{bookingItem.deposit}</span>
-                  </div>
-                  <div className="flex justify-between text-emerald-600 font-medium">
-                    <span>Platform Trust Fee (Buildathon Demo)</span>
-                    <span>₹0 (Waived)</span>
-                  </div>
-                  <div className="border-t border-slate-200 pt-2 flex justify-between font-extrabold text-sm text-slate-900">
-                    <span>Total Authorized Amount</span>
-                    <span>₹{bookingItem.rentDaily * bookingDuration + bookingItem.deposit}</span>
-                  </div>
-                </div>
+Traditional analytics like Mixpanel or GA4 only tell you WHERE people left. They never tell you WHY.
 
-                <div className="text-[11px] text-slate-500 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-start gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>
-                    Your ₹{bookingItem.deposit} deposit is held in a protected Smart Escrow lock. It is returned via instant UPI Autopay the second you return the item undamaged.
-                  </span>
-                </div>
+Meet FunnelDoctor AI. We combine Quantitative Funnel Telemetry with Qualitative Gemini Multimodal Vision.
 
-                <button
-                  onClick={handleConfirmRental}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs shadow-md transition flex items-center justify-center gap-2"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Confirm Booking & Authorize Escrow</span>
-                </button>
-              </>
-            ) : (
-              <div className="text-center py-4 flex flex-col items-center animate-fadeIn">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-3">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="font-extrabold text-base text-slate-900">Rental Authorized!</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                  Your escrow deposit is secured. Share this 4-digit code with <strong>{bookingItem.lenderName}</strong> during physical handover:
-                </p>
+Our agent crawls the URL, takes responsive screenshots, and correlates the exact 71% drop-off with visual UX flaws—like this forced login modal and below-the-fold UPI button.
 
-                <div className="my-4 bg-slate-900 text-white px-6 py-2.5 rounded-2xl font-mono text-2xl font-extrabold tracking-widest">
-                  {generatedOtp}
-                </div>
+Then, in under 60 seconds, it writes a complete engineering PRD and hands your developers the ready-to-ship React code fix.
 
-                <p className="text-[11px] text-slate-400">Item is ready for pickup at {bookingItem.distanceLabel}.</p>
+This isn't another analytics dashboard—it's an autonomous AI Product Manager that turns leaked revenue into cash flow. Thank you!"`}
+            </div>
 
-                <button
-                  onClick={() => {
-                    setBookingItem(null);
-                    setCurrentTab("hub");
-                  }}
-                  className="mt-4 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition"
-                >
-                  Go to My Hub & Track Rental
-                </button>
-              </div>
-            )}
+            <button
+              onClick={() => setShowPitchModal(false)}
+              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition"
+            >
+              Ready to Pitch!
+            </button>
           </div>
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* GEMINI API SETTINGS MODAL                  */}
-      {/* ========================================== */}
+      {/* ========================================================================= */}
+      {/* GEMINI API SETTINGS MODAL                                                 */}
+      {/* ========================================================================= */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 relative">
+        <div className="fixed inset-0 z-50 bg-[#090D16]/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 relative">
             <button
               onClick={() => setShowSettingsModal(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1"
+              className="absolute right-4 top-4 text-slate-400 hover:text-white p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-indigo-600" />
-              <h3 className="font-extrabold text-base text-slate-900">Google Gemini API Configuration</h3>
+              <Zap className="w-5 h-5 text-indigo-400" />
+              <h3 className="font-extrabold text-base text-white">Google Gemini 2.5 API Setup</h3>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              RentNear AI is powered by <strong>Gemini 2.5 Flash</strong> for multimodal visual condition inspection and problem-to-bundle concierge reasoning.
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Connect your Google AI Studio API key to enable live multimodal vision parsing and real-time generative reasoning.
             </p>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                Paste Google AI Studio API Key:
+              <label className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                Google AI Studio Key:
               </label>
               <input
                 type="password"
                 value={tempApiKeyInput}
                 onChange={(e) => setTempApiKeyInput(e.target.value)}
                 placeholder="AIzaSy..."
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+                className="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-mono"
               />
-              <span className="text-[10px] text-slate-400">
-                Key is stored safely in your browser's <code className="bg-slate-100 px-1 rounded">localStorage</code>.
+              <span className="text-[10px] text-slate-500">
+                Stored in browser <code className="bg-slate-800 px-1 rounded">localStorage</code>.
               </span>
             </div>
 
-            <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200 text-[11px] text-indigo-800">
-              💡 <strong>Demo Fallback Notice:</strong> If you don't enter an API key, the app automatically runs in intelligent simulation mode so your presentation never stalls!
+            <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20 text-[11px] text-indigo-300">
+              💡 <strong>Demo Fallback Notice:</strong> If left empty, FunnelDoctor AI operates in deterministic simulation mode so stage demos never fail!
             </div>
 
             <div className="flex items-center gap-2 mt-2">
               <button
                 onClick={handleSaveApiKey}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition"
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition"
               >
                 Save & Activate Key
               </button>
               {geminiApiKey && (
                 <button
                   onClick={() => {
-                    localStorage.removeItem("rentnear_gemini_api_key");
+                    localStorage.removeItem("funneldoctor_gemini_key");
                     setGeminiApiKey("");
                     setTempApiKeyInput("");
                     setShowSettingsModal(false);
+                    showToast("API Key Cleared");
                   }}
-                  className="px-4 py-2.5 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2.5 border border-slate-700 text-slate-400 hover:bg-slate-800 rounded-xl text-xs font-semibold"
                 >
                   Clear Key
                 </button>
@@ -1628,59 +2386,6 @@ Pick 2 items that solve their problem, explain why, calculate a 10% bundle disco
           </div>
         </div>
       )}
-
-      {/* ========================================== */}
-      {/* MOBILE BOTTOM NAVIGATION DOCK (5 TABS)     */}
-      {/* ========================================== */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 flex items-center justify-around shadow-2xl">
-        <button
-          onClick={() => setCurrentTab("explore")}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition ${
-            currentTab === "explore" ? "text-emerald-600" : "text-slate-400"
-          }`}
-        >
-          <Search className="w-5 h-5" />
-          <span>Explore</span>
-        </button>
-
-        <button
-          onClick={() => setCurrentTab("concierge")}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition ${
-            currentTab === "concierge" ? "text-indigo-600" : "text-slate-400"
-          }`}
-        >
-          <Sparkles className="w-5 h-5" />
-          <span>Concierge</span>
-        </button>
-
-        {/* Floating Center Snap CTA */}
-        <button
-          onClick={() => setCurrentTab("snap")}
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 text-white flex items-center justify-center shadow-lg -translate-y-4 border-2 border-white active:scale-95 transition"
-        >
-          <PlusCircle className="w-6 h-6" />
-        </button>
-
-        <button
-          onClick={() => setCurrentTab("scanner")}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition ${
-            currentTab === "scanner" ? "text-emerald-600" : "text-slate-400"
-          }`}
-        >
-          <ShieldCheck className="w-5 h-5" />
-          <span>Scanner</span>
-        </button>
-
-        <button
-          onClick={() => setCurrentTab("hub")}
-          className={`flex flex-col items-center gap-0.5 text-[10px] font-bold transition ${
-            currentTab === "hub" ? "text-emerald-600" : "text-slate-400"
-          }`}
-        >
-          <Wallet className="w-5 h-5" />
-          <span>My Hub</span>
-        </button>
-      </nav>
     </div>
   );
 }
