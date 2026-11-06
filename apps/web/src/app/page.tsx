@@ -777,111 +777,131 @@ export default function FunnelDoctorApp() {
       )}
 
       {/* ========================================================================= */}
-      {/* GLOBAL PERSISTENT HEADER (REMOTE.COM STYLE)                               */}
+      {/* GLOBAL PERSISTENT HEADER (MINIMALIST & CLEAN)                             */}
       {/* ========================================================================= */}
-      <header className={`sticky top-0 z-40 transition-colors ${
-        viewMode === "website" ? "bg-[#53147e] text-white border-b border-purple-800/40" : "bg-white text-slate-900 border-b border-slate-200 shadow-sm"
-      } px-4 md:px-8 py-3.5`}>
+      <header
+        className={`sticky top-0 z-40 transition-colors ${
+          viewMode === "website"
+            ? "bg-[#53147e] text-white border-b border-purple-800/40"
+            : "bg-white text-slate-900 border-b border-slate-200 shadow-sm"
+        } px-6 md:px-10 py-3.5`}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo & Brand */}
+          {/* Minimal Brand Logo */}
           <div
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group"
             onClick={() => setViewMode("website")}
           >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-white shadow-md transition-transform group-hover:scale-105 ${
-              viewMode === "website" ? "bg-white text-purple-900" : "bg-indigo-600 text-white"
-            }`}>
-              <Activity className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`font-extrabold text-base tracking-tight ${viewMode === "website" ? "text-white" : "text-slate-950"}`}>
-                  FunnelDoctor<span className={viewMode === "website" ? "text-cyan-300" : "text-indigo-600"}>.ai</span>
-                </span>
-                <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1 ${
-                  viewMode === "website" ? "bg-white/10 text-cyan-200 border border-white/20" : "bg-indigo-50 text-indigo-700 border border-indigo-200"
-                }`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Gemini 2.5 Active
-                </span>
-              </div>
-              <p className={`text-[11px] font-medium ${viewMode === "website" ? "text-purple-200/80" : "text-slate-500"}`}>
-                Autonomous Multimodal Conversion & RCA Agent
-              </p>
-            </div>
-          </div>
-
-          {/* Navigation Links (Remote.com style) */}
-          <div className="hidden lg:flex items-center gap-6 text-xs font-semibold">
-            <button onClick={() => setViewMode("website")} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
-              Telemetry
-            </button>
-            <button onClick={() => { setViewMode("workspace"); setActiveTab("vision"); }} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
-              Vision X-Ray
-            </button>
-            <button onClick={() => { setViewMode("workspace"); setActiveTab("rca"); }} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
-              SQL Lab
-            </button>
-            <button onClick={() => { setViewMode("workspace"); setActiveTab("prd"); }} className={`transition hover:opacity-100 ${viewMode === "website" ? "text-white/80" : "text-slate-600"}`}>
-              PRD Studio
-            </button>
-          </div>
-
-          {/* Controls & CTAs */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* View Mode Toggle Pill */}
-            <div className={`p-1 rounded-xl flex items-center gap-1 border ${
-              viewMode === "website" ? "bg-black/20 border-white/15" : "bg-slate-100 border-slate-200"
-            }`}>
-              <button
-                onClick={() => setViewMode("website")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                  viewMode === "website"
-                    ? "bg-white text-slate-950 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden sm:inline">Website</span>
-              </button>
-              <button
-                onClick={() => setViewMode("workspace")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                  viewMode === "workspace"
-                    ? "bg-indigo-600 text-white shadow-sm font-bold"
-                    : viewMode === "website" ? "text-white/80 hover:text-white" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>Workspace</span>
-              </button>
-            </div>
-
-            {/* Pitch Script */}
-            <button
-              onClick={() => setShowPitchModal(true)}
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
-                viewMode === "website" ? "bg-white/10 hover:bg-white/20 text-white border-white/20" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold transition-transform group-hover:scale-105 ${
+                viewMode === "website"
+                  ? "bg-white/10 text-cyan-300"
+                  : "bg-indigo-600 text-white"
               }`}
             >
-              <Mic className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Pitch Script</span>
-            </button>
+              <Activity className="w-4 h-4" />
+            </div>
+            <span
+              className={`font-extrabold text-base tracking-tight ${
+                viewMode === "website" ? "text-white" : "text-slate-950"
+              }`}
+            >
+              FunnelDoctor<span className={viewMode === "website" ? "text-cyan-300" : "text-indigo-600"}>.ai</span>
+            </span>
+          </div>
 
-            {/* Primary Action Button (White in hero, Indigo in app) */}
+          {/* Minimal Center Navigation Links */}
+          <nav className="hidden md:flex items-center gap-7 text-xs font-medium">
             <button
               onClick={() => {
-                if (viewMode === "website") {
-                  setViewMode("workspace");
-                } else {
-                  setShowSettingsModal(true);
-                }
+                if (viewMode !== "website") setViewMode("website");
+                window.scrollTo({ top: 600, behavior: "smooth" });
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition active:scale-95 ${
-                viewMode === "website" ? "bg-white text-slate-950 hover:bg-slate-100" : "bg-indigo-600 text-white hover:bg-indigo-700"
+              className={`transition ${
+                viewMode === "website"
+                  ? "text-white/70 hover:text-white"
+                  : "text-slate-600 hover:text-slate-950"
               }`}
             >
-              {viewMode === "website" ? "Launch Workspace ➔" : "Gemini API"}
+              Telemetry
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("workspace");
+                setActiveTab("vision");
+              }}
+              className={`transition ${
+                viewMode === "website"
+                  ? "text-white/70 hover:text-white"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              Vision X-Ray
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("workspace");
+                setActiveTab("rca");
+              }}
+              className={`transition ${
+                viewMode === "website"
+                  ? "text-white/70 hover:text-white"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              SQL Lab
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("workspace");
+                setActiveTab("prd");
+              }}
+              className={`transition ${
+                viewMode === "website"
+                  ? "text-white/70 hover:text-white"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              PRD Studio
+            </button>
+          </nav>
+
+          {/* Minimal Right Actions */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              onClick={() => setShowPitchModal(true)}
+              className={`text-xs font-semibold transition ${
+                viewMode === "website"
+                  ? "text-white/80 hover:text-white"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              Pitch Script
+            </button>
+
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className={`text-xs font-semibold transition hidden sm:inline-block ${
+                viewMode === "website"
+                  ? "text-white/80 hover:text-white"
+                  : "text-slate-600 hover:text-slate-950"
+              }`}
+            >
+              {geminiApiKey ? "API Active" : "API Key"}
+            </button>
+
+            {/* Single High-Contrast Action Pill */}
+            <button
+              onClick={() =>
+                setViewMode(viewMode === "website" ? "workspace" : "website")
+              }
+              className={`px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition active:scale-95 ${
+                viewMode === "website"
+                  ? "bg-white text-slate-950 hover:bg-slate-100"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              }`}
+            >
+              {viewMode === "website" ? "Live Workspace ➔" : "View Website ➔"}
             </button>
           </div>
         </div>
