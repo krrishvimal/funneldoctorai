@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #02040a;
-  --foreground: #f8fafc;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 * {
@@ -16,115 +16,63 @@ body {
   background: var(--background);
   font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
-  background-color: #02040a;
+  background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Background Patterns & Beams */
-.bg-grid-pattern {
-  background-size: 40px 40px;
+/* Remote.com Style Clean Canvas Patterns */
+.bg-grid-subtle {
+  background-size: 32px 32px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
 }
 
-.bg-dot-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
+.bg-dot-subtle {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-.bg-radial-hero {
-  background: radial-gradient(circle 800px at 50% -100px, rgba(99, 102, 241, 0.18), rgba(139, 92, 246, 0.08), transparent 70%);
+/* Remote.com Enterprise Card System */
+.remote-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.bg-radial-accent {
-  background: radial-gradient(circle 500px at 50% 50%, rgba(16, 185, 129, 0.08), transparent 60%);
+.remote-card:hover {
+  border-color: rgba(203, 213, 225, 1);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 2px 6px 0 rgba(15, 23, 42, 0.04);
 }
 
-/* Ultra-Premium Glassmorphism 3.0 */
-.glass-panel {
-  background: rgba(8, 12, 24, 0.7);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
-    0 20px 40px -15px rgba(0, 0, 0, 0.7);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.glass-panel:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.15),
-    0 24px 48px -12px rgba(99, 102, 241, 0.18);
-}
-
-.glass-panel-active {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-    0 0 30px -5px rgba(99, 102, 241, 0.25);
-}
-
-.glass-pill {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+.remote-pill {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
   transition: all 0.2s ease;
 }
 
-.glass-pill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Gradient Borders & Shimmers */
-.shimmer-badge {
-  position: relative;
-  overflow: hidden;
-}
-
-.shimmer-badge::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    60deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.1) 50%,
-    transparent 70%
-  );
-  transform: rotate(30deg);
-  animation: shimmer 6s infinite linear;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%) rotate(30deg); }
-  100% { transform: translateX(100%) rotate(30deg); }
+.remote-pill:hover {
+  background: #f8fafc;
+  border-color: rgba(203, 213, 225, 1);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #02040a;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94a3b8;
 }
 
 /* Radar Scan Animation for Gemini Vision Screen */
@@ -149,33 +97,13 @@ body {
   animation: radarScan 3.5s ease-in-out infinite;
 }
 
-/* Slow mesh ambient float */
-@keyframes pulseSlow {
-  0%, 100% {
-    transform: scale(1) translate(0px, 0px);
-    opacity: 0.14;
-  }
-  50% {
-    transform: scale(1.15) translate(30px, -20px);
-    opacity: 0.26;
-  }
-}
-
-.animate-mesh-float-1 {
-  animation: pulseSlow 14s infinite ease-in-out;
-}
-
-.animate-mesh-float-2 {
-  animation: pulseSlow 18s infinite ease-in-out reverse;
-}
-
 /* Audio Waveform Bars */
 @keyframes waveBounce {
   0%, 100% {
     height: 6px;
   }
   50% {
-    height: 26px;
+    height: 24px;
   }
 }
 
@@ -184,17 +112,3 @@ body {
 .animate-wave-3 { animation: waveBounce 0.7s ease-in-out infinite 0.3s; }
 .animate-wave-4 { animation: waveBounce 1.3s ease-in-out infinite 0.2s; }
 .animate-wave-5 { animation: waveBounce 0.9s ease-in-out infinite 0.4s; }
-
-/* Subtle pulse glow for active bottlenecks */
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(244, 63, 94, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 35px rgba(244, 63, 94, 0.75);
-  }
-}
-
-.animate-pulse-bottleneck {
-  animation: pulseGlow 2s infinite ease-in-out;
-}
