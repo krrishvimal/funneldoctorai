@@ -550,9 +550,9 @@ export default function FunnelDoctorMinimalist() {
 
   // Custom Ingestion State
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
-  const [customCsvInput, setCustomCsvInput] = useState(SAMPLE_CSV_PREFILL);
+  const [customCsvInput, setCustomCsvInput] = useState('');
   const [customCsvFileName, setCustomCsvFileName] = useState<string | null>(null);
-  const [customUrlInput, setCustomUrlInput] = useState('https://mybrand.in/checkout/step-4');
+  const [customUrlInput, setCustomUrlInput] = useState('');
   const [customScreenshotBase64, setCustomScreenshotBase64] = useState<string | null>(null);
   const [customScreenshotName, setCustomScreenshotName] = useState<string | null>(null);
   const [isSubmittingCustom, setIsSubmittingCustom] = useState(false);
@@ -803,10 +803,27 @@ END OF AUDIT PACKAGE · FUNNELDOCTOR AI · STARTUP BUILDATHON INDIA 2026
 
   // Submit Custom Audit to /api/audit
   const handleRunCustomAudit = async () => {
-    if (!customCsvInput.trim()) {
-      setCustomError('Please provide funnel CSV data or click "Load Sample CSV".');
+    const urlTarget = customUrlInput.trim() || targetUrl.trim();
+    if (!urlTarget) {
+      setCustomError('Please enter a target website or store URL.');
       return;
     }
+
+    const domainMatch = urlTarget.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+    const auditSlug = domainMatch.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'audit-report';
+
+    const isUntouchedSample = customCsvInput.trim() === SAMPLE_CSV_PREFILL.trim();
+    const hasNoCsv = !customCsvInput.trim();
+
+    // INTELLIGENT ROUTING: If no CSV was provided, or if the user typed a real domain (like nike.in)
+    // but left the dummy demo CSV untouched, DO NOT poison their store with generic sample data.
+    // Seamlessly run the authentic domain audit for their website!
+    if (hasNoCsv || (isUntouchedSample && urlTarget && !urlTarget.includes('mybrand.in'))) {
+      setIsCustomModalOpen(false);
+      router.push(`/audit/${auditSlug}`);
+      return;
+    }
+
     setCustomError(null);
     setIsSubmittingCustom(true);
 
@@ -1751,17 +1768,29 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 <div className="flex items-center justify-between mb-2">
                   <label className="font-mono text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Funnel Event CSV (Headers: step, visitors)</span>
+                    <span>Funnel Event CSV (Optional · Headers: step, visitors)</span>
                   </label>
-                  <button
-                    onClick={() => {
-                      setCustomCsvInput(SAMPLE_CSV_PREFILL);
-                      setCustomCsvFileName(null);
-                    }}
-                    className="font-mono text-[11px] text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer"
-                  >
-                    Reset to Sample CSV
-                  </button>
+                  {customCsvInput ? (
+                    <button
+                      onClick={() => {
+                        setCustomCsvInput('');
+                        setCustomCsvFileName(null);
+                      }}
+                      className="font-mono text-[11px] text-rose-600 hover:text-rose-800 hover:underline cursor-pointer"
+                    >
+                      Clear CSV (Run Autonomous Mode)
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setCustomCsvInput(SAMPLE_CSV_PREFILL);
+                        setCustomCsvFileName('sample-template.csv');
+                      }}
+                      className="font-mono text-[11px] text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer"
+                    >
+                      + Load Demo Sample Template
+                    </button>
+                  )}
                 </div>
 
                 {/* Direct CSV File Upload or Paste Box */}
@@ -1782,7 +1811,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                     </span>
                   ) : (
                     <span className="text-[11px] font-mono text-neutral-400">
-                      or paste raw CSV rows below:
+                      or paste raw CSV rows (or leave empty for AI auto-audit):
                     </span>
                   )}
                 </div>
@@ -1792,8 +1821,14 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                   onChange={(e) => setCustomCsvInput(e.target.value)}
                   rows={4}
                   className="w-full bg-[#FAFAFA] border border-neutral-300 rounded-xl p-3 font-mono text-xs text-neutral-800 focus:outline-none focus:border-neutral-900 focus:bg-white"
-                  placeholder="step,visitors&#10;01. Home,50000&#10;02. Checkout,12000"
+                  placeholder="Optional: Paste CSV rows here (step,visitors). If left empty, Gemini will autonomously inspect your URL!"
                 />
+                {!customCsvInput.trim() && (
+                  <p className="text-[11px] font-mono text-emerald-700 mt-1 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Autonomous Mode: Gemini 2.5 will automatically deduce conversion stages from your URL!</span>
+                  </p>
+                )}
               </div>
 
               {/* URL & Screenshot Row */}
