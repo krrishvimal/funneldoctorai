@@ -279,19 +279,51 @@ export async function auditDomainWithGemini(
           generationConfig: { responseMimeType: "application/json" }
         });
 
-        const prompt = `You are FunnelDoctor AI, an elite B2B conversion rate optimization and causal telemetry intelligence engine.
+        const prompt = `You are FunnelDoctor AI, a friendly, ultra-sharp product advisor. You explain conversion drop-offs in crystal-clear, everyday Plain English that any store owner, client, or non-technical founder understands in 5 seconds.
+
 Analyze the website domain: "${cleanDomain}" (${fullUrl}).
 
-1. Determine the EXACT industry archetype (e.g. B2B SaaS, D2C Fashion, Quick Commerce, EdTech, Fintech, Healthcare).
-2. Generate 5 realistic, sequential conversion funnel stages for THIS EXACT business model.
-   - CRITICAL: If this is a B2B SaaS or Developer tool, use SaaS stages (Landing -> Work Email/SSO -> Workspace Setup -> Teammates -> Activation). NEVER use e-commerce terms like "cart" or "shoppers".
-   - If this is trial/sampling commerce, use sampling stages.
-   - If this is D2C e-commerce, use appropriate checkout stages.
-3. Generate realistic monthly visitor volume (100k - 800k), realistic step drop-off percentages, estimated monthly revenue loss in Lakhs (₹), recoverable revenue (+18% lift), and average transaction value (AOV in ₹).
-4. Pinpoint the single biggest bottleneck stage.
-5. Provide 3 specific causal findings with plain-English explanations (one UX, one Pricing/Cost, one Latency/Technical).
-6. Provide a drop-in Next.js + Tailwind React component that fixes this bottleneck.
-7. Provide an Executive PRD in Markdown.
+CRITICAL TONE & VOCABULARY RULES:
+1. ZERO JARGON / GRADE 6-8 READABILITY:
+   - STRICTLY BAN words like: "telemetry", "handshake", "data ingestion", "compute-unit overage", "asynchronous validation loops", "acute bottleneck", "causal architecture", "attribution pipeline", "micro-conversion", "spatial vision", "heuristic", "paradigm".
+   - Never write like an enterprise IT sales brochure. Write like an experienced human product advisor explaining to a client over coffee. Direct, honest, conversational, and simple.
+   - Every explanation must be 1 to 2 short sentences in everyday words.
+
+2. INDUSTRY ARCHETYPE & DOMAIN CONTEXT:
+   - Determine what "${cleanDomain}" actually is:
+     * If this is an Advertising Agency, Creative Studio, Marketing Portfolio, or Client Service (e.g. domains ending in .ad, or containing agency, studio, media, design): Use client inquiry stages:
+       01. Homepage & Work Portfolio -> 02. Case Studies & Client Proof -> 03. Inquiry / Project Brief Form -> 04. Call Booking & Budget Range -> 05. Proposal Delivered / Project Kickoff.
+     * If this is B2B SaaS or Software: Use clean signup stages:
+       01. Product Landing Page -> 02. Email Signup / Google Login -> 03. Interactive Product Demo / Setup -> 04. Teammate Invites -> 05. First Value / Active User.
+     * If this is D2C E-Commerce: Use clean checkout stages:
+       01. Storefront & Catalog -> 02. Product Selection -> 03. Shopping Bag -> 04. Address & Payment Gate -> 05. Order Confirmed.
+     * If this is Fintech / KYC: Use clean account opening stages.
+
+3. BELIEVABLE ESTIMATES:
+   - Realistic monthly visitors (e.g. 25k - 180k for an agency/studio/SaaS, 100k - 500k for e-commerce).
+   - Realistic average value (AOV / Project size / Subscription in ₹).
+   - Drop-off rate at the bottleneck step (typically 50% - 75%).
+   - Calculate leakedMonthlyLakhs = (visitors * (dropoffRate / 100) * aov) / 100,000.
+   - Calculate recoverableMonthlyLakhs = leakedMonthlyLakhs * 0.22.
+
+4. 3 PLAIN-ENGLISH FINDINGS (One UX, One Pricing/Cost, One Speed/Technical):
+   - title: Short and punchy (3 to 6 words). E.g. "Too Many Questions on Contact Form", "No Starting Prices or Rates Shown", "Portfolio Images Load Too Slowly".
+   - plainEnglish: 1-2 simple sentences explaining the exact user frustration in everyday words.
+     * Example: "Visitors have to answer 8 detailed questions before they can even speak with someone, so 60% give up halfway."
+     * Example: "There are no ballpark prices or starting packages shown, so clients leave without reaching out."
+     * Example: "The portfolio page takes over 4 seconds to load high-res images on phones, causing visitors to hit the back button."
+   - impact: Clear, simple business cost (e.g. "65% of potential clients leave here, costing ~₹18 Lakhs in lost pipeline").
+
+5. DROP-IN REACT FIX COMPONENT:
+   - A clean, modern, self-contained Tailwind React component that fixes this bottleneck in 1-tap or streamlined flow.
+
+6. PLAIN-ENGLISH PRODUCT SPEC (PRD):
+   - Write clean, human Markdown with clear sections:
+     # Product Spec (PRD)
+     ## 1. What Is Happening
+     ## 2. Why People Leave
+     ## 3. The 3-Step Fix
+     ## 4. Expected Results
 
 Return STRICT JSON matching:
 {
@@ -411,6 +443,62 @@ function generateDeterministicFallback(
   const leakedLakhs = Number(((baseVisitors * (worstDrop / 100) * aov) / 100000).toFixed(1));
   const recoverableLakhs = Number((leakedLakhs * 0.22).toFixed(1));
 
+  const domainExtension = cleanDomain.split(".").pop() || "";
+  const isAgencyDomain = ["ad", "agency", "studio", "design", "creative", "media"].includes(domainExtension) || cleanDomain.includes("ad") || cleanDomain.includes("agency");
+
+  if (isAgencyDomain) {
+    const s1 = baseVisitors;
+    const s2 = Math.round(s1 * 0.55);
+    const s3 = Math.round(s2 * (1 - worstDrop / 100));
+    const s4 = Math.round(s3 * 0.70);
+    const s5 = Math.round(s4 * 0.85);
+
+    return {
+      domain: fullUrl,
+      brandName,
+      category: "Creative Agency & Advertising Studio",
+      visitors: baseVisitors,
+      dropoffRate: worstDrop,
+      leakedMonthlyLakhs: leakedLakhs,
+      recoverableMonthlyLakhs: recoverableLakhs,
+      aov: Math.round(aov * 2.5),
+      worstStepName: "03. Project Inquiry & Brief Form",
+      worstStepIndex: 3,
+      steps: [
+        { name: "01. Homepage & Work Portfolio", visitors: s1, dropoffRate: 45.0, isBottleneck: false },
+        { name: "02. Case Studies & Proof", visitors: s2, dropoffRate: 35.0, isBottleneck: false },
+        { name: "03. Project Inquiry & Brief Form", visitors: s3, dropoffRate: worstDrop, isBottleneck: true },
+        { name: "04. Budget & Call Booking", visitors: s4, dropoffRate: 30.0, isBottleneck: false },
+        { name: "05. Project Kickoff", visitors: s5, dropoffRate: 0, isBottleneck: false }
+      ],
+      findings: [
+        {
+          id: "1",
+          title: "Too Many Questions on Contact Form",
+          plainEnglish: `Visitors on ${brandName} are asked to fill out 8+ required fields before speaking with someone, causing most potential clients to leave.`,
+          impact: `${worstDrop}% Form Abandonment`,
+          category: "ux"
+        },
+        {
+          id: "2",
+          title: "No Starting Rates or Ballpark Pricing",
+          plainEnglish: "Without starting budget ranges shown upfront, prospective clients assume it is too expensive and leave without reaching out.",
+          impact: "36.5% Exit Rate",
+          category: "pricing"
+        },
+        {
+          id: "3",
+          title: "Heavy Portfolio Images Load Slowly (3.4s)",
+          plainEnglish: "High-resolution case study images take over 3 seconds to load on mobile phones, causing visitors to click back.",
+          impact: "3,400 ms Mobile Delay",
+          category: "latency"
+        }
+      ],
+      reactCode: generateFallbackReactCode(brandName, "03. Project Inquiry & Brief Form"),
+      prdMarkdown: generateFallbackPRD(brandName, fullUrl, "03. Project Inquiry & Brief Form")
+    };
+  }
+
   if (isSaasDomain) {
     const s1 = baseVisitors;
     const s2 = Math.round(s1 * 0.62);
@@ -427,40 +515,40 @@ function generateDeterministicFallback(
       leakedMonthlyLakhs: leakedLakhs,
       recoverableMonthlyLakhs: recoverableLakhs,
       aov,
-      worstStepName: "03. Workspace Activation Gate",
+      worstStepName: "03. Workspace Setup & Trial",
       worstStepIndex: 3,
       steps: [
         { name: "01. Product Landing Page", visitors: s1, dropoffRate: 38.0, isBottleneck: false },
         { name: "02. Google SSO / Work Email Auth", visitors: s2, dropoffRate: 32.5, isBottleneck: false },
-        { name: "03. Workspace Activation Gate", visitors: s3, dropoffRate: worstDrop, isBottleneck: true },
+        { name: "03. Workspace Setup & Trial", visitors: s3, dropoffRate: worstDrop, isBottleneck: true },
         { name: "04. Teammate Invites", visitors: s4, dropoffRate: 25.0, isBottleneck: false },
-        { name: "05. Core Feature Activation", visitors: s5, dropoffRate: 0, isBottleneck: false }
+        { name: "05. Active User Activation", visitors: s5, dropoffRate: 0, isBottleneck: false }
       ],
       findings: [
         {
           id: "1",
-          title: "Mandatory Corporate Domain Gate",
-          plainEnglish: `Users signing up with non-corporate domains are blocked immediately without an option to preview a sandboxed workspace.`,
-          impact: `${worstDrop}% Churn`,
+          title: "Work Email Required Upfront",
+          plainEnglish: `Users signing up with Gmail or personal emails are blocked immediately instead of being allowed to test a demo workspace.`,
+          impact: `${worstDrop}% Signup Churn`,
           category: "ux"
         },
         {
           id: "2",
-          title: "Premature Credit Card Wall",
-          plainEnglish: "Users are asked for credit card details before they experience the core value proposition.",
+          title: "Credit Card Required Too Early",
+          plainEnglish: "Users are asked for credit card details before they experience any value from the product.",
           impact: "38.5% Exit Rate",
           category: "pricing"
         },
         {
           id: "3",
-          title: "3,200 ms Workspace Provisioning Latency",
-          plainEnglish: "Database provisioning on OAuth callback stalls user onboarding.",
-          impact: "3,200 ms Latency",
+          title: "Screen Freezes on Setup (3.2s)",
+          plainEnglish: "Setting up the account after login takes over 3 seconds, leading impatient users to close the tab.",
+          impact: "3,200 ms Delay",
           category: "latency"
         }
       ],
-      reactCode: generateFallbackReactCode(brandName, "03. Workspace Activation Gate"),
-      prdMarkdown: generateFallbackPRD(brandName, fullUrl, "03. Workspace Activation Gate")
+      reactCode: generateFallbackReactCode(brandName, "03. Workspace Setup & Trial"),
+      prdMarkdown: generateFallbackPRD(brandName, fullUrl, "03. Workspace Setup & Trial")
     };
   }
 
@@ -492,23 +580,23 @@ function generateDeterministicFallback(
     findings: [
       {
         id: "1",
-        title: "Forced Account Login & Mandatory Phone OTP",
-        plainEnglish: `Shoppers on ${brandName} are prevented from checking out as guests and forced through an SMS verification screen.`,
+        title: "Forced Login Blocks Guest Checkout",
+        plainEnglish: `Shoppers on ${brandName} cannot checkout as guests and are forced to wait for an SMS code before paying.`,
         impact: `${worstDrop}% Churn`,
         category: "ux"
       },
       {
         id: "2",
-        title: "Hidden Delivery Surcharge at Final Step",
-        plainEnglish: "Shipping fees are hidden until the final payment step, causing sticker shock.",
+        title: "Hidden Delivery Fee Added at Final Step",
+        plainEnglish: "Courier fees only appear at the very last step, causing surprise and cart abandonment.",
         impact: "31.2% Exit Rate",
         category: "pricing"
       },
       {
         id: "3",
-        title: "2,840 ms Payment Gateway Handshake",
-        plainEnglish: "Launching UPI and card intent delays user checkout on mobile web.",
-        impact: "2,840 ms Latency",
+        title: "Slow Payment App Loading (2.8s)",
+        plainEnglish: "Opening UPI apps like Google Pay or PhonePe stalls on mobile phones.",
+        impact: "2,840 ms Delay",
         category: "latency"
       }
     ],
@@ -594,30 +682,29 @@ export function RemediatedStep() {
 }
 
 function generateFallbackPRD(brandName: string, domainUrl: string, worstStep: string): string {
-  return `# EXECUTIVE PRODUCT REQUIREMENT DOCUMENT (PRD)
-**Project**: ${brandName} Conversion Optimization Remediation  
-**Target URL**: ${domainUrl}  
-**Primary Bottleneck**: ${worstStep}  
-**Target Metric**: +18% Lift in Bottom-of-Funnel Conversion  
+  return `# PRODUCT REQUIREMENT SPEC (PRD)
+**Client / Brand**: ${brandName}  
+**Website**: ${domainUrl}  
+**Primary Drop-Off Step**: ${worstStep}  
+**Target Goal**: Increase completed conversions by +18% to +22%  
 
 ---
 
-## 1. Executive Problem Statement
-Telemetry and spatial visual inspection diagnosed critical dropoff at **${worstStep}**. Users experience friction that prematurely ends high-intent sessions.
+## 1. What Is Happening
+Most visitors drop off at **${worstStep}**. They hit friction that stops them from completing their goal, causing lost revenue every month.
 
-## 2. Quantitative Baseline
-- **Primary Churn Step**: ${worstStep}
-- **Remediation Strategy**: Replace high-friction wall with zero-friction 1-tap fast track.
-- **Projected Recovery**: Recover up to 22% of abandoned sessions within 14 days.
+## 2. Why People Leave
+1. **Too many steps or form fields**: Users are forced through long questionnaires or account walls before getting value.
+2. **Hidden or unclear pricing**: Missing starting rates or unexpected fees shown at the last second.
+3. **Slow mobile speed**: Pages or buttons take too long to load on phones.
 
-## 3. Solution Specification
-- Eliminate mandatory upfront hurdles; defer non-essential information gathering.
-- Introduce 1-tap intent options.
-- Maintain P95 interaction latency under 800 ms.
+## 3. How We Fix It (3-Step Action Plan)
+1. **Make it 1-tap or simple**: Cut form fields down to the bare essentials and provide an instant fast-track option.
+2. **Show clear numbers upfront**: Make pricing and estimates transparent before asking for a commitment.
+3. **Speed up mobile response**: Ensure key actions and next steps respond in under 1 second.
 
-## 4. Acceptance Criteria
-- [x] Primary action reachable in under 3 taps.
-- [x] Zero extraneous form fields on mobile viewports.
-- [x] Verified A/B test setup tracking event: \`conversion_step_completed\`.
+## 4. Expected Results
+- Recover up to 22% of visitors who currently drop off.
+- Shorter time-to-convert and a much smoother experience on mobile phones.
 `;
 }

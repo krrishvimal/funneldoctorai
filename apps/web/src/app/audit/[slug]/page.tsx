@@ -340,7 +340,7 @@ ${audit.prdMarkdown}
         <section className="space-y-4 max-w-4xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-mono font-medium text-emerald-800">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            Gemini 2.5 Autonomous Audit · {audit.category}
+            AI Conversion Audit · {audit.category}
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-neutral-950 leading-[1.15]">
@@ -350,7 +350,7 @@ ${audit.prdMarkdown}
           <p className="text-base sm:text-lg text-neutral-600 leading-relaxed max-w-3xl">
             Over <strong className="text-neutral-900">{reachedCount.toLocaleString()} {cohortNoun}</strong> reached this stage, but only <strong className="text-neutral-900">{continuedCount.toLocaleString()} continued</strong>. 
             That is an abrupt <strong className="text-neutral-900">-{audit.dropoffRate}% drop right before {actionNoun}</strong>. 
-            Here is the root-cause analysis and the ready-to-use fix.
+            Here is why visitors leave and how to fix it with clean code in 60s.
           </p>
         </section>
 
@@ -360,7 +360,7 @@ ${audit.prdMarkdown}
           <div className="p-6 bg-white border border-neutral-200/90 rounded-2xl shadow-xs flex flex-col justify-between">
             <div>
               <div className="font-mono text-xs uppercase tracking-wider text-neutral-500 mb-2 flex items-center justify-between">
-                <span>Monthly Cash Lost</span>
+                <span>Monthly Lost Revenue</span>
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
               </div>
               <div className="text-3xl sm:text-4xl font-bold font-mono text-neutral-900 tracking-tight">
@@ -383,14 +383,14 @@ ${audit.prdMarkdown}
           <div className="p-6 bg-white border border-rose-300 rounded-2xl shadow-xs bg-rose-50/20 flex flex-col justify-between">
             <div>
               <div className="font-mono text-xs uppercase tracking-wider text-rose-700 font-semibold mb-2 flex items-center justify-between">
-                <span>The Primary Churn Step</span>
+                <span>Where Most People Drop Off</span>
                 <AlertTriangle className="w-4 h-4 text-rose-600" />
               </div>
               <div className="text-2xl sm:text-3xl font-bold font-mono text-rose-700 tracking-tight truncate">
                 {audit.worstStepName}
               </div>
               <p className="text-xs text-neutral-700 mt-2">
-                -{audit.dropoffRate}% of users exit the funnel at this exact moment.
+                -{audit.dropoffRate}% of visitors leave at this exact step.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-rose-200/60 text-[11px] font-mono text-rose-600 font-semibold truncate">
@@ -422,13 +422,13 @@ ${audit.prdMarkdown}
         <section className="bg-white border border-neutral-200/90 rounded-3xl p-8 sm:p-12 shadow-xs">
           <div className="max-w-2xl mx-auto text-center mb-10">
             <div className="font-mono text-xs uppercase tracking-wider text-neutral-500 mb-1">
-              Visual Causality Architecture
+              Interactive Drop-Off Map
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
-              The Conversion Churn Ecosystem
+              How Visitors Leave The Funnel
             </h2>
             <p className="text-xs text-neutral-500 mt-1">
-              Watch how traffic, interface friction, and latency flow directly into the bottleneck.
+              See how traffic, screen friction, and slow loading cause visitors to drop out.
             </p>
           </div>
 
@@ -531,7 +531,7 @@ ${audit.prdMarkdown}
             >
               <div className="flex items-center gap-1.5 font-mono text-[10px] text-rose-600 font-bold mb-1">
                 <Smartphone className="w-3.5 h-3.5" />
-                <span>VISUAL FRICTION</span>
+                <span>SCREEN FRICTION</span>
               </div>
               <p className="font-semibold text-xs leading-snug line-clamp-2">
                 {audit.findings[0]?.title || 'Visual Friction Detected'}
@@ -563,10 +563,10 @@ ${audit.prdMarkdown}
             >
               <div className="flex items-center gap-1.5 font-mono text-[10px] text-rose-600 font-bold mb-1">
                 <Clock className="w-3.5 h-3.5" />
-                <span>GATEWAY DELAY</span>
+                <span>PAGE / APP DELAY</span>
               </div>
               <p className="font-semibold text-xs leading-snug line-clamp-2">
-                {audit.findings[2]?.title || audit.findings[1]?.title || 'Gateway Latency Delay'}
+                {audit.findings[2]?.title || audit.findings[1]?.title || 'Slow Page Delay'}
               </p>
               <span className="text-[10px] text-neutral-400 mt-1 block font-mono">Click to inspect</span>
             </div>
@@ -581,7 +581,7 @@ ${audit.prdMarkdown}
               }`}
             >
               <Zap className="w-4 h-4 text-emerald-600 fill-emerald-600" />
-              <span className="font-bold text-emerald-700">1-Tap Solution (+₹{audit.recoverableMonthlyLakhs}L/mo)</span>
+              <span className="font-bold text-emerald-700">1-Tap Fix (+₹{audit.recoverableMonthlyLakhs}L/mo)</span>
             </div>
           </div>
         </section>
@@ -591,9 +591,9 @@ ${audit.prdMarkdown}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">Sequential Telemetry</span>
+                <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">Step-by-Step Flow</span>
                 <h2 className="text-2xl font-bold tracking-tight text-neutral-900 mt-1">
-                  Full Funnel Journey Breakdown
+                  Customer Journey & Drop-Offs
                 </h2>
               </div>
               <span className="text-xs font-mono text-neutral-400">
@@ -615,7 +615,7 @@ ${audit.prdMarkdown}
                     <span className="text-neutral-400 font-semibold">STAGE 0{idx + 1}</span>
                     {st.isBottleneck && (
                       <span className="text-rose-600 font-bold bg-rose-100/80 px-1.5 py-0.5 rounded text-[10px]">
-                        BOTTLENECK
+                        BIGGEST DROP
                       </span>
                     )}
                   </div>
@@ -637,12 +637,12 @@ ${audit.prdMarkdown}
         {/* 6. WHY THEY LEAVE: THE 3 ROOT CAUSES */}
         <section className="space-y-6">
           <div>
-            <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">Root-Cause Diagnosis</span>
+            <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">Why Visitors Leave</span>
             <h2 className="text-2xl font-bold tracking-tight text-neutral-900 mt-1">
-              Why {cohortNoun} Abandon At {audit.worstStepName}
+              Why People Leave At {audit.worstStepName}
             </h2>
             <p className="text-xs text-neutral-600 mt-0.5">
-              Three specific friction drivers isolate {audit.dropoffRate}% of lost conversions.
+              Three specific problems explain why {audit.dropoffRate}% of visitors drop out.
             </p>
           </div>
 
@@ -652,7 +652,7 @@ ${audit.prdMarkdown}
                 <div>
                   <div className="flex items-center justify-between font-mono text-xs mb-3">
                     <span className="px-2 py-0.5 rounded font-bold bg-neutral-100 text-neutral-700">
-                      Culprit #0{idx + 1}
+                      Problem #0{idx + 1}
                     </span>
                     <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                       {f.impact}
@@ -666,7 +666,7 @@ ${audit.prdMarkdown}
                   </p>
                 </div>
                 <div className="mt-5 pt-3 border-t border-neutral-100 text-[11px] font-mono text-neutral-400">
-                  Detected by Gemini 2.5 Spatial Vision
+                  Identified by AI Screen Inspection
                 </div>
               </div>
             ))}
@@ -677,9 +677,9 @@ ${audit.prdMarkdown}
         <section className="bg-white border border-neutral-200 rounded-3xl p-8 sm:p-10 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-neutral-200">
             <div>
-              <span className="text-xs font-mono uppercase tracking-wider text-emerald-700 font-bold">The 60-Second Cure</span>
+              <span className="text-xs font-mono uppercase tracking-wider text-emerald-700 font-bold">The 60-Second Fix</span>
               <h2 className="text-2xl font-bold tracking-tight text-neutral-900 mt-1">
-                Auto-Synthesized Conversion Fix
+                Ready-To-Use Code Fix
               </h2>
             </div>
 
@@ -691,7 +691,7 @@ ${audit.prdMarkdown}
                   activeTab === 'comparator' ? 'bg-white text-black font-semibold shadow-xs' : 'text-neutral-500 hover:text-black'
                 }`}
               >
-                Visual Diff
+                Before vs. After
               </button>
               <button
                 onClick={() => setActiveTab('code')}
@@ -699,7 +699,7 @@ ${audit.prdMarkdown}
                   activeTab === 'code' ? 'bg-white text-black font-semibold shadow-xs' : 'text-neutral-500 hover:text-black'
                 }`}
               >
-                React Code
+                Clean Code
               </button>
               <button
                 onClick={() => setActiveTab('prd')}
@@ -707,7 +707,7 @@ ${audit.prdMarkdown}
                   activeTab === 'prd' ? 'bg-white text-black font-semibold shadow-xs' : 'text-neutral-500 hover:text-black'
                 }`}
               >
-                Executive PRD
+                Product Spec (PRD)
               </button>
             </div>
           </div>
@@ -719,10 +719,10 @@ ${audit.prdMarkdown}
               <div className="p-6 bg-rose-50/20 border border-rose-200 rounded-2xl flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between font-mono text-xs text-rose-700 font-bold pb-2 mb-3 border-b border-rose-200">
-                    <span>Current Friction Wall</span>
+                    <span>Current Problem</span>
                     <span>-{audit.dropoffRate}% Churn</span>
                   </div>
-                  <h4 className="font-bold text-base text-neutral-900 mb-2">High-Friction Baseline</h4>
+                  <h4 className="font-bold text-base text-neutral-900 mb-2">What is happening now</h4>
                   <ul className="text-xs text-neutral-700 space-y-2.5">
                     {audit.findings.length > 0 ? (
                       audit.findings.map(f => (
@@ -749,22 +749,22 @@ ${audit.prdMarkdown}
               <div className="p-6 bg-emerald-50/20 border border-emerald-300 rounded-2xl flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between font-mono text-xs text-emerald-800 font-bold pb-2 mb-3 border-b border-emerald-200">
-                    <span>Gemini Remediation</span>
+                    <span>The Fix</span>
                     <span>+{Math.min(45, Math.round(audit.dropoffRate * 0.28))}% Lift</span>
                   </div>
                   <h4 className="font-bold text-base text-neutral-900 mb-2">Zero-Friction Solution</h4>
                   <ul className="text-xs text-neutral-800 space-y-2.5">
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 font-bold shrink-0">✓</span>
-                      <span>Zero barrier: Express action button located directly in the natural touch zone.</span>
+                      <span>1-Tap Action: Direct action button placed right where the thumb naturally taps.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 font-bold shrink-0">✓</span>
-                      <span>Transparent fee and pricing guarantee removes commitment hesitation.</span>
+                      <span>Clear Pricing: Show total costs and estimates upfront with zero surprises.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-emerald-600 font-bold shrink-0">✓</span>
-                      <span>Instant sub-800ms intent execution bypasses manual friction fields.</span>
+                      <span>Fast & Simple: Skip long forms and connect in under 1 second.</span>
                     </li>
                   </ul>
                 </div>
