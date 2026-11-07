@@ -14,7 +14,7 @@ export async function runFunnelAudit(
   options: AuditOptions = {}
 ): Promise<RCAReport> {
   const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
-  const modelName = options.modelName || "gemini-1.5-flash";
+  const modelName = options.modelName || process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
   if (!apiKey) {
     // Deterministic fallback mode (ideal for unit testing, offline CI/CD, and demo without keys)

@@ -602,15 +602,21 @@ export default function FunnelDoctorMinimalist() {
   // Target URL Input & Audit Submission Handler
   const handleRunAudit = () => {
     const trimmedInput = targetUrl.trim();
+    if (!trimmedInput) return;
+
+    // If custom URL is entered, navigate directly to autonomous audit
     if (trimmedInput !== currentData.url.trim()) {
-      setCustomUrlInput(trimmedInput);
-      setIsCustomModalOpen(true);
-    } else {
-      switchPreset(selectedPresetKey);
-      setTimeout(() => {
-        document.getElementById('telemetry')?.scrollIntoView({ behavior: 'smooth' });
-      }, 150);
+      const domainMatch = trimmedInput.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+      const auditSlug = domainMatch.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'audit-report';
+      setIsAuditing(true);
+      router.push(`/audit/${auditSlug}`);
+      return;
     }
+
+    switchPreset(selectedPresetKey);
+    setTimeout(() => {
+      document.getElementById('telemetry')?.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
   };
 
   // Financial Math
