@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FunnelDoctor AI — Autonomous Multimodal Conversion, UX Vision & RCA Platform",
+  title: "FunnelDoctor AI — Autonomous Multimodal Conversion & RCA Platform",
   description:
-    "Autonomous Multimodal Conversion & Root-Cause-Analysis SaaS built for Startup Buildathon India 2026. Powered by Google DeepMind & Google Cloud Gemini 2.5.",
+    "Clinical Swiss Diagnostic Telemetry for Multimodal Conversion Friction. Built for Startup Buildathon India 2026. Powered by Google DeepMind & Google Cloud Gemini 2.5.",
 };
 
 export default function RootLayout({
@@ -13,9 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth" suppressHydrationWarning>
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className="min-h-screen bg-[#030303] text-white antialiased selection:bg-indigo-500/30"
+        className="min-h-screen bg-[#F7F7F8] text-[#0A0A0A] antialiased selection:bg-black selection:text-white"
         suppressHydrationWarning
       >
         {children}

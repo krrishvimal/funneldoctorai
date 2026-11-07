@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #030303;
-  --foreground: #ffffff;
+  --background: #F7F7F8;
+  --foreground: #0A0A0A;
 }
 
 * {
@@ -16,23 +16,23 @@ body {
   background: var(--background);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
-  background-color: #030303;
+  background-color: #F7F7F8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar for Sleek Dark Aesthetic */
+/* Custom Scrollbar for Swiss Minimalist Aesthetic */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #030303;
+  background: #F7F7F8;
 }
 ::-webkit-scrollbar-thumb {
-  background: #262626;
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #404040;
+  background: #94A3B8;
 }
