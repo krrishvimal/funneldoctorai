@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   Globe
 } from 'lucide-react';
+import RealisticPhoneMockup from '@/components/RealisticPhoneMockup';
 
 // 1. ULTRA-SMOOTH BEZIER TOPOGRAPHIC MESH BACKGROUND
 function TopographicMesh() {
@@ -1255,25 +1256,13 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             {/* Right Column: Realistic Interactive Mobile Screen Viewport */}
             <div className="lg:col-span-6 flex flex-col items-center justify-center bg-neutral-100/70 p-6 lg:p-10 rounded-2xl border border-neutral-200/60">
               
-              {/* Phone Hardware Mockup */}
-              <div className="w-full max-w-[340px] bg-neutral-900 rounded-[38px] p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.22)] border border-neutral-800 relative">
-                
-                {/* Phone Glass Screen */}
-                <div className="w-full bg-[#F9FAFB] rounded-[30px] overflow-hidden flex flex-col justify-between min-h-[500px] border border-neutral-200/80 relative text-neutral-900 select-none">
-                  
-                  {/* Dynamic Island & Device Notch */}
-                  <div className="pt-2 px-4 pb-1.5 flex flex-col items-center border-b border-neutral-100 bg-white">
-                    <div className="w-20 h-4 bg-neutral-900 rounded-full mb-1 flex items-center justify-end px-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 animate-pulse" />
-                    </div>
-                    <div className="w-full flex items-center justify-between text-[10px] font-mono text-neutral-400">
-                      <span>9:41 AM</span>
-                      <div className="flex items-center gap-1.5">
-                        <span>5G</span>
-                        <span className="font-sans font-bold">100%</span>
-                      </div>
-                    </div>
-                  </div>
+              {/* Photorealistic Titanium CSS Device Frame */}
+              <RealisticPhoneMockup
+                selectedIssue={selectedPin}
+                viewMode={screenViewMode}
+                onToggleViewMode={setScreenViewMode}
+                storeName={selectedPresetKey === 'd2c' ? 'QuickStyle Store' : selectedPresetKey === 'fintech' ? 'FinPulse Identity' : selectedPresetKey === 'edtech' ? 'PrepMate Test Prep' : 'Store Checkout'}
+              >
 
                   {/* App Bar & Interactive Mode Switcher */}
                   <div className="px-3.5 py-2 bg-white/90 backdrop-blur-xs border-b border-neutral-200/60 flex items-center justify-between">
@@ -1611,13 +1600,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                     )}
                   </div>
 
-                  {/* Phone Home Bar */}
-                  <div className="pb-2 pt-1 flex justify-center bg-white border-t border-neutral-100">
-                    <div className="w-24 h-1 bg-neutral-300 rounded-full" />
-                  </div>
-
-                </div>
-              </div>
+              </RealisticPhoneMockup>
 
               {/* Viewport Subtext */}
               <div className="mt-4 text-[11px] font-mono text-neutral-400 text-center">
