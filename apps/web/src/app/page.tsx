@@ -551,6 +551,7 @@ export default function FunnelDoctorMinimalist() {
   // Custom Ingestion State
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
   const [customCsvInput, setCustomCsvInput] = useState(SAMPLE_CSV_PREFILL);
+  const [customCsvFileName, setCustomCsvFileName] = useState<string | null>(null);
   const [customUrlInput, setCustomUrlInput] = useState('https://mybrand.in/checkout/step-4');
   const [customScreenshotBase64, setCustomScreenshotBase64] = useState<string | null>(null);
   const [customScreenshotName, setCustomScreenshotName] = useState<string | null>(null);
@@ -770,6 +771,23 @@ END OF AUDIT PACKAGE · FUNNELDOCTOR AI · STARTUP BUILDATHON INDIA 2026
     URL.revokeObjectURL(url);
   };
 
+  // Custom CSV File Upload Handler
+  const handleCsvFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCustomCsvFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        if (text) {
+          setCustomCsvInput(text);
+          setCustomError(null);
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
   // Custom Screenshot Upload Handler
   const handleScreenshotFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -831,13 +849,16 @@ END OF AUDIT PACKAGE · FUNNELDOCTOR AI · STARTUP BUILDATHON INDIA 2026
         aov: 1500,
         lift: `+${Math.min(50, Math.round(dropRatePct * 0.45))}% CR LIFT`,
         recoveredLakhsEst: `₹${((metrics.totalInitialVisitors * (dropRatePct / 100) * 1500 * 0.22) / 100000).toFixed(1)}L`,
-        steps: metrics.steps.map((s: any, idx: number) => ({
-          step: `${(idx + 1).toString().padStart(2, '0')}. ${s.name}`,
-          users: s.visitors.toLocaleString(),
-          pct: metrics.totalInitialVisitors > 0 ? Number(((s.visitors / metrics.totalInitialVisitors) * 100).toFixed(1)) : 0,
-          drop: s.dropoffRate > 0 ? `-${(s.dropoffRate * 100).toFixed(1)}% CHURN` : undefined,
-          critical: s.index === metrics.biggestDropStep.index
-        })),
+        steps: metrics.steps.map((s: any, idx: number) => {
+          const cleanName = s.name.replace(/^(\d+[\s.)-]+\s*)+/, '').trim();
+          return {
+            step: `${(idx + 1).toString().padStart(2, '0')}. ${cleanName || s.name}`,
+            users: s.visitors.toLocaleString(),
+            pct: metrics.totalInitialVisitors > 0 ? Number(((s.visitors / metrics.totalInitialVisitors) * 100).toFixed(1)) : 0,
+            drop: s.dropoffRate > 0 ? `-${(s.dropoffRate * 100).toFixed(1)}% CHURN` : undefined,
+            critical: s.index === metrics.biggestDropStep.index
+          };
+        }),
         pins: report.findings.slice(0, 3).map((f: any, idx: number) => ({
           id: (idx + 1).toString().padStart(2, '0'),
           title: f.headline || `Fault #${idx + 1}`,
@@ -1727,22 +1748,49 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             <div className="my-5 space-y-4">
               {/* CSV Data Section */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-2">
                   <label className="font-mono text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Funnel Event CSV (Headers: step, visitors)</span>
                   </label>
                   <button
-                    onClick={() => setCustomCsvInput(SAMPLE_CSV_PREFILL)}
+                    onClick={() => {
+                      setCustomCsvInput(SAMPLE_CSV_PREFILL);
+                      setCustomCsvFileName(null);
+                    }}
                     className="font-mono text-[11px] text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer"
                   >
                     Reset to Sample CSV
                   </button>
                 </div>
+
+                {/* Direct CSV File Upload or Paste Box */}
+                <div className="mb-2 flex items-center gap-2">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg text-xs font-mono cursor-pointer transition border border-neutral-300">
+                    <Upload className="w-3.5 h-3.5 text-neutral-600" />
+                    <span>Upload .csv / .txt file</span>
+                    <input
+                      type="file"
+                      accept=".csv,text/csv,text/plain"
+                      onChange={handleCsvFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                  {customCsvFileName ? (
+                    <span className="text-[11px] font-mono text-emerald-700 font-semibold truncate">
+                      ✓ Ingested: {customCsvFileName}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-mono text-neutral-400">
+                      or paste raw CSV rows below:
+                    </span>
+                  )}
+                </div>
+
                 <textarea
                   value={customCsvInput}
                   onChange={(e) => setCustomCsvInput(e.target.value)}
-                  rows={5}
+                  rows={4}
                   className="w-full bg-[#FAFAFA] border border-neutral-300 rounded-xl p-3 font-mono text-xs text-neutral-800 focus:outline-none focus:border-neutral-900 focus:bg-white"
                   placeholder="step,visitors&#10;01. Home,50000&#10;02. Checkout,12000"
                 />

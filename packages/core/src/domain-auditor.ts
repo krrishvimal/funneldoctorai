@@ -315,16 +315,23 @@ function assembleFullReport(
 ): DomainAuditReport {
   const brandName = partial.brandName || cleanDomain;
   const worstStep = partial.worstStepName || "03. Checkout Gate";
+  const visitors = partial.visitors || 150000;
+  const dropoffRate = partial.dropoffRate || 64.5;
+  const aov = partial.aov || 1850;
+
+  // Mathematically unified unit economics
+  const leakedMonthlyLakhs = Number(((visitors * (dropoffRate / 100) * aov) / 100000).toFixed(1));
+  const recoverableMonthlyLakhs = Number((leakedMonthlyLakhs * 0.22).toFixed(1));
 
   return {
     domain: fullUrl,
     brandName,
     category: partial.category || "Digital Commerce",
-    visitors: partial.visitors || 150000,
-    dropoffRate: partial.dropoffRate || 64.5,
-    leakedMonthlyLakhs: partial.leakedMonthlyLakhs || 45.2,
-    recoverableMonthlyLakhs: partial.recoverableMonthlyLakhs || 9.8,
-    aov: partial.aov || 1850,
+    visitors,
+    dropoffRate,
+    leakedMonthlyLakhs,
+    recoverableMonthlyLakhs,
+    aov,
     worstStepName: worstStep,
     worstStepIndex: partial.worstStepIndex || 3,
     steps: partial.steps || [],

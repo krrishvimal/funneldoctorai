@@ -14,7 +14,7 @@ export async function runFunnelAudit(
   options: AuditOptions = {}
 ): Promise<RCAReport> {
   const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
-  const modelName = options.modelName || process.env.GEMINI_MODEL || "gemini-3.5-flash";
+  const projectUrl = options.projectUrl || "Unknown URL";
 
   if (!apiKey) {
     // Deterministic fallback mode (ideal for unit testing, offline CI/CD, and demo without keys)
@@ -30,27 +30,23 @@ export async function runFunnelAudit(
     };
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
-  });
-
   const promptText = `
 ${CRO_HEURISTICS_GUIDELINES}
 
-Analyze the following quantitative conversion funnel data alongside the attached UI screenshots:
+TARGET DOMAIN / URL: "${projectUrl}"
 
-FUNNEL METRICS:
+FUNNEL TELEMETRY METRICS:
 ${JSON.stringify(metrics, null, 2)}
 
 TASK:
-1. Cross-reference visual bottlenecks in the screenshots with the quantitative drop-off data.
-2. Return a strict JSON object with the following fields:
+1. Determine the true business archetype of "${projectUrl}" (e.g. Consumer Social Network, B2B SaaS, D2C Fashion, Fintech).
+2. DOMAIN-TELEMETRY CONSISTENCY CHECK: Check if the provided sequential funnel steps logically match the nature of "${projectUrl}".
+   - If there is a semantic conflict (e.g. retail checkout stages like "Storefront Home" or "Added to Cart" provided for Instagram, Linear, or GitHub):
+     Explicitly clarify this in the executiveSummary: State whether this data represents an isolated sub-product (like "Instagram Shop / Social Commerce Storefront") or if the provided CSV stages conflict with the core platform.
+3. Cross-reference visual bottlenecks in the screenshots (if attached) with the quantitative drop-off data.
+4. Return a strict JSON object with the following fields:
 {
-  "executiveSummary": "A concise executive briefing (2-3 paragraphs) explaining the macro funnel health and the primary root cause.",
+  "executiveSummary": "A concise executive briefing explaining the macro funnel health, domain alignment, and primary root cause.",
   "findings": [
     {
       "id": "finding-1",
@@ -58,58 +54,72 @@ TASK:
       "severity": "CRITICAL" | "HIGH" | "MEDIUM" | "LOW",
       "category": "clarity" | "cognitive_load" | "trust_and_security" | "fitts_law_and_touch" | "hidden_costs_and_pricing" | "form_friction",
       "headline": "string",
-      "explanation": "Detailed root cause linking the visual element to the numbers",
+      "explanation": "Detailed root cause linking the step to user dropoff",
       "visualElementSelector": "css selector or descriptive element name",
       "dropoffContributionEstPercent": number,
       "actionableFix": "Concrete engineering/design fix",
       "recommendedCodeDiff": "Clean JSX/HTML/Tailwind snippet fixing the issue"
     }
   ],
-  "generatedPRD": "A complete, production-ready Markdown Product Requirements Document (PRD) detailing problem statement, user stories, acceptance criteria, and measurement metrics.",
+  "generatedPRD": "A complete, production-ready Markdown Product Requirements Document (PRD).",
   "redesignCodeSuggestion": "A complete, self-contained Next.js / Tailwind CSS component rewriting the worst-performing step."
 }
 `;
 
-  const contents: any[] = [promptText];
+  const candidateModels = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"];
 
-  for (const shot of screenshots) {
-    if (shot.base64Data) {
-      contents.push({
-        inlineData: {
-          mimeType: shot.mimeType || "image/png",
-          data: shot.base64Data,
+  for (const modelName of candidateModels) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
         },
       });
+
+      const contents: any[] = [promptText];
+
+      for (const shot of screenshots) {
+        if (shot.base64Data) {
+          contents.push({
+            inlineData: {
+              mimeType: shot.mimeType || "image/png",
+              data: shot.base64Data,
+            },
+          });
+        }
+      }
+
+      const result = await model.generateContent(contents);
+      const text = result.response.text() || "{}";
+      const parsed = JSON.parse(text);
+
+      return {
+        projectUrl: options.projectUrl,
+        generatedAt: new Date().toISOString(),
+        executiveSummary: parsed.executiveSummary || "Analysis completed.",
+        funnelMetrics: metrics,
+        findings: parsed.findings || generateSyntheticFindings(metrics, screenshots),
+        generatedPRD: parsed.generatedPRD || generateStandardPRD(metrics, []),
+        redesignCodeSuggestion: parsed.redesignCodeSuggestion,
+      };
+    } catch (error) {
+      console.warn(`Gemini model ${modelName} failed, trying next candidate:`, error);
     }
   }
 
-  try {
-    const result = await model.generateContent(contents);
-    const text = result.response.text() || "{}";
-    const parsed = JSON.parse(text);
-
-    return {
-      projectUrl: options.projectUrl,
-      generatedAt: new Date().toISOString(),
-      executiveSummary: parsed.executiveSummary || "Analysis completed.",
-      funnelMetrics: metrics,
-      findings: parsed.findings || generateSyntheticFindings(metrics, screenshots),
-      generatedPRD: parsed.generatedPRD || generateStandardPRD(metrics, []),
-      redesignCodeSuggestion: parsed.redesignCodeSuggestion,
-    };
-  } catch (error) {
-    console.warn("Gemini API call encountered an error. Falling back to heuristic engine:", error);
-    const findings = generateSyntheticFindings(metrics, screenshots);
-    return {
-      projectUrl: options.projectUrl,
-      generatedAt: new Date().toISOString(),
-      executiveSummary: `Fallback audit: Bottleneck detected at "${metrics.biggestDropStep.name}".`,
-      funnelMetrics: metrics,
-      findings,
-      generatedPRD: generateStandardPRD(metrics, findings),
-      redesignCodeSuggestion: findings[0]?.recommendedCodeDiff,
-    };
-  }
+  // Fallback if all models fail
+  const findings = generateSyntheticFindings(metrics, screenshots);
+  return {
+    projectUrl: options.projectUrl,
+    generatedAt: new Date().toISOString(),
+    executiveSummary: `Fallback audit: Bottleneck detected at "${metrics.biggestDropStep.name}".`,
+    funnelMetrics: metrics,
+    findings,
+    generatedPRD: generateStandardPRD(metrics, findings),
+    redesignCodeSuggestion: findings[0]?.recommendedCodeDiff,
+  };
 }
 
 function generateStandardPRD(metrics: FunnelAnalysisResult, findings: AuditFinding[]): string {

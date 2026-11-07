@@ -217,11 +217,43 @@ ${audit.prdMarkdown}
   };
 
   // Noun adjustment by category
-  const isSaas = audit.category.toLowerCase().includes('saas') || audit.category.toLowerCase().includes('b2b');
-  const isFintech = audit.category.toLowerCase().includes('fintech') || audit.category.toLowerCase().includes('broking');
-  const isTrial = audit.category.toLowerCase().includes('trial') || audit.category.toLowerCase().includes('sampling');
-  const cohortNoun = isSaas ? 'evaluating teams' : isFintech ? 'applicants' : isTrial ? 'trial users' : 'shoppers';
-  const actionNoun = isSaas ? 'workspace activation' : isFintech ? 'account completion' : isTrial ? 'trial order' : 'purchase';
+  const catLower = audit.category.toLowerCase();
+  const isSaas = catLower.includes('saas') || catLower.includes('b2b') || catLower.includes('software');
+  const isFintech = catLower.includes('fintech') || catLower.includes('broking') || catLower.includes('bank');
+  const isTrial = catLower.includes('trial') || catLower.includes('sampling');
+  const isSocial = catLower.includes('social') || catLower.includes('media') || catLower.includes('creator') || catLower.includes('consumer');
+  const isEdtech = catLower.includes('edtech') || catLower.includes('education') || catLower.includes('course');
+
+  const cohortNoun = isSaas 
+    ? 'evaluating teams' 
+    : isFintech 
+      ? 'applicants' 
+      : isTrial 
+        ? 'trial users' 
+        : isSocial 
+          ? 'new users' 
+          : isEdtech 
+            ? 'students' 
+            : 'shoppers';
+
+  const actionNoun = isSaas 
+    ? 'workspace activation' 
+    : isFintech 
+      ? 'account verification' 
+      : isTrial 
+        ? 'trial order' 
+        : isSocial 
+          ? 'feed activation' 
+          : isEdtech 
+            ? 'course enrollment' 
+            : 'purchase';
+
+  // Mathematically accurate step dropoff calculation
+  const bottleneckStep = audit.steps.find(s => s.isBottleneck) || audit.steps[Math.max(0, audit.worstStepIndex - 1)];
+  const bottleneckIdx = bottleneckStep ? audit.steps.indexOf(bottleneckStep) : -1;
+  const nextStep = bottleneckIdx >= 0 && bottleneckIdx + 1 < audit.steps.length ? audit.steps[bottleneckIdx + 1] : null;
+  const reachedCount = bottleneckStep ? bottleneckStep.visitors : audit.visitors;
+  const continuedCount = nextStep ? nextStep.visitors : Math.round(reachedCount * (1 - audit.dropoffRate / 100));
 
   if (isLoading) {
     return (
@@ -316,17 +348,9 @@ ${audit.prdMarkdown}
           </h1>
 
           <p className="text-base sm:text-lg text-neutral-600 leading-relaxed max-w-3xl">
-            {audit.steps && audit.steps.length >= 2 ? (
-              <>
-                Over <strong className="text-neutral-900">{audit.steps[Math.max(0, audit.worstStepIndex - 2)]?.visitors?.toLocaleString() || audit.steps[0]?.visitors?.toLocaleString()} {cohortNoun}</strong> reached this stage, but only <strong className="text-neutral-900">{audit.steps[Math.max(0, audit.worstStepIndex - 1)]?.visitors?.toLocaleString() || Math.round(audit.visitors * (1 - audit.dropoffRate / 100)).toLocaleString()} continued</strong>. 
-                That is an abrupt <strong className="text-neutral-900">-{audit.dropoffRate}% drop right before {actionNoun}</strong>. 
-                Here is the root-cause analysis and the ready-to-use fix.
-              </>
-            ) : (
-              <>
-                Conversion telemetry indicates a critical <strong className="text-neutral-900">-{audit.dropoffRate}% drop</strong> at {audit.worstStepName}. Here is the diagnostic breakdown and synthesized fix.
-              </>
-            )}
+            Over <strong className="text-neutral-900">{reachedCount.toLocaleString()} {cohortNoun}</strong> reached this stage, but only <strong className="text-neutral-900">{continuedCount.toLocaleString()} continued</strong>. 
+            That is an abrupt <strong className="text-neutral-900">-{audit.dropoffRate}% drop right before {actionNoun}</strong>. 
+            Here is the root-cause analysis and the ready-to-use fix.
           </p>
         </section>
 
@@ -343,7 +367,11 @@ ${audit.prdMarkdown}
                 ₹{audit.leakedMonthlyLakhs} <span className="text-lg font-normal text-neutral-500">Lakhs</span>
               </div>
               <p className="text-xs text-neutral-500 mt-2">
-                Estimated sales abandoned at checkout every month.
+                {isSocial 
+                  ? 'Estimated creator & ad monetization abandoned every month.' 
+                  : isSaas 
+                    ? 'Estimated subscription ARR/MRR lost from unactivated teams.' 
+                    : 'Estimated revenue abandoned at checkout every month.'}
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-neutral-100 text-[11px] font-mono text-neutral-400">
@@ -366,9 +394,7 @@ ${audit.prdMarkdown}
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-rose-200/60 text-[11px] font-mono text-rose-600 font-semibold truncate">
-              {audit.steps && audit.steps.length >= 2 
-                ? `${audit.steps[Math.max(0, audit.worstStepIndex - 2)]?.visitors?.toLocaleString() || audit.steps[0]?.visitors?.toLocaleString()} users ➔ only ${audit.steps[Math.max(0, audit.worstStepIndex - 1)]?.visitors?.toLocaleString() || Math.round(audit.visitors * (1 - audit.dropoffRate/100)).toLocaleString()} continued`
-                : `-${audit.dropoffRate}% churn rate`}
+              {reachedCount.toLocaleString()} {cohortNoun} ➔ only {continuedCount.toLocaleString()} continued
             </div>
           </div>
 
@@ -794,13 +820,18 @@ ${audit.prdMarkdown}
   );
 }
 
+function cleanStepName(name: string): string {
+  if (!name) return '';
+  return name.replace(/^(\d+[\s.)-]+\s*)+/, '').trim();
+}
+
 // --------------------------------------------------------------------------
 // HELPER: NORMALIZE AUDIT DATA
 // --------------------------------------------------------------------------
 function normalizeAuditData(raw: any, defaultDomain: string, defaultBrand: string): AuditData {
   const brand = raw.brandName || defaultBrand;
   const domain = raw.domain || defaultDomain;
-  const category = raw.category || 'Digital Commerce';
+  let category = raw.category || 'Digital Commerce';
   const visitors = Number(raw.visitors) || 150000;
   const dropoffRate = Number(raw.dropoffRate || raw.dropoff) || 58.4;
   const aov = Number(raw.aov) || 1500;
@@ -815,17 +846,30 @@ function normalizeAuditData(raw: any, defaultDomain: string, defaultBrand: strin
 
   let steps: AuditStep[] = [];
   if (Array.isArray(raw.steps) && raw.steps.length > 0) {
-    steps = raw.steps.map((s: any, idx: number) => ({
-      name: s.name || s.step || `Stage 0${idx + 1}`,
-      visitors: typeof s.visitors === 'number' ? s.visitors : Number(String(s.users || '0').replace(/[^0-9]/g, '')) || 0,
-      dropoffRate: typeof s.dropoffRate === 'number' ? s.dropoffRate : s.drop ? Number(String(s.drop).replace(/[^0-9.]/g, '')) : 0,
-      isBottleneck: !!(s.isBottleneck || s.critical)
-    }));
+    steps = raw.steps.map((s: any, idx: number) => {
+      const rawName = s.name || s.step || `Stage 0${idx + 1}`;
+      const cleaned = cleanStepName(rawName);
+      return {
+        name: `${(idx + 1).toString().padStart(2, '0')}. ${cleaned || rawName}`,
+        visitors: typeof s.visitors === 'number' ? s.visitors : Number(String(s.users || '0').replace(/[^0-9]/g, '')) || 0,
+        dropoffRate: typeof s.dropoffRate === 'number' ? s.dropoffRate : s.drop ? Number(String(s.drop).replace(/[^0-9.]/g, '')) : 0,
+        isBottleneck: !!(s.isBottleneck || s.critical)
+      };
+    });
+  }
+
+  // Detect if e-commerce steps were pasted onto a social or SaaS domain
+  const hasStorefrontSteps = steps.some(s => /storefront|product|cart|checkout|bag|order/i.test(s.name));
+  const isSocialDomain = /instagram|tiktok|facebook|twitter|x\.com|youtube|threads/i.test(domain);
+  if (hasStorefrontSteps && isSocialDomain) {
+    category = "Social Commerce & In-App Storefront";
   }
 
   const criticalStep = steps.find(s => s.isBottleneck) || steps[Math.min(2, steps.length - 1)];
-  const worstStepName = raw.worstStepName || criticalStep?.name || 'Primary Bottleneck';
-  const worstStepIndex = raw.worstStepIndex || (steps.indexOf(criticalStep) + 1) || 3;
+  const worstStepIndex = raw.worstStepIndex || (steps.indexOf(criticalStep) + 1) || 1;
+  const rawWorst = raw.worstStepName || criticalStep?.name || 'Primary Bottleneck';
+  const cleanedWorst = cleanStepName(rawWorst);
+  const worstStepName = `${worstStepIndex.toString().padStart(2, '0')}. ${cleanedWorst || rawWorst}`;
 
   let findings: AuditFinding[] = [];
   if (Array.isArray(raw.findings) && raw.findings.length > 0) {
