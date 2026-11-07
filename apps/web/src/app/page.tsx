@@ -8,18 +8,19 @@ import {
   BarChart3,
   CheckCircle2,
   AlertTriangle,
-  FileText,
   Mic,
   Volume2,
   Upload,
   Copy,
   Check,
-  Terminal,
-  Sparkles,
   Layers,
+  Play,
+  Sparkles,
+  Activity,
+  Sliders,
 } from "lucide-react";
 
-// 1. SMOOTH ARCHITECTURAL TOPOGRAPHIC MESH
+// 1. ULTRA-SMOOTH BEZIER ARCHITECTURAL TOPOGRAPHIC MESH (NO JAGGED CORNERS)
 function SwissTopographicMesh() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -47,28 +48,29 @@ function SwissTopographicMesh() {
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      t += 0.006;
+      t += 0.008;
 
       const waveCount = 6;
       for (let i = 0; i < waveCount; i++) {
         ctx.beginPath();
         ctx.lineWidth = 1;
-        ctx.strokeStyle = `rgba(15, 23, 42, ${0.06 + i * 0.025})`;
+        ctx.strokeStyle = `rgba(15, 23, 42, ${0.05 + i * 0.02})`;
 
-        const baseHeight = canvas.height * 0.34 + i * 38;
-        const freq = 0.0014 + i * 0.0002;
-        const amp = 28 + i * 14;
+        const baseHeight = canvas.height * 0.32 + i * 34;
+        const freq = 0.0018 + i * 0.0002;
+        const amp = 24 + i * 10;
 
-        // 4px step for ultra-smooth curves (no jagged polygon corners)
-        for (let x = 0; x <= canvas.width; x += 4) {
+        // 2px high-resolution sampling for silky-smooth organic sine waves
+        for (let x = 0; x <= canvas.width; x += 2) {
           const dx = x - mouse.x;
-          const dist = Math.abs(dx);
-          const mouseInfluence = Math.max(0, (240 - dist) / 240) * 22;
+          const dist = Math.sqrt(dx * dx);
+          // Smooth Gaussian bell-curve mouse displacement (no sharp triangle peak)
+          const mouseInfluence = Math.exp(-(dist * dist) / 45000) * 28;
 
           const y =
             baseHeight +
-            Math.sin(x * freq + t + i * 0.6) * amp +
-            Math.cos(x * 0.0009 - t * 0.5) * 14 -
+            Math.sin(x * freq + t + i * 0.5) * amp +
+            Math.cos(x * 0.0011 - t * 0.6) * 12 -
             mouseInfluence;
 
           if (x === 0) ctx.moveTo(x, y);
@@ -92,39 +94,45 @@ function SwissTopographicMesh() {
   return (
     <canvas
       ref={canvasRef}
-      className="pointer-events-none fixed inset-0 z-0 opacity-80"
+      className="pointer-events-none fixed inset-0 z-0"
     />
   );
 }
 
-// 2. THREE REALISTIC STARTUP DATASETS (DYNAMIC STATE MACHINE)
+// 2. THREE REALISTIC STARTUP DATASETS
 type PresetKey = "d2c" | "fintech" | "edtech";
+
+interface RcaWeight {
+  label: string;
+  pct: number;
+  color: string;
+}
 
 interface FunnelStep {
   step: string;
   users: string;
   pct: number;
+  fixedPct?: number;
   drop?: string;
   status: "normal" | "critical" | "healthy";
 }
 
-interface SpatialPin {
+interface PinItem {
   id: string;
-  x: string;
-  y: string;
   title: string;
   desc: string;
   metric: string;
+  wireLabel: string;
 }
 
-interface SqlResultRow {
+interface SqlRow {
   os: string;
   sessions: string;
   latency: string;
   churn: string;
 }
 
-interface PresetDataset {
+interface Dataset {
   id: PresetKey;
   label: string;
   url: string;
@@ -132,14 +140,15 @@ interface PresetDataset {
   dropoff: number;
   aov: number;
   lift: string;
+  rcaWeights: RcaWeight[];
   steps: FunnelStep[];
-  pins: SpatialPin[];
+  pins: PinItem[];
   sql: string;
-  sqlResults: SqlResultRow[];
+  sqlResults: SqlRow[];
   voiceSummary: string;
 }
 
-const PRESET_DATASETS: Record<PresetKey, PresetDataset> = {
+const PRESET_DATASETS: Record<PresetKey, Dataset> = {
   d2c: {
     id: "d2c",
     label: "D2C Checkout [-71.7%]",
@@ -148,17 +157,23 @@ const PRESET_DATASETS: Record<PresetKey, PresetDataset> = {
     dropoff: 71.7,
     aov: 1850,
     lift: "+38% CR LIFT",
+    rcaWeights: [
+      { label: "UI/UX & Forced OTP Wall", pct: 46, color: "bg-rose-600" },
+      { label: "Hidden ₹149 Fee Shock", pct: 31, color: "bg-neutral-800" },
+      { label: "Android WebView UPI Latency", pct: 18, color: "bg-neutral-500" },
+      { label: "Channel Intent Mismatch", pct: 5, color: "bg-neutral-300" },
+    ],
     steps: [
       { step: "01. Product Viewed", users: "1,00,000", pct: 100, status: "normal" },
       { step: "02. Added to Bag", users: "38,400", pct: 38.4, status: "normal" },
       { step: "03. Checkout Initiated", users: "25,000", pct: 65.1, status: "normal" },
-      { step: "04. Address & Payment", users: "7,075", pct: 28.3, drop: "-71.7% CHURN", status: "critical" },
+      { step: "04. Address & Payment", users: "7,075", pct: 28.3, fixedPct: 48.6, drop: "-71.7% CHURN", status: "critical" },
       { step: "05. Order Confirmed", users: "6,580", pct: 93.0, status: "healthy" },
     ],
     pins: [
-      { id: "01", x: "22%", y: "28%", title: "Forced Account OTP Modal", desc: "Blocks guest checkout; 41% exit within 6s of modal trigger.", metric: "41.2% Exit" },
-      { id: "02", x: "68%", y: "56%", title: "Late ₹149 Fee Reveal", desc: "Delivery + convenience surcharge hidden until final step.", metric: "31.4% Rage Click" },
-      { id: "03", x: "48%", y: "84%", title: "UPI CTA Below Fold", desc: 'Primary GPay/PhonePe button pushed below 6.1" Android viewport.', metric: "64% Unseen" },
+      { id: "01", title: "Forced Account OTP Modal", desc: "Blocks guest checkout; 41% exit within 6s of modal trigger.", metric: "41.2% Exit", wireLabel: "[Modal] Forced Email OTP" },
+      { id: "02", title: "Late ₹149 Fee Reveal", desc: "Delivery + convenience surcharge hidden until final step.", metric: "31.4% Rage Click", wireLabel: "+₹149 Hidden Fee Surge" },
+      { id: "03", title: "UPI CTA Below Fold", desc: 'Primary GPay/PhonePe button pushed below 6.1" Android viewport.', metric: "64% Unseen", wireLabel: 'Pay via UPI [Below 6.1" Fold]' },
     ],
     sql: `SELECT device_os, app_version,
   COUNT(DISTINCT session_id) AS sessions,
@@ -172,7 +187,7 @@ GROUP BY 1, 2 ORDER BY churn_pct DESC;`,
       { os: "iOS Mobile Safari", sessions: "5,800", latency: "610 ms", churn: "54.1%" },
       { os: "Desktop Chrome", sessions: "2,800", latency: "420 ms", churn: "48.2%" },
     ],
-    voiceSummary: "Diagnostic complete for QuickStyle D2C. Step 4 is leaking 316.9 Lakhs per month. 78.4 percent of drops occur on Android WebView due to a forced email login modal combined with a 4.2 second UPI intent latency spike. Deploying our synthesized 1-Tap Guest UPI Express component is projected to recover 69.7 Lakhs per month.",
+    voiceSummary: "Diagnostic complete for QuickStyle D2C. Step 4 is leaking 331.6 Lakhs per month. 78.4 percent of drops occur on Android WebView due to a forced email login modal combined with a 4.2 second UPI intent latency spike. Deploying our synthesized 1-Tap Guest UPI Express component recovers 73 Lakhs per month.",
   },
   fintech: {
     id: "fintech",
@@ -182,17 +197,23 @@ GROUP BY 1, 2 ORDER BY churn_pct DESC;`,
     dropoff: 74.8,
     aov: 3200,
     lift: "+44% KYC COMPLETION",
+    rcaWeights: [
+      { label: "Zero-Context Camera Prompt", pct: 44, color: "bg-rose-600" },
+      { label: "Live Agent Queue Wait (>4m)", pct: 34, color: "bg-neutral-800" },
+      { label: "PAN Glare Error 402 Blob", pct: 16, color: "bg-neutral-500" },
+      { label: "Low Network Drop", pct: 6, color: "bg-neutral-300" },
+    ],
     steps: [
       { step: "01. Landing Page", users: "80,000", pct: 100, status: "normal" },
       { step: "02. Mobile OTP Verified", users: "52,000", pct: 65.0, status: "normal" },
       { step: "03. PAN & Income Verified", users: "18,000", pct: 34.6, status: "normal" },
-      { step: "04. Aadhaar & Video KYC", users: "4,536", pct: 25.2, drop: "-74.8% CHURN", status: "critical" },
+      { step: "04. Aadhaar & Video KYC", users: "4,536", pct: 25.2, fixedPct: 49.4, drop: "-74.8% CHURN", status: "critical" },
       { step: "05. Credit Line Activated", users: "4,310", pct: 95.0, status: "healthy" },
     ],
     pins: [
-      { id: "01", x: "30%", y: "25%", title: "Zero-Context Camera Prompt", desc: "Browser requests camera/mic before explaining Video KYC purpose.", metric: "46% Deny Permission" },
-      { id: "02", x: "60%", y: "55%", title: "Opaque Error 402 Toast", desc: "PAN glare rejection shows raw JSON error without retry framing.", metric: "52% Abandon" },
-      { id: "03", x: "45%", y: "82%", title: "No Async DigiLocker Fallback", desc: "Forces live agent wait queue (avg 4.5 mins) instead of instant pull.", metric: "3.8m Queue Drop" },
+      { id: "01", title: "Zero-Context Camera Prompt", desc: "Browser requests camera/mic before explaining Video KYC purpose.", metric: "46% Deny Permission", wireLabel: "[Browser] Allow Camera Access?" },
+      { id: "02", title: "Opaque Error 402 Toast", desc: "PAN glare rejection shows raw JSON error without retry framing.", metric: "52% Abandon", wireLabel: "ERR_402: Invalid Image Blob" },
+      { id: "03", title: "No Async DigiLocker Fallback", desc: "Forces live agent wait queue (avg 4.5 mins) instead of instant pull.", metric: "3.8m Queue Drop", wireLabel: "Wait Queue: 14 Users Ahead" },
     ],
     sql: `SELECT kyc_method, error_code,
   COUNT(DISTINCT user_id) AS attempts,
@@ -206,7 +227,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
       { os: "Manual PAN Upload", sessions: "4,600", latency: "48.5 s", churn: "68.0%" },
       { os: "DigiLocker OAuth", sessions: "2,200", latency: "11.2 s", churn: "31.4%" },
     ],
-    voiceSummary: "Diagnostic complete for FinPulse Neo. 74.8 percent of credit-approved applicants abandon at Step 4 Video KYC. SQL telemetry proves that users hit with Error 402 during live video queuing wait 274 seconds before dropping. Switching default routing to 1-Click DigiLocker OAuth with an anti-glare overlay recovers 94.8 Lakhs monthly.",
+    voiceSummary: "Diagnostic complete for FinPulse Neo. 74.8 percent of credit-approved applicants abandon at Step 4 Video KYC. SQL telemetry proves that users hit with Error 402 during live video queuing wait 274 seconds before dropping. Switching default routing to 1-Click DigiLocker OAuth recovers 94.8 Lakhs monthly.",
   },
   edtech: {
     id: "edtech",
@@ -216,17 +237,23 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
     dropoff: 96.5,
     aov: 999,
     lift: "+62% TRIAL-TO-PAID",
+    rcaWeights: [
+      { label: "₹4,999 Annual Sticker Shock", pct: 58, color: "bg-rose-600" },
+      { label: "100% Blurred Answer Review", pct: 24, color: "bg-neutral-800" },
+      { label: "Missing AutoPay Cancel Trust", pct: 12, color: "bg-neutral-500" },
+      { label: "Payment Gateway Reload", pct: 6, color: "bg-neutral-300" },
+    ],
     steps: [
       { step: "01. Free Sign Up", users: "95,000", pct: 100, status: "normal" },
       { step: "02. Diagnostic Mock Taken", users: "64,000", pct: 67.3, status: "normal" },
       { step: "03. AI Score Report Viewed", users: "40,000", pct: 62.5, status: "normal" },
-      { step: "04. Pro Paywall Modal", users: "1,400", pct: 3.5, drop: "-96.5% CHURN", status: "critical" },
+      { step: "04. Pro Paywall Modal", users: "1,400", pct: 3.5, fixedPct: 18.2, drop: "-96.5% CHURN", status: "critical" },
       { step: "05. Subscription Active", users: "1,310", pct: 93.5, status: "healthy" },
     ],
     pins: [
-      { id: "01", x: "25%", y: "30%", title: "₹4,999 Annual Plan Default", desc: "Student cohort suffers sticker shock when billed annually upfront.", metric: "89% Bounce < 4s" },
-      { id: "02", x: "65%", y: "58%", title: "Locked Mistake Review Blur", desc: "Blurs 100% of test answers instead of unlocking 2 free AI explanations.", metric: "Zero Value Hook" },
-      { id: "03", x: "50%", y: "85%", title: "Missing AutoPay Cancel Trust", desc: "No visible 1-click UPI Mandate cancellation guarantee near CTA.", metric: "High Trust Friction" },
+      { id: "01", title: "₹4,999 Annual Plan Default", desc: "Student cohort suffers sticker shock when billed annually upfront.", metric: "89% Bounce < 4s", wireLabel: "Default: ₹4,999/yr Billed Today" },
+      { id: "02", title: "Locked Mistake Review Blur", desc: "Blurs 100% of test answers instead of unlocking 2 free AI explanations.", metric: "Zero Value Hook", wireLabel: "[Blurred] All 30 Solutions Locked" },
+      { id: "03", title: "Missing AutoPay Cancel Trust", desc: "No visible 1-click UPI Mandate cancellation guarantee near CTA.", metric: "High Trust Friction", wireLabel: "Start Recurring UPI Mandate" },
     ],
     sql: `SELECT pricing_variant, user_segment,
   COUNT(DISTINCT student_id) AS paywall_views,
@@ -239,11 +266,11 @@ GROUP BY 1, 2 ORDER BY conv_pct ASC;`,
       { os: "Quarterly ₹1,799", sessions: "5,500", latency: "9.4 s dwell", churn: "93.4%" },
       { os: "Weekly Sachet ₹149", sessions: "3,000", latency: "24.8 s dwell", churn: "84.2%" },
     ],
-    voiceSummary: "Diagnostic complete for PrepMate EdTech. 96.5 percent of students exit at the paywall in under 4 seconds due to the 4,999 rupee annual default plan. Introducing a 149 rupee 7-day Exam Sprint sachet pass with 2 unlocked AI answer explanations lifts paid conversion by 62 percent.",
+    voiceSummary: "Diagnostic complete for PrepMate EdTech. 96.5 percent of students exit at the paywall in under 4 seconds due to the 4,999 rupee annual default plan. Introducing a 149 rupee 7-day Exam Sprint pass with 2 unlocked AI answer explanations lifts paid conversion by 62 percent.",
   },
 };
 
-export default function FunnelDoctorSwissPerfect() {
+export default function FunnelDoctorSwissUltimate() {
   const [selectedPreset, setSelectedPreset] = useState<PresetKey>("d2c");
   const currentData = PRESET_DATASETS[selectedPreset];
 
@@ -254,7 +281,11 @@ export default function FunnelDoctorSwissPerfect() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // Financial Sliders (Synced with selected dataset, adjustable by user)
+  // Interactive Simulation Mode for the Funnel Stream ("Broken State" vs "Gemini Fixed State")
+  const [simFixedMode, setSimFixedMode] = useState(false);
+  const [customUploadName, setCustomUploadName] = useState<string | null>(null);
+
+  // Financial Sliders
   const [checkoutVisitors, setCheckoutVisitors] = useState(currentData.visitors);
   const [dropoffRate, setDropoffRate] = useState(currentData.dropoff);
   const [aov, setAov] = useState(currentData.aov);
@@ -262,21 +293,31 @@ export default function FunnelDoctorSwissPerfect() {
   const switchPreset = (key: PresetKey) => {
     setIsAuditing(true);
     setSelectedPreset(key);
+    setSimFixedMode(false);
     const next = PRESET_DATASETS[key];
     setTargetUrl(next.url);
     setCheckoutVisitors(next.visitors);
     setDropoffRate(next.dropoff);
     setAov(next.aov);
     setSelectedPin("01");
-    setTimeout(() => setIsAuditing(false), 450);
+    setTimeout(() => setIsAuditing(false), 350);
   };
 
-  // Accurate Financial Math (No Contradictory Labels)
+  const handleCustomScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCustomUploadName(file.name);
+      setIsAuditing(true);
+      setTimeout(() => setIsAuditing(false), 600);
+    }
+  };
+
+  // Financial Math
   const monthlyLeakedLakhs = ((checkoutVisitors * (dropoffRate / 100) * aov) / 100000).toFixed(1);
   const monthlyRecoverableLakhs = (Number(monthlyLeakedLakhs) * 0.22).toFixed(1);
   const annualizedRecoverableCr = ((Number(monthlyRecoverableLakhs) * 12) / 100).toFixed(2);
 
-  // Web Speech API for Gemini Live War Room Demo
+  // Voice Briefing
   const toggleVoiceBriefing = () => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     if (isSpeaking) {
@@ -299,7 +340,7 @@ export default function FunnelDoctorSwissPerfect() {
 
   return (
     <div className="min-h-screen bg-[#F7F7F8] text-[#0A0A0A] font-sans selection:bg-black selection:text-white relative">
-      {/* Smooth Topographic Background */}
+      {/* Smooth Architectural Topographic Background */}
       <SwissTopographicMesh />
 
       {/* Swiss Blueprint Dot Grid */}
@@ -311,41 +352,44 @@ export default function FunnelDoctorSwissPerfect() {
         }}
       />
 
-      {/* 1. PRECISION SWISS HEADER */}
-      <header className="sticky top-0 z-50 bg-[#F7F7F8]/85 backdrop-blur-md border-b border-[#E5E5E7]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* 1. FIXED SINGLE-LINE PRECISION SWISS HEADER (NO WRAPPING) */}
+      <header className="sticky top-0 z-50 bg-[#F7F7F8]/90 backdrop-blur-md border-b border-[#E5E5E7]">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4 whitespace-nowrap">
+          <div className="flex items-center gap-2.5 shrink-0">
             <div className="w-6 h-6 border-2 border-black flex items-center justify-center font-mono font-bold text-xs bg-white">
               FD
             </div>
             <span className="font-semibold tracking-tight text-sm uppercase">
               FunnelDoctor<span className="text-neutral-400"> / System</span>
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 text-[11px] font-mono bg-white rounded text-neutral-700 border border-neutral-300">
+            <span className="hidden lg:inline-flex items-center gap-1.5 ml-1 px-2 py-0.5 text-[10px] font-mono bg-white text-neutral-700 border border-neutral-300">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
               GEMINI 2.5 MULTIMODAL
             </span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-xs font-mono uppercase tracking-wider text-neutral-500">
+          <nav className="hidden xl:flex items-center gap-5 text-[11px] font-mono uppercase tracking-wider text-neutral-500">
+            <a href="#simulator" className="hover:text-black transition-colors">
+              00. Live Flow
+            </a>
             <a href="#telemetry" className="hover:text-black transition-colors">
-              01. Funnel & X-Ray
+              01. X-Ray & SQL
             </a>
             <a href="#remediation" className="hover:text-black transition-colors">
-              02. UI & PRD Synthesis
+              02. UI & PRD
             </a>
             <a href="#warroom" className="hover:text-black transition-colors">
-              03. Voice War Room
+              03. War Room
             </a>
             <a href="#calculator" className="hover:text-black transition-colors">
-              04. ROI Model
+              04. ROI
             </a>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={toggleVoiceBriefing}
-              className={`px-3 py-2 text-xs font-mono uppercase tracking-wider border transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider border transition-colors flex items-center gap-1.5 cursor-pointer ${
                 isSpeaking
                   ? "bg-rose-600 text-white border-rose-600"
                   : "bg-white text-black border-neutral-300 hover:border-black"
@@ -356,17 +400,17 @@ export default function FunnelDoctorSwissPerfect() {
             </button>
             <a
               href="#telemetry"
-              className="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-black text-white hover:bg-neutral-800 transition-colors border border-black"
+              className="px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-wider bg-black text-white hover:bg-neutral-800 transition-colors border border-black"
             >
-              Live Workspace [↵]
+              Workspace [↵]
             </a>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-32">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-14 pb-32">
         {/* 2. HERO SECTION */}
-        <section className="max-w-4xl mx-auto text-center pt-6 pb-14">
+        <section className="max-w-4xl mx-auto text-center pt-4 pb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-neutral-300 rounded-full text-[11px] font-mono tracking-tight text-neutral-600 mb-6 shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
             DIAGNOSTIC TELEMETRY FOR MULTIMODAL CONVERSION FRICTION
@@ -377,11 +421,11 @@ export default function FunnelDoctorSwissPerfect() {
             <span className="text-neutral-400 font-normal">Synthesize the fix in 60s.</span>
           </h1>
 
-          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto font-normal leading-relaxed mb-10">
+          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto font-normal leading-relaxed mb-8">
             Autonomous Root-Cause Analysis combining quantitative BigQuery funnel telemetry with Gemini Vision spatial screen inspection to output executive PRDs and production React code.
           </p>
 
-          {/* Fixed Target Input Bar */}
+          {/* Target Input Bar */}
           <div className="max-w-2xl mx-auto bg-white border border-neutral-300 p-2 flex flex-col sm:flex-row items-center gap-2 shadow-xs">
             <div className="flex items-center gap-2 px-3 py-2 w-full font-mono text-xs text-neutral-500 border-b sm:border-b-0 sm:border-r border-neutral-200">
               <span className="text-neutral-400 shrink-0">TARGET URL:</span>
@@ -400,7 +444,7 @@ export default function FunnelDoctorSwissPerfect() {
             </button>
           </div>
 
-          {/* Interactive Preset Switcher (Updates Entire Page State) */}
+          {/* Interactive Preset Switcher */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-4 font-mono text-[11px] text-neutral-500">
             <span>LIVE PRESETS:</span>
             {(Object.keys(PRESET_DATASETS) as PresetKey[]).map((key) => {
@@ -422,124 +466,309 @@ export default function FunnelDoctorSwissPerfect() {
           </div>
         </section>
 
-        {/* 3. 5-STAGE VISUAL FUNNEL TELEMETRY BAR (PROVES THE FUNNEL ANOMALY) */}
-        <section id="telemetry" className="mb-6">
-          <div className="bg-white border border-neutral-200 p-6 shadow-2xs">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-neutral-100 pb-4">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-black" />
-                <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">
-                  STAGE 00 // QUANTITATIVE FUNNEL TELEMETRY STREAM ({currentData.id.toUpperCase()})
-                </span>
+        {/* 3. INTERACTIVE USER-STREAM SIMULATION (BETTER THAN A VIDEO) */}
+        <section id="simulator" className="mb-6">
+          <div className="bg-white border border-neutral-300 p-6 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-5 pb-4 border-b border-neutral-200">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-black" />
+                  <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">
+                    INTERACTIVE FUNNEL PHYSICS SIMULATOR // WHY MULTIMODAL RCA MATTERS
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-600 mt-1">
+                  Traditional analytics only show <em>how many</em> users vanish at Step 04. Toggle the Gemini Remediation switch to see how fixing spatial UI bugs re-routes live user traffic.
+                </p>
               </div>
-              <span className="text-[11px] font-mono text-rose-600 font-bold bg-rose-50 px-2.5 py-0.5 border border-rose-200">
-                ANOMALY ISOLATED AT STEP 04 ({currentData.dropoff}% DROP-OFF)
-              </span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              {currentData.steps.map((s, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 border transition-all ${
-                    s.status === "critical"
-                      ? "bg-rose-50/40 border-rose-500 ring-1 ring-rose-500/30"
-                      : "bg-[#F7F7F8] border-neutral-200"
+              {/* Interactive Simulation Toggle */}
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <button
+                  onClick={() => setSimFixedMode(false)}
+                  className={`px-3 py-1.5 border cursor-pointer transition-all ${
+                    !simFixedMode
+                      ? "bg-rose-600 text-white border-rose-600 font-bold"
+                      : "bg-white text-neutral-600 border-neutral-300"
                   }`}
                 >
-                  <div className="flex items-center justify-between font-mono text-[10px] text-neutral-500 mb-1">
-                    <span>{s.step}</span>
-                    {s.drop && <span className="text-rose-600 font-bold">{s.drop}</span>}
-                  </div>
-                  <div className="text-xl font-bold tracking-tight font-mono mb-2" suppressHydrationWarning>
-                    {s.users} <span className="text-xs font-normal text-neutral-500">users</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-neutral-200 overflow-hidden">
-                    <div
-                      className={`h-full ${s.status === "critical" ? "bg-rose-600" : "bg-black"}`}
-                      style={{ width: `${s.pct}%` }}
+                  🚨 Broken Funnel ({currentData.dropoff}% Drop)
+                </button>
+                <button
+                  onClick={() => setSimFixedMode(true)}
+                  className={`px-3 py-1.5 border cursor-pointer transition-all ${
+                    simFixedMode
+                      ? "bg-emerald-600 text-white border-emerald-600 font-bold"
+                      : "bg-white text-neutral-600 border-neutral-300"
+                  }`}
+                >
+                  ⚡ Gemini Synthesized Fix ({currentData.lift})
+                </button>
+              </div>
+            </div>
+
+            {/* Animated SVG Traffic Pipeline */}
+            <div className="bg-[#F7F7F8] border border-neutral-200 p-4 mb-5">
+              <svg viewBox="0 0 900 130" className="w-full h-32 overflow-visible">
+                <defs>
+                  <linearGradient id="streamGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#0A0A0A" stopOpacity="0.15" />
+                    <stop offset="65%" stopColor={simFixedMode ? "#059669" : "#E11D48"} stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#059669" stopOpacity="0.3" />
+                  </linearGradient>
+                </defs>
+
+                {/* Main Conversion Conduit */}
+                <path
+                  d="M 20 45 L 560 45 L 880 45"
+                  stroke="#CBD5E1"
+                  strokeWidth="26"
+                  strokeLinecap="square"
+                  fill="none"
+                />
+
+                {/* Active Surviving Traffic Stream */}
+                <path
+                  d="M 20 45 L 560 45 L 880 45"
+                  stroke={simFixedMode ? "#059669" : "#0A0A0A"}
+                  strokeWidth={simFixedMode ? "18" : "8"}
+                  fill="none"
+                  className="transition-all duration-500"
+                />
+
+                {/* Step 04 Leak Conduit (Drops Downward when Broken) */}
+                <path
+                  d="M 560 45 Q 610 45, 635 105 L 770 105"
+                  stroke="#E11D48"
+                  strokeWidth={simFixedMode ? "3" : "16"}
+                  strokeDasharray="6 4"
+                  fill="none"
+                  className="transition-all duration-500"
+                />
+
+                {/* Animated Flowing User Dots (Surviving) */}
+                {[0, 1, 2, 3, 4].map((dot) => (
+                  <circle key={dot} r="4.5" fill={simFixedMode ? "#059669" : "#0A0A0A"}>
+                    <animateMotion
+                      dur={`${2.8 + dot * 0.3}s`}
+                      repeatCount="indefinite"
+                      path="M 20 45 L 880 45"
                     />
+                  </circle>
+                ))}
+
+                {/* Animated Leaking User Dots (Dropping out at Step 04) */}
+                {!simFixedMode &&
+                  [0, 1, 2, 3].map((dot) => (
+                    <circle key={dot} r="4.5" fill="#E11D48">
+                      <animateMotion
+                        dur={`${2.2 + dot * 0.4}s`}
+                        repeatCount="indefinite"
+                        path="M 280 45 L 560 45 Q 610 45, 635 105 L 770 105"
+                      />
+                    </circle>
+                  ))}
+
+                {/* Stage Node Labels */}
+                <g className="font-mono text-[10px]" fill="#0A0A0A">
+                  <rect x="15" y="10" width="115" height="20" fill="#FFFFFF" stroke="#CBD5E1" />
+                  <text x="22" y="23" fontWeight="bold">
+                    01. VIEW (100%)
+                  </text>
+
+                  <rect x="195" y="10" width="115" height="20" fill="#FFFFFF" stroke="#CBD5E1" />
+                  <text x="202" y="23" fontWeight="bold">
+                    02. BAG (38.4%)
+                  </text>
+
+                  <rect x="375" y="10" width="125" height="20" fill="#FFFFFF" stroke="#CBD5E1" />
+                  <text x="382" y="23" fontWeight="bold">
+                    03. START (65.1%)
+                  </text>
+
+                  <rect
+                    x="530"
+                    y="8"
+                    width="155"
+                    height="22"
+                    fill={simFixedMode ? "#ECFDF5" : "#FFF1F2"}
+                    stroke={simFixedMode ? "#059669" : "#E11D48"}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="538"
+                    y="22"
+                    fill={simFixedMode ? "#047857" : "#BE123C"}
+                    fontWeight="bold"
+                    suppressHydrationWarning
+                  >
+                    {simFixedMode ? "04. 1-TAP FIXED (48.6%)" : `04. FRICTION (-${currentData.dropoff}%)`}
+                  </text>
+
+                  <rect x="745" y="10" width="135" height="20" fill="#FFFFFF" stroke="#CBD5E1" />
+                  <text x="752" y="23" fontWeight="bold">
+                    05. PAID ORDER
+                  </text>
+
+                  {/* Leak Drain Label */}
+                  <text
+                    x="645"
+                    y="95"
+                    fill="#BE123C"
+                    fontWeight="bold"
+                    suppressHydrationWarning
+                  >
+                    {simFixedMode
+                      ? `✓ RECOVERED: +₹${monthlyRecoverableLakhs}L/MO`
+                      : `✗ REVENUE DRAIN: -₹${monthlyLeakedLakhs}L/MO`}
+                  </text>
+                </g>
+              </svg>
+            </div>
+
+            {/* 5-Stage Quantitative Funnel Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {currentData.steps.map((s, idx) => {
+                const displayPct = simFixedMode && s.fixedPct ? s.fixedPct : s.pct;
+                return (
+                  <div
+                    key={idx}
+                    className={`p-3.5 border transition-all ${
+                      s.status === "critical"
+                        ? simFixedMode
+                          ? "bg-emerald-50/40 border-emerald-600"
+                          : "bg-rose-50/40 border-rose-500 ring-1 ring-rose-500/30"
+                        : "bg-[#F7F7F8] border-neutral-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-mono text-[10px] text-neutral-500 mb-1">
+                      <span>{s.step}</span>
+                      {s.drop && (
+                        <span
+                          className={simFixedMode ? "text-emerald-700 font-bold" : "text-rose-600 font-bold"}
+                          suppressHydrationWarning
+                        >
+                          {simFixedMode ? currentData.lift : s.drop}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-lg font-bold tracking-tight font-mono mb-2" suppressHydrationWarning>
+                      {s.users} <span className="text-[11px] font-normal text-neutral-500">users</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-neutral-200 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${
+                          s.status === "critical"
+                            ? simFixedMode
+                              ? "bg-emerald-600"
+                              : "bg-rose-600"
+                            : "bg-black"
+                        }`}
+                        style={{ width: `${displayPct}%` }}
+                      />
+                    </div>
+                    <div className="mt-1.5 font-mono text-[10px] text-neutral-500">
+                      Step Conversion:{" "}
+                      <strong
+                        className={
+                          s.status === "critical"
+                            ? simFixedMode
+                              ? "text-emerald-700"
+                              : "text-rose-600"
+                            : "text-black"
+                        }
+                        suppressHydrationWarning
+                      >
+                        {displayPct}%
+                      </strong>
+                    </div>
                   </div>
-                  <div className="mt-1.5 font-mono text-[10px] text-neutral-500">
-                    Step Conversion:{" "}
-                    <strong className={s.status === "critical" ? "text-rose-600" : "text-black"} suppressHydrationWarning>
-                      {s.pct}%
-                    </strong>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
 
-        {/* 4. MODULE 01 (SPATIAL VISION WIREFRAME) & MODULE 02 (SQL + EXECUTED TABLE) */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Module 01: True Visual Viewport X-Ray with Interactive Hotspot Pins */}
+        {/* 4. MODULE 01 (SPATIAL VISION WIREFRAME - ZERO OVERLAP) & MODULE 02 (SQL + RCA WEIGHTS) */}
+        <section id="telemetry" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Module 01: True Visual Viewport X-Ray */}
           <div className="lg:col-span-7 bg-white border border-neutral-200 p-8 flex flex-col justify-between shadow-2xs">
             <div>
-              <div className="flex items-center justify-between mb-6 border-b border-neutral-100 pb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-6 border-b border-neutral-100 pb-4">
                 <div className="flex items-center gap-2">
                   <ScanEye className="w-4 h-4 text-black" />
                   <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">
                     MODULE 01 // GEMINI 2.5 SPATIAL VISION X-RAY
                   </span>
                 </div>
-                <span className="text-[11px] font-mono px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 font-bold">
-                  3 SPATIAL FAULTS PINNED
-                </span>
+                <label className="text-[11px] font-mono px-2.5 py-1 bg-black text-white flex items-center gap-1.5 cursor-pointer hover:bg-neutral-800">
+                  <Upload className="w-3 h-3" />
+                  {customUploadName
+                    ? `Scanned: ${customUploadName.slice(0, 14)}...`
+                    : "Upload Custom UI Screenshot"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCustomScreenshot}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
               <h3 className="text-2xl font-semibold tracking-tight mb-2">Multimodal Viewport Inspection</h3>
               <p className="text-sm text-neutral-600 mb-6 leading-relaxed">
-                Click any spatial pin on the mobile wireframe to inspect how Gemini Vision correlates layout flaws with rage-clicks and step abandonment.
+                Click any spatial pin on the mobile blueprint to inspect how Gemini Vision correlates layout flaws with rage-clicks and step abandonment.
               </p>
             </div>
 
-            {/* Split Wireframe + Pin Inspector */}
+            {/* Split Wireframe + Pin Inspector (CLEAN PIN ALIGNMENT - NO TEXT OVERLAP) */}
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 bg-[#F7F7F8] border border-neutral-200 p-4">
               {/* Interactive Mobile Screen Blueprint */}
-              <div className="sm:col-span-5 bg-white border-2 border-neutral-900 p-3 relative min-h-[250px] flex flex-col justify-between">
-                <div className="flex items-center justify-between border-b border-neutral-200 pb-1.5 font-mono text-[9px] text-neutral-400">
-                  <span>390x844PX</span>
-                  <span className="text-rose-600 font-bold">● REC VIEWPORT</span>
+              <div className="sm:col-span-5 bg-white border-2 border-neutral-900 p-3.5 flex flex-col justify-between">
+                <div className="flex items-center justify-between border-b border-neutral-200 pb-2 font-mono text-[9px] text-neutral-400">
+                  <span>390x844PX VIEWPORT</span>
+                  <span className="text-rose-600 font-bold">● 3 FAULTS</span>
                 </div>
 
-                {/* Simulated UI Wireframe Blocks */}
-                <div className="space-y-2 my-2">
-                  <div className="h-8 bg-rose-50 border border-dashed border-rose-300 p-1.5 font-mono text-[9px] text-rose-700 flex items-center justify-between">
-                    <span>[Modal] Forced OTP Login</span>
-                    <span className="font-bold">#01</span>
-                  </div>
-                  <div className="h-6 bg-neutral-100 border border-neutral-200 p-1 font-mono text-[9px] text-neutral-400">
-                    Address Line 1...
-                  </div>
-                  <div className="h-8 bg-rose-50 border border-dashed border-rose-300 p-1.5 font-mono text-[9px] text-rose-700 flex items-center justify-between">
-                    <span>+₹149 Hidden Fee Surge</span>
-                    <span className="font-bold">#02</span>
-                  </div>
+                {/* Clean Non-Overlapping Wireframe Blocks with Integrated Pin Badges */}
+                <div className="space-y-2.5 my-3">
+                  {currentData.pins.map((pin, idx) => (
+                    <React.Fragment key={pin.id}>
+                      {idx === 2 && (
+                        <div className="border-t-2 border-dashed border-rose-500 pt-1 font-mono text-[9px] text-rose-600 flex justify-between">
+                          <span>--- 6.1" ANDROID FOLD ---</span>
+                          <span className="font-bold">BELOW FOLD</span>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setSelectedPin(pin.id)}
+                        className={`w-full text-left p-2 border transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                          selectedPin === pin.id
+                            ? "bg-rose-50 border-rose-500 shadow-2xs"
+                            : "bg-neutral-50 border-dashed border-neutral-300 hover:border-black"
+                        }`}
+                      >
+                        <span className="font-mono text-[10px] text-neutral-800 truncate">
+                          {pin.wireLabel}
+                        </span>
+                        <span
+                          className={`w-5 h-5 rounded-full font-mono text-[10px] font-bold flex items-center justify-center shrink-0 ${
+                            selectedPin === pin.id
+                              ? "bg-rose-600 text-white ring-2 ring-rose-300"
+                              : "bg-black text-white"
+                          }`}
+                        >
+                          {pin.id}
+                        </span>
+                      </button>
+                    </React.Fragment>
+                  ))}
                 </div>
 
-                {/* Fold Line */}
-                <div className="border-t-2 border-dashed border-rose-500 pt-1.5 font-mono text-[9px] text-rose-600 flex justify-between items-center">
-                  <span>--- 6.1" SCREEN FOLD ---</span>
-                  <span className="bg-rose-600 text-white px-1 font-bold">#03 BELOW FOLD</span>
+                <div className="font-mono text-[9px] text-neutral-400 border-t border-neutral-100 pt-1.5 flex justify-between">
+                  <span>HEURISTIC SCAN: BAYMARD</span>
+                  <span className="text-black font-bold">CONFIDENCE: 98.4%</span>
                 </div>
-
-                {/* Clickable Pulsing Pins */}
-                {currentData.pins.map((pin) => (
-                  <button
-                    key={pin.id}
-                    onClick={() => setSelectedPin(pin.id)}
-                    style={{ left: pin.x, top: pin.y }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full font-mono text-[10px] font-bold flex items-center justify-center transition-transform cursor-pointer shadow-md ${
-                      selectedPin === pin.id
-                        ? "bg-rose-600 text-white scale-125 ring-4 ring-rose-500/30"
-                        : "bg-black text-white hover:scale-110"
-                    }`}
-                  >
-                    {pin.id}
-                  </button>
-                ))}
               </div>
 
               {/* Pin Findings List */}
@@ -570,6 +799,24 @@ export default function FunnelDoctorSwissPerfect() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            {/* Senior Data Analyst Addition: 4-Pillar Root Cause Weight Attribution Bar */}
+            <div className="mt-4 pt-4 border-t border-neutral-200 font-mono text-[11px]">
+              <div className="flex justify-between text-neutral-500 mb-2">
+                <span>MULTIVARIATE ROOT-CAUSE ATTRIBUTION WEIGHTS</span>
+                <span className="text-black font-bold">SHAPLEY VALUE MODEL</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {currentData.rcaWeights.map((w, i) => (
+                  <div key={i} className="bg-[#F7F7F8] border border-neutral-200 p-2">
+                    <div className="text-xs font-bold text-black" suppressHydrationWarning>
+                      {w.pct}% Weight
+                    </div>
+                    <div className="text-[10px] text-neutral-500 truncate">{w.label}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -642,7 +889,6 @@ export default function FunnelDoctorSwissPerfect() {
               </h2>
             </div>
 
-            {/* 3-Mode Switch: Side-by-Side Diff | Executive PRD | React Code */}
             <div className="inline-flex border border-neutral-300 p-0.5 bg-neutral-200/60 font-mono text-xs">
               <button
                 onClick={() => setActiveTab("split")}
@@ -678,7 +924,6 @@ export default function FunnelDoctorSwissPerfect() {
           </div>
 
           <div className="bg-white border border-neutral-200 p-8 shadow-2xs">
-            {/* TAB A: SIDE-BY-SIDE VISUAL DIFF (NO EMPTY WHITE SPACE) */}
             {activeTab === "split" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
                 {/* Left: Broken Baseline */}
@@ -689,7 +934,7 @@ export default function FunnelDoctorSwissPerfect() {
                         <AlertTriangle className="w-4 h-4 text-rose-600" />
                         CURRENT BROKEN BASELINE
                       </span>
-                      <span className="bg-rose-100 text-rose-800 px-2 py-0.5 font-bold">
+                      <span className="bg-rose-100 text-rose-800 px-2 py-0.5 font-bold" suppressHydrationWarning>
                         {currentData.dropoff}% DROP-OFF
                       </span>
                     </div>
@@ -725,7 +970,7 @@ export default function FunnelDoctorSwissPerfect() {
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                         GEMINI SYNTHESIZED REMEDIATION
                       </span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold" suppressHydrationWarning>
                         {currentData.lift}
                       </span>
                     </div>
@@ -761,7 +1006,7 @@ export default function FunnelDoctorSwissPerfect() {
                           <span className="text-emerald-700 font-bold">P95: 380ms</span>
                         </div>
                         <button
-                          className="w-full py-3 bg-black text-white font-mono text-xs tracking-wider uppercase hover:bg-neutral-800 transition-colors"
+                          className="w-full py-3 bg-black text-white font-mono text-xs tracking-wider uppercase hover:bg-neutral-800 transition-colors cursor-pointer"
                           suppressHydrationWarning
                         >
                           Pay ₹{aov.toLocaleString()} Instantly via UPI [GPay / PhonePe]
@@ -780,7 +1025,6 @@ export default function FunnelDoctorSwissPerfect() {
               </div>
             )}
 
-            {/* TAB B: EXECUTIVE AUTO-PRD & RICE PRIORITIZATION SPEC */}
             {activeTab === "prd" && (
               <div className="font-mono text-xs space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 pb-4">
@@ -867,7 +1111,6 @@ export default function FunnelDoctorSwissPerfect() {
               </div>
             )}
 
-            {/* TAB C: PRODUCTION REACT + TAILWIND CODE */}
             {activeTab === "code" && (
               <div>
                 <div className="flex justify-between items-center mb-3 font-mono text-xs">
@@ -942,7 +1185,7 @@ export function ExpressUpiCheckout({ cartTotal = ${aov}, freeShipMin = 999, onIn
           </div>
         </section>
 
-        {/* 7. MODULE 05: FIXED FINANCIAL SENSITIVITY MODEL */}
+        {/* 7. MODULE 05: FINANCIAL SENSITIVITY MODEL */}
         <section id="calculator" className="pt-14">
           <div className="border-t border-neutral-200 pt-10">
             <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">
@@ -1009,7 +1252,6 @@ export function ExpressUpiCheckout({ cartTotal = ${aov}, freeShipMin = 999, onIn
                 </div>
               </div>
 
-              {/* Accurate Financial Output Column */}
               <div className="border-t md:border-t-0 md:border-l border-neutral-200 md:pl-8 flex flex-col justify-center font-mono">
                 <span className="text-[11px] text-neutral-400 block mb-1">MONTHLY REVENUE LEAKED:</span>
                 <span
