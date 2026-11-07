@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   ArrowRight, 
   ScanEye, 
@@ -941,78 +942,83 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
       {/* Topographic Mesh Background */}
       <TopographicMesh />
 
-      {/* 1. CLEAN, UN-CROWDED MINIMALIST NAVBAR */}
-      <header className="sticky top-0 z-50 bg-[#FBFBFB]/90 backdrop-blur-md border-b border-neutral-200/80">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-neutral-900 text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs">
+      {/* 1. MINIMALIST, PREMIUM SWISS NAVBAR */}
+      <header className="sticky top-0 z-50 bg-[#FBFBFB]/85 backdrop-blur-md border-b border-neutral-200/70">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
+          
+          {/* Brand Identity */}
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
+            <div className="w-7 h-7 rounded-lg bg-neutral-950 text-white flex items-center justify-center font-mono font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
               FD
             </div>
-            <div className="flex flex-col">
-              <span className="font-semibold tracking-tight text-sm uppercase">
-                FunnelDoctor<span className="text-neutral-400">.ai</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold tracking-tight text-sm text-neutral-900">
+                FunnelDoctor
               </span>
-              <span className="text-[10px] font-mono text-emerald-700 tracking-wider">
-                GEMINI 2.5 ACTIVE
+              <span className="text-[10px] font-mono font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md">
+                v2.5
               </span>
             </div>
-          </div>
+          </Link>
           
-          <nav className="hidden lg:flex items-center gap-7 text-xs font-mono uppercase tracking-wider text-neutral-500">
-            <a href="#telemetry" className="hover:text-black transition-colors">01. Telemetry</a>
-            <a href="#xray" className="hover:text-black transition-colors">02. Vision X-Ray</a>
-            <a href="#sql" className="hover:text-black transition-colors">03. SQL Proof</a>
-            <a href="#remediation" className="hover:text-black transition-colors text-emerald-700 font-semibold">04. Synthesized Fix</a>
-            <a href="#calculator" className="hover:text-black transition-colors">05. ROI Model</a>
+          {/* Refined Center Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-neutral-500">
+            <a href="#telemetry" className="hover:text-neutral-950 transition-colors">Telemetry</a>
+            <a href="#xray" className="hover:text-neutral-950 transition-colors">Vision X-Ray</a>
+            <a href="#remediation" className="hover:text-neutral-950 transition-colors text-emerald-700 font-semibold">Synthesized Fix</a>
+            <a href="#calculator" className="hover:text-neutral-950 transition-colors">ROI Model</a>
             <button 
               onClick={() => setIsPricingModalOpen(true)}
-              className="hover:text-black transition-colors text-neutral-800 font-semibold flex items-center gap-1 cursor-pointer"
+              className="hover:text-neutral-950 transition-colors flex items-center gap-1 cursor-pointer text-neutral-600"
             >
               <span>Pricing</span>
-              <span className="text-[9px] bg-neutral-200 text-neutral-800 px-1 py-0.5 rounded font-mono">B2B</span>
+              <span className="text-[9px] bg-neutral-200/80 text-neutral-700 px-1 py-0.5 rounded font-mono font-bold">B2B</span>
             </button>
           </nav>
 
-          <div className="flex items-center gap-2.5">
-            <button 
-              onClick={handleDownloadFullRcaPackage}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all bg-white text-neutral-700 border-neutral-200 hover:border-black cursor-pointer shadow-2xs"
-              title="Download Complete Executive RCA Markdown Package"
-            >
-              <Download className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Export RCA</span>
-            </button>
-
+          {/* Action Group */}
+          <div className="flex items-center gap-2">
+            {/* Audio Briefing */}
             <button 
               onClick={toggleVoice}
-              className={`px-3 py-2 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+              className={`px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                 isSpeaking 
-                  ? 'bg-neutral-900 text-white border-neutral-900 shadow-md ring-2 ring-emerald-500/30' 
-                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-black'
+                  ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs ring-2 ring-emerald-500/30' 
+                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-black shadow-2xs'
               }`}
               title="Multimodal Voice RCA Briefing"
             >
               {isSpeaking ? (
                 <div className="flex items-center gap-1.5">
-                  <div className="flex items-end gap-0.5 h-3">
+                  <div className="flex items-end gap-0.5 h-2.5">
                     <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2" style={{ animationDuration: '0.4s' }} />
-                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-3" style={{ animationDuration: '0.6s' }} />
+                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2.5" style={{ animationDuration: '0.6s' }} />
                     <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-1.5" style={{ animationDuration: '0.5s' }} />
-                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2.5" style={{ animationDuration: '0.7s' }} />
                   </div>
-                  <span className="text-emerald-400 font-bold hidden md:inline">Voice Playing</span>
+                  <span className="text-emerald-400 font-bold hidden xl:inline text-[11px]">Playing</span>
                 </div>
               ) : (
                 <>
                   <Volume2 className="w-3.5 h-3.5 text-neutral-500" />
-                  <span className="hidden md:inline">Audio Brief</span>
+                  <span className="hidden xl:inline text-[11px]">Audio</span>
                 </>
               )}
             </button>
 
+            {/* Export RCA Package */}
+            <button 
+              onClick={handleDownloadFullRcaPackage}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all bg-white text-neutral-700 border-neutral-200 hover:border-black cursor-pointer shadow-2xs"
+              title="Download Complete Executive RCA Markdown Package"
+            >
+              <Download className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="text-[11px]">Export</span>
+            </button>
+
+            {/* Launch / Primary CTA */}
             <button 
               onClick={() => scrollToSection('remediation')}
-              className="px-4 sm:px-5 py-2 text-xs font-mono uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+              className="px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider bg-neutral-950 hover:bg-black text-white font-medium rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
             >
               Launch Fix →
             </button>
