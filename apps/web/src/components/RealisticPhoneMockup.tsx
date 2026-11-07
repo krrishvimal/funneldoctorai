@@ -167,19 +167,30 @@ export default function RealisticPhoneMockup({
                   )}
 
                   {selectedIssue === '03' && (
-                    <div className="p-3 bg-white rounded-2xl border-2 border-rose-500/80 shadow-[0_8px_20px_-6px_rgba(225,29,72,0.15)] space-y-2.5">
-                      <div className="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-center">
-                        <span className="font-bold text-[11px] text-amber-900 block">🎉 15% FESTIVE DISCOUNT</span>
-                        <p className="text-[10px] text-amber-700">Orders above ₹5,000</p>
+                    <div className="p-4 bg-white rounded-2xl border-2 border-rose-500/80 shadow-[0_8px_20px_-6px_rgba(225,29,72,0.15)] space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">📱</span>
+                        <span className="font-semibold text-xs text-neutral-900">Enter UPI ID / VPA</span>
                       </div>
-                      <div className="border-t-2 border-dashed border-rose-400 my-1 relative text-center">
-                        <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
-                          ── Bottom of Phone Screen (Cut Off) ──
-                        </span>
+                      <p className="text-[11px] text-neutral-500 leading-relaxed">
+                        Manually type your UPI handle to receive a collect request.
+                      </p>
+                      
+                      {/* Manual UPI Input Box */}
+                      <div className="space-y-1.5">
+                        <div className="p-2.5 bg-neutral-50 border border-rose-300 rounded-xl flex items-center justify-between text-xs font-mono">
+                          <span className="text-neutral-900">rahul.kumar92@okhdfc</span>
+                          <span className="text-rose-600 text-[10px] font-bold">Typo?</span>
+                        </div>
+                        <div className="text-[10px] text-rose-600 font-mono flex items-center gap-1">
+                          <span>⚠️</span> Invalid VPA handle. Check spelling.
+                        </div>
                       </div>
-                      <div className="opacity-40 p-2 bg-neutral-100 rounded-lg text-center text-[11px] font-mono text-neutral-500">
-                        [ ⬇️ Pay Button is Hidden Below Screen ]
-                      </div>
+
+                      {/* Action Button */}
+                      <button className="w-full py-2.5 rounded-xl bg-neutral-900 text-white font-medium text-xs shadow-xs">
+                        Verify ID & Request Payment
+                      </button>
                     </div>
                   )}
 
@@ -192,7 +203,7 @@ export default function RealisticPhoneMockup({
                         ? 'Forced login popup blocks guest buyers. 41.2% exit within 6 seconds.'
                         : selectedIssue === '02'
                         ? 'Surprise fee reveals at final screen, causing 31.4% rage clicks.'
-                        : 'Pay button pushed below screen by promo banner. 64% never scroll down.'}
+                        : 'Forcing manual UPI ID typing causes 48.2% drop-off. Shoppers forget handles.'}
                     </p>
                   </div>
                 </>
@@ -280,40 +291,39 @@ export default function RealisticPhoneMockup({
                   )}
 
                   {selectedIssue === '03' && (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
                         <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
                           <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                          Pay Button Instantly Visible
+                          1-Tap Instant UPI Active
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO SCROLLING NEEDED</span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">ZERO TYPING</span>
                       </div>
 
-                      <div className="p-2 bg-amber-50/80 border border-amber-200 rounded-lg flex items-center justify-between text-[11px]">
-                        <span className="text-amber-900 font-medium flex items-center gap-1">
-                          <span>🎉</span> <strong>DIWALI2026</strong> (-15% Applied)
-                        </span>
-                        <span className="font-mono text-emerald-700 font-bold">-₹277.50</span>
+                      {/* 1-Tap App Selector */}
+                      <div className="p-3 bg-white border border-neutral-200 rounded-xl space-y-2">
+                        <span className="text-[10px] font-mono text-neutral-400 uppercase block">Launch Installed App:</span>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {['Google Pay', 'PhonePe', 'Paytm'].map((app, i) => (
+                            <div key={i} className={`p-2 rounded-lg border text-center text-[10px] font-mono font-bold ${i === 0 ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs' : 'bg-white text-neutral-700 border-neutral-200'}`}>
+                              {app}
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="flex justify-between items-center px-1 text-xs font-mono">
-                        <span className="text-neutral-500">Total Payable:</span>
-                        <span className="font-bold text-neutral-900 text-sm">₹1,572.50</span>
+                        <span className="text-neutral-500">Order Total:</span>
+                        <span className="font-bold text-neutral-900 text-sm">₹1,999</span>
                       </div>
 
                       <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
-                        ⚡ 1-Tap Pay ₹1,572.50 via UPI
+                        ⚡ 1-Tap Pay ₹1,999 with Google Pay
                       </button>
-
-                      <div className="border-t-2 border-dashed border-emerald-300 my-1 relative text-center">
-                        <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
-                          ── Bottom of Phone Screen (Pay button is 100% visible above) ──
-                        </span>
-                      </div>
 
                       <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
                         <span className="text-emerald-700 font-bold shrink-0">✓ FIX #03:</span>
-                        <span>Pay button pinned to visible screen. 100% of shoppers see it immediately without scrolling.</span>
+                        <span>Direct 1-tap app intent replaces manual UPI typing. Eliminates 48.2% drop-off.</span>
                       </div>
                     </div>
                   )}
