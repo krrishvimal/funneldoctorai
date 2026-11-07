@@ -977,16 +977,6 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
           {/* Action Group */}
           <div className="flex items-center gap-2.5">
-            {/* Export RCA Package */}
-            <button 
-              onClick={handleDownloadFullRcaPackage}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all bg-white text-neutral-700 border-neutral-200 hover:border-black cursor-pointer shadow-2xs"
-              title="Download Complete Executive RCA Markdown Package"
-            >
-              <Download className="w-3.5 h-3.5 text-neutral-500" />
-              <span className="text-[11px]">Export</span>
-            </button>
-
             {/* Launch / Primary CTA */}
             <button 
               onClick={() => scrollToSection('remediation')}
