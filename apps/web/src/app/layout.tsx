@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className="min-h-screen bg-[#F7F7F8] text-[#0A0A0A] antialiased selection:bg-black selection:text-white"
+        className="min-h-screen bg-[#FBFBFB] text-[#09090B] antialiased selection:bg-emerald-500/20 selection:text-emerald-900"
         suppressHydrationWarning
       >
         {children}

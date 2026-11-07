@@ -5,14 +5,12 @@ import {
   ArrowRight, 
   ScanEye, 
   Terminal, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Upload, 
+  Volume2, 
   Copy, 
   Check, 
-  Volume2, 
-  Sparkles, 
-  ChevronRight 
+  Sparkles,
+  Database,
+  Layers
 } from 'lucide-react';
 
 // ULTRA-SMOOTH BEZIER TOPOGRAPHIC MESH BACKGROUND
@@ -160,11 +158,12 @@ WHERE step_index = 4 GROUP BY 1, 2;`,
 };
 
 export default function FunnelDoctorMinimalist() {
-  const [selectedPreset, setSelectedPreset] = useState('d2c');
+  const [selectedPreset] = useState('d2c');
   const currentData = PRESET_DATASETS[selectedPreset] || PRESET_DATASETS.d2c;
   const [targetUrl, setTargetUrl] = useState(currentData.url);
   const [selectedPin, setSelectedPin] = useState('01');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   // Financial Sliders
   const [visitors, setVisitors] = useState(currentData.visitors);
@@ -173,6 +172,7 @@ export default function FunnelDoctorMinimalist() {
 
   const leakedLakhs = ((visitors * (dropoff / 100) * aov) / 100000).toFixed(1);
   const recoverableLakhs = (Number(leakedLakhs) * 0.22).toFixed(1);
+  const annualizedCr = ((Number(recoverableLakhs) * 12) / 100).toFixed(2);
 
   const toggleVoice = () => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -187,20 +187,21 @@ export default function FunnelDoctorMinimalist() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const handleCopySql = () => {
+    navigator.clipboard?.writeText(currentData.sql);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 2000);
+  };
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-[#FBFBFB] text-[#09090B] font-sans selection:bg-emerald-500/20 selection:text-emerald-900 relative">
       
-      {/* Topographic Mesh Background */}
+      {/* Topographic Mesh Background (Clean without dot grid noise) */}
       <TopographicMesh />
-
-      {/* Subtle Dot Grid */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-30"
-        style={{
-          backgroundImage: 'radial-gradient(#d4d4d8 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
 
       {/* 1. CLEAN, UN-CROWDED MINIMALIST NAVBAR */}
       <header className="sticky top-0 z-50 bg-[#FBFBFB]/90 backdrop-blur-md border-b border-neutral-200/80">
@@ -210,14 +211,19 @@ export default function FunnelDoctorMinimalist() {
               FD
             </div>
             <div className="flex flex-col">
-              <span className="font-semibold tracking-tight text-sm uppercase">FunnelDoctor<span className="text-neutral-400">.ai</span></span>
-              <span className="text-[10px] font-mono text-emerald-700 tracking-wider">GEMINI 2.5 ACTIVE</span>
+              <span className="font-semibold tracking-tight text-sm uppercase">
+                FunnelDoctor<span className="text-neutral-400">.ai</span>
+              </span>
+              <span className="text-[10px] font-mono text-emerald-700 tracking-wider">
+                GEMINI 2.5 ACTIVE
+              </span>
             </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider text-neutral-500">
             <a href="#telemetry" className="hover:text-black transition-colors">Telemetry</a>
             <a href="#xray" className="hover:text-black transition-colors">Vision X-Ray</a>
+            <a href="#sql" className="hover:text-black transition-colors">SQL Evidence</a>
             <a href="#calculator" className="hover:text-black transition-colors">ROI Model</a>
           </nav>
 
@@ -233,7 +239,10 @@ export default function FunnelDoctorMinimalist() {
               <Volume2 className="w-3.5 h-3.5" />
               {isSpeaking ? 'Playing...' : 'Audio Brief'}
             </button>
-            <button className="px-5 py-2 text-xs font-mono uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
+            <button 
+              onClick={() => scrollToSection('telemetry')}
+              className="px-5 py-2 text-xs font-mono uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+            >
               Launch Workspace →
             </button>
           </div>
@@ -254,7 +263,7 @@ export default function FunnelDoctorMinimalist() {
             <span className="text-neutral-400 font-normal">Synthesize the fix in 60s.</span>
           </h1>
 
-          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-8">
             Combine quantitative BigQuery funnel telemetry with Gemini Vision spatial screen inspection to output executive PRDs and production React code.
           </p>
 
@@ -269,20 +278,62 @@ export default function FunnelDoctorMinimalist() {
                 className="w-full bg-transparent text-black focus:outline-none font-mono text-xs" 
               />
             </div>
-            <button className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer">
+            <button 
+              onClick={() => scrollToSection('telemetry')}
+              className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+            >
               Run Audit <ArrowRight className="w-3.5 h-3.5" />
             </button>
+          </div>
+
+          {/* Trust & Live Benchmark Line */}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-neutral-500 pt-5">
+            <span className="flex items-center gap-1.5 text-neutral-800 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              QuickStyle D2C Benchmark
+            </span>
+            <span className="text-neutral-300">·</span>
+            <span>₹331.6L monthly leakage isolated</span>
+            <span className="text-neutral-300">·</span>
+            <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+              {currentData.lift}
+            </span>
+          </div>
+
+          {/* 3-Step Typographic Breadcrumb */}
+          <div className="pt-10 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-neutral-400 border-t border-neutral-200/70 pt-6">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-[10px]">1</span>
+                <span className="text-neutral-700 font-medium">Ingest Telemetry</span>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-300" />
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-[10px]">2</span>
+                <span className="text-neutral-700 font-medium">Vision + SQL RCA</span>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-300" />
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px]">3</span>
+                <span className="text-emerald-800 font-semibold">PRD & 1-Tap Fix</span>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* 3. QUANTITATIVE FUNNEL STREAM */}
         <section id="telemetry">
           <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-100 font-mono text-xs text-neutral-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-neutral-100 font-mono text-xs text-neutral-500 gap-2">
               <span className="uppercase tracking-wider">Quantitative Funnel Stream</span>
-              <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                Anomaly at Step 04 (-71.7% Drop)
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                  {currentData.lift} PROJECTED
+                </span>
+                <span className="text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                  Anomaly at Step 04 (-71.7% Drop)
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
@@ -311,11 +362,11 @@ export default function FunnelDoctorMinimalist() {
           </div>
         </section>
 
-        {/* 4. MODULE 01: VISION X-RAY (SIDE-BY-SIDE WITH GENEROUS PADDING & BREATHING ROOM) */}
+        {/* 4. MODULE 01: VISION X-RAY */}
         <section id="xray" className="bg-white border border-neutral-200 rounded-3xl p-10 lg:p-14 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
-            {/* Left Side: Generous Narrative & Findings */}
+            {/* Left Side: Narrative & Findings */}
             <div className="lg:col-span-6 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md font-mono text-xs text-neutral-600">
                 <ScanEye className="w-4 h-4 text-emerald-600" />
@@ -399,10 +450,88 @@ export default function FunnelDoctorMinimalist() {
           </div>
         </section>
 
-        {/* 5. FINANCIAL SENSITIVITY & ROI MODEL */}
+        {/* 5. MODULE 02: BIGQUERY SQL TELEMETRY EVIDENCE */}
+        <section id="sql" className="bg-white border border-neutral-200 rounded-3xl p-8 lg:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-neutral-100 gap-3">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md font-mono text-xs text-neutral-600 mb-2">
+                <Terminal className="w-4 h-4 text-emerald-600" />
+                <span>MODULE 02 // QUANTITATIVE SQL TELEMETRY</span>
+              </div>
+              <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-neutral-900">
+                BigQuery Correlation Proof
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopySql}
+                className="px-3.5 py-1.5 rounded-lg border border-neutral-200 hover:border-black font-mono text-xs text-neutral-700 hover:text-black flex items-center gap-1.5 transition cursor-pointer bg-white"
+              >
+                {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedSql ? "Copied SQL" : "Copy Query"}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start font-mono text-xs">
+            {/* SQL Terminal Viewer */}
+            <div className="lg:col-span-7 bg-[#09090B] text-neutral-200 rounded-2xl p-5 border border-neutral-800 shadow-inner">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-neutral-800 text-[11px] text-neutral-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  <span className="ml-2 font-mono text-neutral-400">telemetry_rca_step4.sql</span>
+                </div>
+                <span className="text-[10px] text-emerald-400 font-mono">STATUS: EXECUTED (184ms)</span>
+              </div>
+              <pre className="text-neutral-300 font-mono text-xs overflow-x-auto leading-relaxed">
+                <code>{currentData.sql}</code>
+              </pre>
+            </div>
+
+            {/* Results Table */}
+            <div className="lg:col-span-5 bg-[#FAFAFA] border border-neutral-200 rounded-2xl p-5 flex flex-col justify-between h-full">
+              <div>
+                <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 pb-3 mb-3 border-b border-neutral-200">
+                  <span className="uppercase">Cohort</span>
+                  <span>P95 UPI</span>
+                  <span>Churn Rate</span>
+                </div>
+                <div className="space-y-2.5">
+                  {currentData.sqlResults.map((row, i) => (
+                    <div
+                      key={i}
+                      className={`p-3 rounded-xl border flex items-center justify-between text-xs font-mono ${
+                        row.churn.includes("78")
+                          ? "bg-rose-50/70 border-rose-200 text-rose-900"
+                          : "bg-white border-neutral-200 text-neutral-800"
+                      }`}
+                    >
+                      <span className="font-medium">{row.os}</span>
+                      <span className="text-neutral-600">{row.latency}</span>
+                      <span className={row.churn.includes("78") ? "font-bold text-rose-600" : "font-medium"}>
+                        {row.churn}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-neutral-200 text-[11px] font-mono text-neutral-500 leading-normal">
+                💡 <strong className="text-neutral-900">RCA Finding:</strong> Android WebView users experience 4,280ms p95 latency on UPI intent invocation, directly multiplying the dropoff of the forced OTP modal.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. FINANCIAL SENSITIVITY & ROI MODEL */}
         <section id="calculator" className="bg-white border border-neutral-200 rounded-3xl p-10 lg:p-14 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
-          <div className="border-b border-neutral-100 pb-6 mb-8 font-mono text-xs text-neutral-500 uppercase tracking-wider">
-            MODULE 04 // Financial Sensitivity & Revenue Recovery
+          <div className="border-b border-neutral-100 pb-6 mb-8 font-mono text-xs text-neutral-500 uppercase tracking-wider flex items-center justify-between">
+            <span>MODULE 03 // Financial Sensitivity & Revenue Recovery</span>
+            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              SHAPLEY VALUE ATTRIBUTION
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
@@ -430,6 +559,18 @@ export default function FunnelDoctorMinimalist() {
                   className="w-full accent-rose-600 cursor-pointer"
                 />
               </div>
+
+              <div>
+                <div className="flex justify-between mb-2 text-neutral-600">
+                  <span>AVERAGE ORDER VALUE (AOV):</span>
+                  <span className="font-bold text-neutral-900" suppressHydrationWarning>₹{aov.toLocaleString()}</span>
+                </div>
+                <input 
+                  type="range" min="500" max="10000" step="50"
+                  value={aov} onChange={(e) => setAov(Number(e.target.value))}
+                  className="w-full accent-neutral-900 cursor-pointer"
+                />
+              </div>
             </div>
 
             <div className="border-t md:border-t-0 md:border-l border-neutral-200 md:pl-10 flex flex-col justify-center font-mono">
@@ -438,15 +579,46 @@ export default function FunnelDoctorMinimalist() {
                 ₹{leakedLakhs} L<span className="text-xs font-normal text-neutral-500"> /mo</span>
               </span>
 
-              <span className="text-[11px] text-neutral-400 block mb-1">RECOVERABLE VIA 1-TAP FIX:</span>
-              <span className="text-3xl font-bold text-emerald-600 tracking-tight" suppressHydrationWarning>
+              <span className="text-[11px] text-neutral-400 block mb-1">RECOVERABLE (+22% LIFT):</span>
+              <span className="text-3xl font-bold text-emerald-600 mb-4 tracking-tight" suppressHydrationWarning>
                 +₹{recoverableLakhs} L<span className="text-xs font-normal text-neutral-500"> /mo</span>
               </span>
+
+              <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
+                <span className="text-neutral-400">ANNUALIZED VALUE:</span>
+                <span className="font-bold text-neutral-900" suppressHydrationWarning>
+                  +₹{annualizedCr} Cr /yr
+                </span>
+              </div>
             </div>
           </div>
         </section>
 
       </main>
+
+      {/* 7. MINIMALIST FOOTER */}
+      <footer className="border-t border-neutral-200/80 bg-white/60 backdrop-blur-sm py-10 px-8 relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-neutral-500">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded-md bg-neutral-900 text-white flex items-center justify-center font-mono font-bold text-[10px]">
+              FD
+            </div>
+            <span className="font-semibold text-neutral-900">FunnelDoctor.ai</span>
+            <span className="text-neutral-300">·</span>
+            <span>Startup Buildathon India 2026</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <span>Powered by Google Cloud & Gemini 2.5</span>
+            <span className="text-neutral-300">·</span>
+            <button 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="hover:text-black transition-colors cursor-pointer"
+            >
+              Back to Top ↑
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
