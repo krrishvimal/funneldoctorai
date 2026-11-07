@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   ArrowRight, 
   ScanEye, 
@@ -528,6 +529,7 @@ const SAMPLE_CSV_PREFILL = `step,visitors
 
 // 3. MAIN COMPONENT
 export default function FunnelDoctorMinimalist() {
+  const router = useRouter();
   const [selectedPresetKey, setSelectedPresetKey] = useState<PresetKey>('d2c');
   const [customDataset, setCustomDataset] = useState<Dataset | null>(null);
 
@@ -864,6 +866,14 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
         prdRolloutPlan: '10% Canary rollout monitoring step conversion and gateway error rates.'
       };
 
+      const domainMatch = customUrlInput.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+      const auditSlug = domainMatch.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'audit-report';
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`fd_audit_${auditSlug}`, JSON.stringify(newCustomDataset));
+        localStorage.setItem('fd_last_custom_audit', JSON.stringify(newCustomDataset));
+      }
+
       setCustomDataset(newCustomDataset);
       setSelectedPresetKey('custom');
       setTargetUrl(customUrlInput);
@@ -873,9 +883,8 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
       setSelectedPin(newCustomDataset.pins[0]?.id || '01');
       setIsCustomModalOpen(false);
 
-      setTimeout(() => {
-        document.getElementById('telemetry')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      // Seamlessly navigate to dedicated, distraction-free report page
+      router.push(`/audit/${auditSlug}`);
     } catch (err: any) {
       setCustomError(err.message || 'Failed to analyze custom funnel.');
     } finally {
