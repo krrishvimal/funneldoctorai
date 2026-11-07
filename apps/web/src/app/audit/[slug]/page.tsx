@@ -235,6 +235,29 @@ Quantitative telemetry indicates that ${cleanBrandName} loses 72.8% of high-inte
           const leaked = ((totalVisitors * (dropRate / 100) * aovVal) / 100000);
           const recoverable = leaked * 0.22;
 
+          const mappedSteps = Array.isArray(parsed.steps) && parsed.steps.length > 0
+            ? parsed.steps.map((s: any, idx: number) => ({
+                name: s.step || `Step 0${idx + 1}`,
+                visitors: Number(String(s.users || '0').replace(/[^0-9]/g, '')) || 0,
+                dropoffRate: s.drop ? Number(String(s.drop).replace(/[^0-9.]/g, '')) : 0,
+                isBottleneck: !!s.critical
+              }))
+            : null;
+
+          const criticalStep = mappedSteps?.find((s: any) => s.isBottleneck) || mappedSteps?.[Math.max(0, (mappedSteps?.length || 2) - 2)];
+          const worstName = criticalStep?.name || parsed.pins?.[0]?.title || 'Checkout Bottleneck';
+          const worstIdx = mappedSteps && criticalStep ? mappedSteps.indexOf(criticalStep) + 1 : 4;
+
+          const mappedFindings = Array.isArray(parsed.pins) && parsed.pins.length > 0
+            ? parsed.pins.map((p: any, idx: number) => ({
+                id: String(idx + 1),
+                title: p.title || `Friction Point #${idx + 1}`,
+                plainEnglish: p.desc || 'Friction point isolated by multimodal diagnostic inspection.',
+                impact: p.metric || 'Critical Exit',
+                category: idx === 0 ? ('ux' as const) : idx === 1 ? ('pricing' as const) : ('latency' as const)
+              }))
+            : null;
+
           setAudit(prev => ({
             ...prev,
             domain: parsed.url || prev.domain,
@@ -244,6 +267,10 @@ Quantitative telemetry indicates that ${cleanBrandName} loses 72.8% of high-inte
             leakedMonthlyLakhs: Number(leaked.toFixed(1)),
             recoverableMonthlyLakhs: Number(recoverable.toFixed(1)),
             aov: aovVal,
+            worstStepName: worstName,
+            worstStepIndex: worstIdx,
+            steps: mappedSteps || prev.steps,
+            findings: mappedFindings || prev.findings,
             reactCode: parsed.remediationCode || prev.reactCode,
             prdMarkdown: parsed.prdProblemStatement 
               ? `# EXECUTIVE PRD: ${parsed.url}\n\n## Problem Statement\n${parsed.prdProblemStatement}\n\n## Hypothesis\n${parsed.prdHypothesis}`
@@ -386,13 +413,21 @@ ${audit.prdMarkdown}
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-neutral-950 leading-[1.15]">
-            {audit.brandName} is losing <span className="text-rose-600 underline decoration-rose-200 underline-offset-4">73 out of every 100 shoppers</span> at Step 4.
+            {audit.brandName} is losing <span className="text-rose-600 underline decoration-rose-200 underline-offset-4">{Math.round(audit.dropoffRate)} out of every 100 shoppers</span> at {audit.worstStepName}.
           </h1>
 
           <p className="text-base sm:text-lg text-neutral-600 leading-relaxed max-w-3xl">
-            Over 18,200 shoppers added clothes to their bag, but only 4,950 continued to payment. 
-            That is a sudden <strong className="text-neutral-900">72.8% drop right before buying</strong>. 
-            Here is the root-cause analysis and the ready-to-use fix.
+            {audit.steps && audit.steps.length >= 2 ? (
+              <>
+                Over <strong className="text-neutral-900">{audit.steps[Math.max(0, audit.worstStepIndex - 2)]?.visitors?.toLocaleString() || audit.steps[0]?.visitors?.toLocaleString()} shoppers</strong> reached this stage, but only <strong className="text-neutral-900">{audit.steps[Math.max(0, audit.worstStepIndex - 1)]?.visitors?.toLocaleString() || Math.round(audit.visitors * (1 - audit.dropoffRate / 100)).toLocaleString()} continued</strong>. 
+                That is an abrupt <strong className="text-neutral-900">-{audit.dropoffRate}% drop right before purchase</strong>. 
+                Here is the root-cause analysis and the ready-to-use fix.
+              </>
+            ) : (
+              <>
+                Conversion telemetry indicates a critical <strong className="text-neutral-900">-{audit.dropoffRate}% drop</strong> at {audit.worstStepName}. Here is the diagnostic breakdown and synthesized fix.
+              </>
+            )}
           </p>
         </section>
 
@@ -424,15 +459,17 @@ ${audit.prdMarkdown}
                 <span>The Primary Churn Step</span>
                 <AlertTriangle className="w-4 h-4 text-rose-600" />
               </div>
-              <div className="text-2xl sm:text-3xl font-bold font-mono text-rose-700 tracking-tight">
-                Step 04: Payment
+              <div className="text-2xl sm:text-3xl font-bold font-mono text-rose-700 tracking-tight truncate">
+                {audit.worstStepName}
               </div>
               <p className="text-xs text-neutral-700 mt-2">
-                -72.8% of users exit the funnel at this exact moment.
+                -{audit.dropoffRate}% of users exit the funnel at this exact moment.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-rose-200/60 text-[11px] font-mono text-rose-600 font-semibold">
-              18,200 in bag ➔ only 4,950 continued
+            <div className="mt-4 pt-3 border-t border-rose-200/60 text-[11px] font-mono text-rose-600 font-semibold truncate">
+              {audit.steps && audit.steps.length >= 2 
+                ? `${audit.steps[Math.max(0, audit.worstStepIndex - 2)]?.visitors?.toLocaleString() || audit.steps[0]?.visitors?.toLocaleString()} users ➔ only ${audit.steps[Math.max(0, audit.worstStepIndex - 1)]?.visitors?.toLocaleString() || Math.round(audit.visitors * (1 - audit.dropoffRate/100)).toLocaleString()} continued`
+                : `-${audit.dropoffRate}% churn rate`}
             </div>
           </div>
 
@@ -573,22 +610,22 @@ ${audit.prdMarkdown}
                 <Smartphone className="w-3.5 h-3.5" />
                 <span>VISUAL FRICTION</span>
               </div>
-              <p className="font-semibold text-xs leading-snug">
-                Forced OTP Wall & Late ₹149 Fee
+              <p className="font-semibold text-xs leading-snug line-clamp-2">
+                {audit.findings[0]?.title || 'Visual Friction Detected'}
               </p>
               <span className="text-[10px] text-neutral-400 mt-1 block font-mono">Click to inspect</span>
             </div>
 
             {/* CENTRAL NODE: The Churn Bottleneck (Pulsing Center Hub) */}
             <div className="z-10 w-36 h-36 rounded-full bg-white border-2 border-rose-500 shadow-xl flex flex-col items-center justify-center p-3 text-center transition-all hover:scale-105">
-              <span className="text-[10px] font-mono text-rose-600 uppercase font-bold tracking-wider">
-                Step 04 Bottleneck
+              <span className="text-[10px] font-mono text-rose-600 uppercase font-bold tracking-wider truncate max-w-[120px]">
+                {audit.worstStepName}
               </span>
               <span className="text-2xl font-bold font-mono text-neutral-900 my-0.5">
-                -72.8%
+                -{audit.dropoffRate}%
               </span>
               <span className="text-[10px] text-neutral-500 font-sans leading-tight">
-                Address & Payment Churn
+                Critical Drop-off
               </span>
             </div>
 
@@ -605,8 +642,8 @@ ${audit.prdMarkdown}
                 <Clock className="w-3.5 h-3.5" />
                 <span>GATEWAY DELAY</span>
               </div>
-              <p className="font-semibold text-xs leading-snug">
-                Android WebView 4.2s UPI Latency
+              <p className="font-semibold text-xs leading-snug line-clamp-2">
+                {audit.findings[2]?.title || audit.findings[1]?.title || 'Gateway Latency Delay'}
               </p>
               <span className="text-[10px] text-neutral-400 mt-1 block font-mono">Click to inspect</span>
             </div>
@@ -621,7 +658,7 @@ ${audit.prdMarkdown}
               }`}
             >
               <Zap className="w-4 h-4 text-emerald-600 fill-emerald-600" />
-              <span className="font-bold text-emerald-700">1-Tap Express Guest UPI Fix (+₹5.4L/mo)</span>
+              <span className="font-bold text-emerald-700">1-Tap Express Fix (+₹{audit.recoverableMonthlyLakhs}L/mo)</span>
             </div>
           </div>
         </section>
@@ -711,8 +748,8 @@ ${audit.prdMarkdown}
               <div className="p-6 bg-rose-50/20 border border-rose-200 rounded-2xl flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between font-mono text-xs text-rose-700 font-bold pb-2 mb-3 border-b border-rose-200">
-                    <span>Current Checkout Wall</span>
-                    <span>-72.8% Churn</span>
+                    <span>Current Friction Wall</span>
+                    <span>-{audit.dropoffRate}% Churn</span>
                   </div>
                   <h4 className="font-bold text-base text-neutral-900 mb-2">High-Friction Baseline</h4>
                   <ul className="text-xs text-neutral-700 space-y-2.5">
@@ -741,7 +778,7 @@ ${audit.prdMarkdown}
                 <div>
                   <div className="flex justify-between font-mono text-xs text-emerald-800 font-bold pb-2 mb-3 border-b border-emerald-200">
                     <span>Gemini Remediation</span>
-                    <span>+18% Lift</span>
+                    <span>+{Math.min(45, Math.round(audit.dropoffRate * 0.25))}% Lift</span>
                   </div>
                   <h4 className="font-bold text-base text-neutral-900 mb-2">1-Tap Express Guest Checkout</h4>
                   <ul className="text-xs text-neutral-800 space-y-2.5">
