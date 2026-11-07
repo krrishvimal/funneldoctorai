@@ -162,7 +162,7 @@ interface Dataset {
 const PRESET_DATASETS: Record<Exclude<PresetKey, 'custom'>, Dataset> = {
   d2c: {
     id: 'd2c',
-    label: '🛍️ D2C Fashion Checkout [-71.7%]',
+    label: '🛍️ Online Store Checkout [-71.7%]',
     tagline: 'QuickStyle D2C Mobile Funnel',
     url: 'https://quickstyle-d2c.in/checkout/step-4',
     visitors: 25000,
@@ -174,13 +174,13 @@ const PRESET_DATASETS: Record<Exclude<PresetKey, 'custom'>, Dataset> = {
       { step: '01. Product Viewed', users: '1,00,000', pct: 100 },
       { step: '02. Added to Bag', users: '38,400', pct: 38.4 },
       { step: '03. Checkout Initiated', users: '25,000', pct: 65.1 },
-      { step: '04. Address & Payment', users: '7,075', pct: 28.3, drop: '-71.7% CHURN', critical: true },
+      { step: '04. Address & Payment', users: '7,075', pct: 28.3, drop: '-71.7% DROP-OFF', critical: true },
       { step: '05. Order Confirmed', users: '6,580', pct: 93.0 },
     ],
     pins: [
-      { id: '01', title: 'Forced Account OTP Modal', desc: 'Blocks guest checkout; 41.2% exit within 6 seconds of display modal.', metric: '41.2% Exit' },
-      { id: '02', title: 'Late ₹149 Fee Surcharge', desc: 'Delivery + convenience fee hidden until final confirmation screen.', metric: '31.4% Rage Clicks' },
-      { id: '03', title: 'UPI CTA Below 6.1" Fold', desc: 'Primary GPay/PhonePe button pushed offscreen by bloated coupon banner.', metric: '64% Unseen' },
+      { id: '01', title: 'Forced Sign-In Pop-up', desc: 'Demanding an account and OTP before payment causes 41.2% of shoppers to leave immediately.', metric: '41.2% Drop-off' },
+      { id: '02', title: 'Hidden Extra Fees', desc: 'Adding ₹149 delivery and handling fees at the final confirmation step shocks buyers.', metric: '31.4% Rage Clicks' },
+      { id: '03', title: 'Payment Button Pushed Offscreen', desc: 'A giant promo coupon banner pushes the Google Pay / PhonePe button below the screen fold.', metric: '64% Never See Button' },
     ],
     sql: `SELECT device_os, app_version,
   ROUND(AVG(upi_latency_ms), 0) AS p95_ms,
@@ -194,12 +194,12 @@ ORDER BY churn_pct DESC;`,
       { os: 'iOS Safari (v17.2)', latency: '610 ms', churn: '54.1%' },
       { os: 'Desktop Chrome (v122)', latency: '380 ms', churn: '42.0%' },
     ],
-    sqlFinding: 'Android WebView users face a 4,280ms p95 latency on UPI deep-link intent invocation. Paired with the forced email OTP modal, 78.4% abandon before the payment gateway handoff.',
-    voiceSummary: 'Diagnostic complete for QuickStyle D2C. Step 4 leaks 331.6 Lakhs per month. 78.4 percent of drops occur on Android WebView due to a forced login modal combined with a 4.2 second UPI intent latency bottleneck. Deploying our synthesized 1-Tap Guest UPI Express component recovers 73 Lakhs monthly.',
-    beforeHeadline: 'Baseline: Forced OTP + Late Fee Shock',
-    beforeSubhead: '3 Major Conversion Traps Identified by Gemini Vision',
-    afterHeadline: 'Synthesized Fix: 1-Tap UPI Express',
-    afterSubhead: 'Zero Login Wall · Free Shipping Progress Bar · Deep-Linked Intent',
+    sqlFinding: 'Android WebView users face a 4,280ms latency on UPI payments. Paired with the forced email login modal, 78.4% abandon before completing payment.',
+    voiceSummary: 'Diagnostic complete for QuickStyle D2C. Step 4 leaks 331.6 Lakhs per month. 78.4 percent of drops occur on Android WebView due to a forced login modal combined with slow UPI payment redirection. Deploying our 1-Tap Guest UPI Express component recovers 73 Lakhs monthly.',
+    beforeHeadline: 'Current Flow: Forced Sign-In + Surprise Fees',
+    beforeSubhead: '3 Major Conversion Obstacles Found on the Mobile Checkout Screen',
+    afterHeadline: 'Optimized Flow: 1-Tap Guest UPI Express',
+    afterSubhead: 'No Login Required · Upfront Free Delivery · Instant UPI Deep-Link',
     remediationFileName: 'components/checkout/ExpressUpiCheckout.tsx',
     remediationCode: `// Auto-Synthesized by FunnelDoctor Gemini 2.5 Code Agent
 // Resolves: Fault #01 (Forced OTP), Fault #02 (Late Fee), Fault #03 (Fold Push)
@@ -301,7 +301,7 @@ export function ExpressUpiCheckout({
   },
   fintech: {
     id: 'fintech',
-    label: '💳 Fintech Video KYC [-74.8%]',
+    label: '💳 Banking & KYC Onboarding [-74.8%]',
     tagline: 'FinPulse Neo Credit Onboarding',
     url: 'https://finpulse-neo.in/onboarding/video-kyc',
     visitors: 18000,
@@ -313,13 +313,13 @@ export function ExpressUpiCheckout({
       { step: '01. Landing Page', users: '80,000', pct: 100 },
       { step: '02. Mobile OTP Verified', users: '52,000', pct: 65.0 },
       { step: '03. PAN & Income Verified', users: '18,000', pct: 34.6 },
-      { step: '04. Aadhaar & Video KYC', users: '4,536', pct: 25.2, drop: '-74.8% CHURN', critical: true },
+      { step: '04. Aadhaar & Video KYC', users: '4,536', pct: 25.2, drop: '-74.8% DROP-OFF', critical: true },
       { step: '05. Credit Line Activated', users: '4,310', pct: 95.0 },
     ],
     pins: [
-      { id: '01', title: 'Zero-Context Camera Permission', desc: 'Browser requests camera & microphone before explaining why live video is needed.', metric: '46.0% Denied' },
-      { id: '02', title: 'Opaque Error 402 Toast', desc: 'PAN glare rejection displays raw ERR_402 blob with no guidance on repositioning.', metric: '52.0% Abandon' },
-      { id: '03', title: 'Live Agent Queue Wait (>4m)', desc: 'Applicants wait an average of 274 seconds for an agent before abandoning.', metric: '3.8m Avg Wait' },
+      { id: '01', title: 'Camera Permission Without Context', desc: 'Browser requests camera and microphone access before explaining why a video call is needed.', metric: '46% Denied' },
+      { id: '02', title: 'Confusing Error Code', desc: 'Showing raw "Error 402" when photo has glare confuses users instead of telling them how to retake it.', metric: '52% Abandon' },
+      { id: '03', title: 'Long Wait for Live Agent', desc: 'Applicants wait over 4 minutes in queue for a video officer before giving up.', metric: '4m+ Wait Time' },
     ],
     sql: `SELECT kyc_method, error_code,
   ROUND(AVG(wait_time_sec), 1) AS avg_wait_s,
@@ -334,11 +334,11 @@ ORDER BY churn_pct DESC;`,
       { os: 'DigiLocker OAuth (Async)', latency: '11.2 s wait', churn: '31.4%' },
     ],
     sqlFinding: 'Applicants waiting in the synchronous live video queue wait 274 seconds on average, with 84.2% abandoning when hit with glare error 402. DigiLocker OAuth routing reduces dropoff to 31.4%.',
-    voiceSummary: 'Diagnostic complete for FinPulse Neo. 74.8 percent of credit-approved applicants abandon at Step 4 Video KYC. SQL telemetry proves users queued for live agents wait 274 seconds before dropping. Switching primary onboarding to 1-Click DigiLocker OAuth with an anti-glare scanner recovers 94.8 Lakhs monthly.',
-    beforeHeadline: 'Baseline: Opaque Error 402 & 4.5m Video Queue',
-    beforeSubhead: 'Permissions Friction + Agent Congestion Bottlenecks',
-    afterHeadline: 'Synthesized Fix: 1-Click DigiLocker OAuth',
-    afterSubhead: 'Instant XML Aadhaar Pull · Anti-Glare Scanner · Zero Wait Time',
+    voiceSummary: 'Diagnostic complete for FinPulse Neo. 74.8 percent of credit-approved applicants abandon at Step 4 Video KYC. Telemetry proves users queued for live agents wait 274 seconds before dropping. Switching primary onboarding to 1-Click DigiLocker OAuth with an anti-glare scanner recovers 94.8 Lakhs monthly.',
+    beforeHeadline: 'Current Flow: Camera Confusion & 4.5m Video Queue',
+    beforeSubhead: 'Premature Permissions + Long Agent Waiting Queue',
+    afterHeadline: 'Optimized Flow: 1-Click DigiLocker Verification',
+    afterSubhead: 'Instant Aadhaar Pull in 10s · Anti-Glare Scanner · Zero Wait Time',
     remediationFileName: 'components/kyc/DigiLockerKycExpress.tsx',
     remediationCode: `// Auto-Synthesized by FunnelDoctor Gemini 2.5 Code Agent
 // Resolves: Fault #01 (Premature Permission), Fault #02 (Glare Error), Fault #03 (Queue Delay)
@@ -406,7 +406,7 @@ export function DigiLockerKycExpress({ onSuccess }: { onSuccess?: () => void }) 
   },
   edtech: {
     id: 'edtech',
-    label: '🎓 EdTech Paywall [-96.5%]',
+    label: '🎓 Course & Subscription Paywall [-96.5%]',
     tagline: 'PrepMate AI Test-Prep Paywall',
     url: 'https://prepmate-ai.com/upgrade/pro-pass',
     visitors: 40000,
@@ -418,13 +418,13 @@ export function DigiLockerKycExpress({ onSuccess }: { onSuccess?: () => void }) 
       { step: '01. Free Sign Up', users: '95,000', pct: 100 },
       { step: '02. Diagnostic Mock Taken', users: '64,000', pct: 67.3 },
       { step: '03. AI Score Report Viewed', users: '40,000', pct: 62.5 },
-      { step: '04. Pro Paywall Modal', users: '1,400', pct: 3.5, drop: '-96.5% CHURN', critical: true },
+      { step: '04. Pro Paywall Modal', users: '1,400', pct: 3.5, drop: '-96.5% DROP-OFF', critical: true },
       { step: '05. Subscription Active', users: '1,310', pct: 93.5 },
     ],
     pins: [
-      { id: '01', title: '₹4,999 Annual Plan Default', desc: 'Student cohort suffers immediate sticker shock when annual plan is selected by default.', metric: '89% Bounce < 4s' },
-      { id: '02', title: '100% Blurred Answer Review', desc: 'Blurs every solution instead of offering 2 free AI answer explanations as a value hook.', metric: 'Zero Value Proof' },
-      { id: '03', title: 'Missing AutoPay Cancel Trust', desc: 'No visible 1-click UPI Mandate cancellation guarantee near recurring CTA.', metric: 'High Trust Friction' },
+      { id: '01', title: 'Expensive Annual Plan by Default', desc: 'Showing ₹4,999/year upfront scares students away within 4 seconds.', metric: '89% Quick Exit' },
+      { id: '02', title: 'All Answers Completely Locked', desc: 'Locking 100% of solutions gives zero free preview of how helpful the explanations are.', metric: 'Zero Value Sample' },
+      { id: '03', title: 'No Easy-Cancel Notice', desc: 'Buyers hesitate to start recurring payments when they don\'t see an explicit cancel-anytime guarantee.', metric: 'High Hesitation' },
     ],
     sql: `SELECT pricing_variant, user_segment,
   COUNT(DISTINCT student_id) AS views,
@@ -440,10 +440,10 @@ ORDER BY conv_pct ASC;`,
     ],
     sqlFinding: 'Students dwell for only 3.2 seconds on the ₹4,999 annual plan with 98.1% bounce. The ₹149 weekly sachet pass increases dwell to 24.8 seconds and triples trial conversion.',
     voiceSummary: 'Diagnostic complete for PrepMate EdTech. 96.5 percent of students exit at the paywall in under 4 seconds due to the 4,999 rupee annual default plan. Introducing a 149 rupee 7-day Exam Sprint sachet pass with 2 unlocked AI answer explanations lifts paid conversion by 62 percent.',
-    beforeHeadline: 'Baseline: ₹4,999 Sticker Shock & 100% Blurred Solutions',
-    beforeSubhead: 'Zero Value Proof + Missing Autopay Cancellation Guarantee',
-    afterHeadline: 'Synthesized Fix: ₹149 Weekly Sprint Pass',
-    afterSubhead: '2 Free Unlocked Explanations · 1-Click Mandate Cancel Guarantee',
+    beforeHeadline: 'Current Flow: ₹4,999 Price Shock & Locked Answers',
+    beforeSubhead: 'Expensive Default Plan + Missing Cancel Guarantee',
+    afterHeadline: 'Optimized Flow: ₹149 Weekly Sprint Pass',
+    afterSubhead: '2 Free Unlocked Explanations · 1-Click Cancel Guarantee',
     remediationFileName: 'components/paywall/SachetSprintPass.tsx',
     remediationCode: `// Auto-Synthesized by FunnelDoctor Gemini 2.5 Code Agent
 // Resolves: Fault #01 (Sticker Shock), Fault #02 (Zero Value Hook), Fault #03 (Autopay Fear)
@@ -540,6 +540,8 @@ export default function FunnelDoctorMinimalist() {
   
   const [targetUrl, setTargetUrl] = useState('');
   const [selectedPin, setSelectedPin] = useState(currentData.pins[0].id);
+  const [screenViewMode, setScreenViewMode] = useState<'flawed' | 'fixed'>('flawed');
+  const heroInputRef = useRef<HTMLInputElement>(null);
   const [activeRemediationTab, setActiveRemediationTab] = useState<'diff' | 'prd' | 'code'>('diff');
   const [isAuditing, setIsAuditing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -548,6 +550,16 @@ export default function FunnelDoctorMinimalist() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedPrd, setCopiedPrd] = useState(false);
   const [copiedCli, setCopiedCli] = useState(false);
+
+  // Focus and scroll to hero input smoothly
+  const focusAuditInput = () => {
+    if (heroInputRef.current) {
+      heroInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      heroInputRef.current.focus();
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // Custom Ingestion State
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
@@ -574,6 +586,7 @@ export default function FunnelDoctorMinimalist() {
     const next = key === 'custom' && customDataset ? customDataset : PRESET_DATASETS[key as Exclude<PresetKey, 'custom'>];
     setTargetUrl(next.url);
     setSelectedPin(next.pins[0].id);
+    setScreenViewMode('flawed');
     setVisitors(next.visitors);
     setDropoff(next.dropoff);
     setAov(next.aov);
@@ -960,12 +973,12 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             </div>
           </Link>
           
-          {/* Refined Center Navigation Links */}
+          {/* Plain English Center Navigation Links */}
           <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-neutral-500">
-            <a href="#telemetry" className="hover:text-neutral-950 transition-colors">Telemetry</a>
-            <a href="#xray" className="hover:text-neutral-950 transition-colors">Vision X-Ray</a>
-            <a href="#remediation" className="hover:text-neutral-950 transition-colors text-emerald-700 font-semibold">Synthesized Fix</a>
-            <a href="#calculator" className="hover:text-neutral-950 transition-colors">ROI Model</a>
+            <a href="#telemetry" className="hover:text-neutral-950 transition-colors">Funnel Flow</a>
+            <a href="#xray" className="hover:text-neutral-950 transition-colors">Screen X-Ray</a>
+            <a href="#remediation" className="hover:text-neutral-950 transition-colors text-emerald-700 font-semibold">The Fix</a>
+            <a href="#calculator" className="hover:text-neutral-950 transition-colors">Revenue Impact</a>
             <button 
               onClick={() => setIsPricingModalOpen(true)}
               className="hover:text-neutral-950 transition-colors flex items-center gap-1 cursor-pointer text-neutral-600"
@@ -977,12 +990,11 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
           {/* Action Group */}
           <div className="flex items-center gap-2.5">
-            {/* Launch / Primary CTA */}
             <button 
-              onClick={() => scrollToSection('remediation')}
+              onClick={focusAuditInput}
               className="px-4 py-1.5 text-xs font-mono uppercase tracking-wider bg-neutral-950 hover:bg-black text-white font-medium rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
             >
-              Launch Fix →
+              Audit Store →
             </button>
           </div>
         </div>
@@ -994,16 +1006,16 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
         <section className="max-w-4xl mx-auto text-center pt-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-mono font-medium text-emerald-800 mb-6">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            Autonomous Multimodal CRO & RCA Agent
+            AI-Powered Conversion Optimization
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.08] text-[#09090B] mb-5">
-            Diagnose conversion churn. <br />
-            <span className="text-neutral-400 font-normal">Synthesize the fix in 60s.</span>
+            Find where your store loses buyers. <br />
+            <span className="text-neutral-400 font-normal">Fix it with clean code in 60s.</span>
           </h1>
 
           <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
-            FunnelDoctor maps your checkout & signup stages, uncovers why users exit, and outputs production React fixes and executive PRDs.
+            FunnelDoctor analyzes your checkout and signup flows, pinpoints why visitors drop off, and gives you ready-to-use code fixes and product specifications.
           </p>
 
           {/* UNIFIED HERO AUDIT COMMAND BOX */}
@@ -1012,6 +1024,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
               <div className="flex items-center gap-2 px-3 py-2 w-full font-mono text-xs text-neutral-500">
                 <Globe className="w-4 h-4 text-neutral-400 shrink-0" />
                 <input 
+                  ref={heroInputRef}
                   type="text" 
                   value={targetUrl}
                   onChange={(e) => setTargetUrl(e.target.value)}
@@ -1030,7 +1043,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 disabled={isAuditing}
                 className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-xs font-medium"
               >
-                {isAuditing ? 'Auditing...' : 'Run Audit'} <ArrowRight className="w-3.5 h-3.5" />
+                {isAuditing ? 'Auditing...' : 'Run Free Audit'} <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -1052,7 +1065,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 className="text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 cursor-pointer transition"
               >
                 <Upload className="w-3 h-3 text-emerald-600" />
-                <span>Have GA4 / Mixpanel CSV? Ingest Telemetry →</span>
+                <span>Have analytics CSV? Upload Funnel →</span>
               </button>
             </div>
           </div>
@@ -1070,10 +1083,10 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 </span>
               </div>
               <h3 className="font-bold text-sm text-neutral-900 mb-1">
-                Map Conversion Stages
+                Map Conversion Steps
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Paste any URL or upload your GA4 / Mixpanel CSV. FunnelDoctor maps sequential stages from first landing to checkout.
+                Paste any store link or upload your CSV. FunnelDoctor maps every step from landing page to checkout.
               </p>
             </div>
 
@@ -1088,10 +1101,10 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 </span>
               </div>
               <h3 className="font-bold text-sm text-neutral-900 mb-1">
-                Isolate Root-Cause Churn
+                Spot Design Flaws
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Gemini 2.5 identifies the #1 drop-off bottleneck and uncovers why users exit (UX friction, pricing shock, or latency).
+                Find the exact pop-ups, hidden fees, or broken layouts causing buyers to abandon your store.
               </p>
             </div>
 
@@ -1106,47 +1119,50 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 </span>
               </div>
               <h3 className="font-bold text-sm text-neutral-900 mb-1">
-                Ship Code Fix & PRD
+                Get Instant Code & Specs
               </h3>
               <p className="text-xs text-neutral-500 leading-relaxed">
-                Instantly export production-ready React / Tailwind code to replace the broken screen, plus an executive PRD for Jira.
+                Export production-ready React code to replace the broken screen, plus an executive PRD for your team.
               </p>
             </div>
           </div>
         </section>
 
-        {/* 3. INTERACTIVE DIAGNOSTIC SANDBOX */}
+        {/* 3. CONVERSION FUNNEL: STEP-BY-STEP PROGRESSION */}
         <section id="telemetry">
           <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-neutral-100 font-mono text-xs text-neutral-500 gap-3">
               <div>
-                <span className="uppercase tracking-wider block text-[11px] text-neutral-400">Interactive Diagnostic Sandbox</span>
+                <span className="uppercase tracking-wider block text-[11px] text-neutral-400 font-semibold">Conversion Funnel</span>
                 <span className="text-neutral-900 font-bold text-sm">{currentData.tagline}</span>
               </div>
               
-              {/* Clean Sandbox Switcher */}
+              {/* Preset Switcher */}
               <div className="flex flex-wrap items-center gap-1.5 bg-neutral-100 p-1 rounded-xl">
-                {(['d2c', 'fintech', 'edtech'] as const).map((key) => {
-                  const preset = PRESET_DATASETS[key];
+                {[
+                  { key: 'd2c', label: '🛍️ Online Store' },
+                  { key: 'fintech', label: '💳 Banking & KYC' },
+                  { key: 'edtech', label: '🎓 Course Paywall' }
+                ].map(({ key, label }) => {
                   const isSelected = selectedPresetKey === key;
                   return (
                     <button
                       key={key}
-                      onClick={() => switchPreset(key)}
-                      className={`px-3 py-1 rounded-lg text-xs font-mono transition cursor-pointer ${
+                      onClick={() => switchPreset(key as PresetKey)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
                         isSelected 
                           ? 'bg-white text-neutral-900 font-semibold shadow-2xs' 
                           : 'text-neutral-600 hover:text-black'
                       }`}
                     >
-                      {key.toUpperCase()}
+                      {label}
                     </button>
                   );
                 })}
                 {customDataset && (
                   <button
                     onClick={() => switchPreset('custom')}
-                    className={`px-3 py-1 rounded-lg text-xs font-mono transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
                       selectedPresetKey === 'custom'
                         ? 'bg-emerald-600 text-white font-semibold shadow-2xs'
                         : 'text-emerald-700 hover:text-emerald-900'
@@ -1164,16 +1180,16 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                   key={idx}
                   className={`p-4 rounded-xl border transition-all ${
                     s.critical 
-                      ? 'bg-rose-50/30 border-rose-300 ring-1 ring-rose-500/20' 
+                      ? 'bg-rose-50/40 border-rose-300 ring-1 ring-rose-500/20' 
                       : 'bg-[#FAFAFA] border-neutral-200/80'
                   }`}
                 >
                   <div className="flex justify-between font-mono text-[11px] text-neutral-500 mb-2">
-                    <span>{s.step}</span>
+                    <span className="font-medium">{s.step}</span>
                     {s.drop && <span className="text-rose-600 font-bold">{s.drop}</span>}
                   </div>
                   <div className="text-xl font-bold font-mono tracking-tight mb-2" suppressHydrationWarning>
-                    {s.users} <span className="text-xs font-normal text-neutral-400">users</span>
+                    {s.users} <span className="text-xs font-normal text-neutral-400">visitors</span>
                   </div>
                   <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${s.critical ? 'bg-rose-600' : 'bg-neutral-900'}`} style={{ width: `${s.pct}%` }} />
@@ -1184,42 +1200,45 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           </div>
         </section>
 
-        {/* 4. MODULE 01: VISION X-RAY */}
+        {/* 4. SCREEN X-RAY: INTERACTIVE MOBILE INSPECTION */}
         <section id="xray" className="bg-white border border-neutral-200 rounded-3xl p-10 lg:p-14 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
-            {/* Left Side: Findings */}
+            {/* Left Column: Interactive Friction Findings */}
             <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md font-mono text-xs text-neutral-600">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md font-mono text-xs text-neutral-700">
                 <ScanEye className="w-4 h-4 text-emerald-600" />
-                <span>MODULE 01 // GEMINI 2.5 SPATIAL X-RAY</span>
+                <span>SCREEN X-RAY // MOBILE AUDIT</span>
               </div>
 
               <h2 className="text-3xl lg:text-4xl font-semibold tracking-tight text-neutral-900">
-                Visual Occlusion & Friction Findings
+                What's Driving Customers Away
               </h2>
 
               <p className="text-base text-neutral-600 leading-relaxed font-normal">
-                Gemini Vision scans mobile checkout viewports, cross-referencing UI layout flaws with telemetry drop-offs. Click any fault below to isolate the anomaly.
+                We inspect your mobile checkout screens to locate the design flaws causing customers to leave without paying. Click any issue below to inspect it on the live phone.
               </p>
 
               <div className="space-y-3 pt-2">
                 {currentData.pins.map((pin) => (
                   <div
                     key={pin.id}
-                    onClick={() => setSelectedPin(pin.id)}
+                    onClick={() => {
+                      setSelectedPin(pin.id);
+                      setScreenViewMode('flawed');
+                    }}
                     className={`p-5 rounded-2xl border transition-all cursor-pointer ${
                       selectedPin === pin.id
-                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-md'
+                        ? 'bg-neutral-900 text-white border-neutral-900 shadow-md ring-1 ring-neutral-900'
                         : 'bg-[#FAFAFA] text-neutral-900 border-neutral-200 hover:border-neutral-300'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2 font-mono text-xs">
                       <span className="font-bold flex items-center gap-2">
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${selectedPin === pin.id ? 'bg-emerald-500 text-black' : 'bg-neutral-200 text-neutral-800'}`}>
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selectedPin === pin.id ? 'bg-emerald-400 text-neutral-950' : 'bg-neutral-200 text-neutral-800'}`}>
                           {pin.id}
                         </span>
-                        {pin.title}
+                        <span>{pin.title}</span>
                       </span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${selectedPin === pin.id ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
                         {pin.metric}
@@ -1233,40 +1252,376 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
               </div>
             </div>
 
-            {/* Right Side: Floating Mobile Phone Frame */}
-            <div className="lg:col-span-6 flex justify-center bg-neutral-100/70 p-8 lg:p-12 rounded-2xl border border-neutral-200/60">
-              <div className="w-full max-w-[340px] bg-white rounded-3xl border border-neutral-300 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] p-5 relative">
-                <div className="w-20 h-3.5 bg-neutral-100 rounded-full mx-auto mb-4" />
-                <div className="flex justify-between items-center text-[10px] font-mono text-neutral-400 border-b border-neutral-100 pb-2 mb-4">
-                  <span>9:41 AM</span>
-                  <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded">LIVE VIEWPORT</span>
-                </div>
+            {/* Right Column: Realistic Interactive Mobile Screen Viewport */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center bg-neutral-100/70 p-6 lg:p-10 rounded-2xl border border-neutral-200/60">
+              
+              {/* Phone Hardware Mockup */}
+              <div className="w-full max-w-[340px] bg-neutral-900 rounded-[38px] p-3 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.22)] border border-neutral-800 relative">
+                
+                {/* Phone Glass Screen */}
+                <div className="w-full bg-[#F9FAFB] rounded-[30px] overflow-hidden flex flex-col justify-between min-h-[500px] border border-neutral-200/80 relative text-neutral-900 select-none">
+                  
+                  {/* Dynamic Island & Device Notch */}
+                  <div className="pt-2 px-4 pb-1.5 flex flex-col items-center border-b border-neutral-100 bg-white">
+                    <div className="w-20 h-4 bg-neutral-900 rounded-full mb-1 flex items-center justify-end px-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 animate-pulse" />
+                    </div>
+                    <div className="w-full flex items-center justify-between text-[10px] font-mono text-neutral-400">
+                      <span>9:41 AM</span>
+                      <div className="flex items-center gap-1.5">
+                        <span>5G</span>
+                        <span className="font-sans font-bold">100%</span>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="space-y-3">
-                  {currentData.pins.map((pin) => {
-                    const isSelected = selectedPin === pin.id;
-                    return (
-                      <div 
-                        key={pin.id}
-                        className={`p-3.5 rounded-xl border transition-all ${
-                          isSelected 
-                            ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-500/20' 
-                            : 'bg-neutral-50 border-neutral-200'
+                  {/* App Bar & Interactive Mode Switcher */}
+                  <div className="px-3.5 py-2 bg-white/90 backdrop-blur-xs border-b border-neutral-200/60 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-neutral-900" />
+                      <span className="font-semibold text-xs text-neutral-800 tracking-tight">
+                        {selectedPresetKey === 'd2c' ? 'QuickStyle Store' : selectedPresetKey === 'fintech' ? 'FinPulse Identity' : selectedPresetKey === 'edtech' ? 'PrepMate Test Prep' : 'Store Checkout'}
+                      </span>
+                    </div>
+
+                    {/* Mode Switcher Toggle Pill */}
+                    <div className="inline-flex p-0.5 bg-neutral-100 rounded-lg text-[10px] font-mono font-medium">
+                      <button
+                        onClick={() => setScreenViewMode('flawed')}
+                        className={`px-2 py-0.5 rounded-md transition cursor-pointer flex items-center gap-1 ${
+                          screenViewMode === 'flawed'
+                            ? 'bg-rose-50 text-rose-700 font-bold border border-rose-200 shadow-2xs'
+                            : 'text-neutral-500 hover:text-neutral-900'
                         }`}
                       >
-                        <div className="flex justify-between font-mono text-[10px] font-bold mb-1">
-                          <span className={isSelected ? 'text-rose-700' : 'text-neutral-600'}>
-                            [FAULT #{pin.id}] {pin.title.toUpperCase()}
-                          </span>
-                          <span className={isSelected ? 'text-rose-600 font-bold' : 'text-neutral-500'}>
-                            {pin.metric}
-                          </span>
-                        </div>
-                        <p className="text-xs text-neutral-800 leading-normal">{pin.desc}</p>
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                        <span>Problem</span>
+                      </button>
+                      <button
+                        onClick={() => setScreenViewMode('fixed')}
+                        className={`px-2 py-0.5 rounded-md transition cursor-pointer flex items-center gap-1 ${
+                          screenViewMode === 'fixed'
+                            ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                            : 'text-neutral-500 hover:text-neutral-900'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                        <span>The Fix</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* SCREEN CONTENT BODY */}
+                  <div className="flex-1 p-3.5 flex flex-col justify-between relative overflow-hidden">
+                    {screenViewMode === 'flawed' ? (
+                      /* ==================== FLAWED SCREEN VIEW ==================== */
+                      <div className="space-y-3 h-full flex flex-col justify-between">
+                        {selectedPresetKey === 'd2c' && (
+                          <>
+                            {selectedPin === '01' && (
+                              /* FLAW 1: Forced Account OTP Modal */
+                              <div className="relative h-full flex flex-col justify-between py-2 space-y-3">
+                                {/* Background Cart Items (Faded behind modal) */}
+                                <div className="opacity-25 blur-[0.6px] space-y-2 pointer-events-none">
+                                  <div className="p-2.5 bg-white rounded-xl border border-neutral-200 text-xs">
+                                    <div className="flex justify-between font-medium">
+                                      <span>Oversized Cotton Tee</span>
+                                      <span>₹1,850</span>
+                                    </div>
+                                    <span className="text-[10px] text-neutral-400">Size: L · Qty: 1</span>
+                                  </div>
+                                  <div className="p-2.5 bg-white rounded-xl border border-neutral-200 text-xs flex justify-between">
+                                    <span className="text-neutral-500">Shipping</span>
+                                    <span className="text-emerald-600 font-medium">FREE</span>
+                                  </div>
+                                </div>
+
+                                {/* Centered Blocking Modal */}
+                                <div className="my-auto bg-white rounded-2xl p-4 border border-rose-300 shadow-xl relative z-10 ring-2 ring-rose-500/20">
+                                  <div className="flex items-center gap-2 mb-2 text-rose-700">
+                                    <div className="w-6 h-6 rounded-full bg-rose-100 flex items-center justify-center text-xs">
+                                      🔒
+                                    </div>
+                                    <span className="font-bold text-xs">Sign In to Continue</span>
+                                  </div>
+                                  <p className="text-[11px] text-neutral-600 mb-3">
+                                    Enter the 6-digit OTP sent to your phone before completing checkout.
+                                  </p>
+                                  <div className="flex justify-between gap-1 mb-3">
+                                    {['4', '9', '·', '·', '·', '·'].map((c, i) => (
+                                      <div key={i} className="w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-300 flex items-center justify-center font-mono text-xs font-bold text-neutral-800">
+                                        {c}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="w-full py-2 bg-neutral-900 text-white rounded-xl text-center text-[11px] font-mono font-medium">
+                                    Verify & Proceed
+                                  </div>
+                                </div>
+
+                                {/* Visual Hotspot Annotation */}
+                                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-mono text-rose-900 flex items-start gap-2">
+                                  <span className="text-rose-600 font-bold shrink-0">⚠️ ISSUE #01:</span>
+                                  <span>Forced login popup blocks guest buyers. 41.2% exit within 6 seconds.</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedPin === '02' && (
+                              /* FLAW 2: Surprise ₹149 Fee at Confirmation */
+                              <div className="relative h-full flex flex-col justify-between py-2 space-y-3">
+                                <div className="space-y-2">
+                                  <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-wider">
+                                    Order Summary · Final Confirmation
+                                  </div>
+                                  <div className="p-3 bg-white rounded-xl border border-neutral-200 text-xs space-y-2">
+                                    <div className="flex justify-between text-neutral-700">
+                                      <span>Items Subtotal</span>
+                                      <span>₹1,850</span>
+                                    </div>
+                                    <div className="flex justify-between text-neutral-700">
+                                      <span>Delivery Fee</span>
+                                      <span className="text-emerald-700 font-medium">Free</span>
+                                    </div>
+                                    
+                                    {/* Red Highlighted Surprise Surcharge */}
+                                    <div className="flex justify-between items-center p-2 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 font-mono text-[11px]">
+                                      <span className="flex items-center gap-1 font-bold">
+                                        <span>⚠️</span> Extra Handling Surcharge:
+                                      </span>
+                                      <span className="font-bold text-rose-700">+₹149</span>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-neutral-100 flex justify-between font-bold text-sm text-neutral-900">
+                                      <span>Total Payable</span>
+                                      <span className="text-rose-700">₹1,999</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Visual Hotspot Annotation */}
+                                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-mono text-rose-900 flex items-start gap-2">
+                                  <span className="text-rose-600 font-bold shrink-0">⚠️ ISSUE #02:</span>
+                                  <span>Surprise ₹149 added at the last moment causes 31.4% rage clicks & exits.</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedPin === '03' && (
+                              /* FLAW 3: Payment Button Pushed Below Fold */
+                              <div className="relative h-full flex flex-col justify-between py-1 space-y-2">
+                                <div className="space-y-2">
+                                  {/* Bloated Coupon Banner */}
+                                  <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-center">
+                                    <span className="font-bold text-xs text-amber-900 block mb-0.5">🎉 FESTIVE 15% DISCOUNT</span>
+                                    <p className="text-[10px] text-amber-800">Use code DIWALI2026 for orders above ₹5,000</p>
+                                  </div>
+
+                                  <div className="p-2.5 bg-white border border-neutral-200 rounded-xl text-[11px] space-y-1">
+                                    <span className="font-bold text-neutral-800 block">Recommended Add-ons</span>
+                                    <div className="flex items-center justify-between text-neutral-600 text-[10px]">
+                                      <span>Cotton Ankle Socks (3-Pack)</span>
+                                      <span className="font-mono">+₹299</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Red Fold Line */}
+                                  <div className="border-t-2 border-dashed border-rose-400 my-1 relative text-center">
+                                    <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
+                                      ── 6.1" Mobile Screen Fold Line ──
+                                    </span>
+                                  </div>
+
+                                  {/* Cut Off Below Fold CTA */}
+                                  <div className="opacity-40 p-2.5 bg-neutral-100 border border-neutral-300 rounded-xl text-center text-xs font-mono font-bold text-neutral-500">
+                                    ⚡ Pay with UPI (GPay / PhonePe)
+                                  </div>
+                                </div>
+
+                                {/* Visual Hotspot Annotation */}
+                                <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-mono text-rose-900 flex items-start gap-2">
+                                  <span className="text-rose-600 font-bold shrink-0">⚠️ ISSUE #03:</span>
+                                  <span>Payment button is pushed off-screen. 64% of shoppers never scroll down.</span>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {selectedPresetKey === 'fintech' && (
+                          /* FINTECH FLAW VIEW */
+                          <div className="relative h-full flex flex-col justify-between py-2 space-y-3">
+                            {selectedPin === '01' ? (
+                              <div className="p-3 bg-white border border-rose-300 rounded-2xl shadow-md space-y-2">
+                                <div className="font-bold text-xs text-neutral-900">finpulse-neo.in wants to:</div>
+                                <div className="text-xs text-neutral-600 flex items-center gap-1.5">
+                                  <span>📹</span> Use your camera & microphone
+                                </div>
+                                <div className="flex justify-end gap-2 pt-2">
+                                  <span className="px-3 py-1 bg-rose-100 text-rose-800 rounded-lg text-[10px] font-bold">Block</span>
+                                  <span className="px-3 py-1 bg-neutral-100 text-neutral-700 rounded-lg text-[10px]">Allow</span>
+                                </div>
+                              </div>
+                            ) : selectedPin === '02' ? (
+                              <div className="p-3 bg-neutral-900 text-white rounded-2xl space-y-2">
+                                <div className="h-24 bg-neutral-800 rounded-xl flex items-center justify-center text-xs text-neutral-400">
+                                  [ ID Photo Preview with Glare ]
+                                </div>
+                                <div className="p-2 bg-rose-900/60 border border-rose-500 rounded-lg text-[11px] font-mono text-rose-200">
+                                  ERR_402_GLARE_DETECTED (Scan rejected)
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="p-4 bg-white border border-neutral-200 rounded-2xl text-center space-y-2">
+                                <div className="w-8 h-8 rounded-full border-2 border-rose-600 border-t-transparent animate-spin mx-auto" />
+                                <span className="font-bold text-xs block text-neutral-800">Waiting for live agent...</span>
+                                <p className="text-[10px] text-neutral-500 font-mono">Queue Position #14 · Est. wait: 4m 34s</p>
+                              </div>
+                            )}
+
+                            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-mono text-rose-900">
+                              ⚠️ Issue #{selectedPin}: Causes 74.8% of credit-approved users to drop off.
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedPresetKey === 'edtech' && (
+                          /* EDTECH FLAW VIEW */
+                          <div className="relative h-full flex flex-col justify-between py-2 space-y-3">
+                            {selectedPin === '01' ? (
+                              <div className="p-4 bg-white border-2 border-rose-300 rounded-2xl space-y-2 text-center">
+                                <span className="text-[10px] font-mono text-rose-600 font-bold uppercase">Default Plan Selected</span>
+                                <div className="text-xl font-bold font-mono text-neutral-900">₹4,999 <span className="text-xs font-normal text-neutral-500">/ year</span></div>
+                                <p className="text-[10px] text-neutral-500">Billed upfront for 12 months. Non-refundable.</p>
+                              </div>
+                            ) : selectedPin === '02' ? (
+                              <div className="p-3 bg-white border border-neutral-200 rounded-2xl space-y-2">
+                                <span className="font-bold text-xs text-neutral-800 block">Mock Test Review</span>
+                                <div className="p-2 bg-neutral-100 rounded-lg text-neutral-400 blur-xs text-xs">
+                                  Question 14: Answer hidden behind locked paywall
+                                </div>
+                                <span className="text-[10px] font-mono text-rose-600 font-bold block text-center">🔒 100% Solutions Locked</span>
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-white border border-neutral-200 rounded-2xl space-y-2">
+                                <button className="w-full py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-mono font-medium">
+                                  Start Recurring AutoPay
+                                </button>
+                                <span className="text-[10px] text-neutral-400 text-center block">No cancellation details shown</span>
+                              </div>
+                            )}
+
+                            <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-mono text-rose-900">
+                              ⚠️ Issue #{selectedPin}: 96.5% of students leave the paywall within 4 seconds.
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedPresetKey === 'custom' && (
+                          <div className="p-4 bg-white border border-rose-200 rounded-2xl text-center space-y-3">
+                            <span className="font-bold text-xs text-rose-700 block">Custom Checkout Issue</span>
+                            <p className="text-xs text-neutral-600">{currentData.pins.find(p => p.id === selectedPin)?.desc}</p>
+                            <div className="p-2 bg-rose-50 text-rose-800 font-mono text-[10px] rounded-lg">
+                              Drop-off Impact: {currentData.pins.find(p => p.id === selectedPin)?.metric}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
+                    ) : (
+                      /* ==================== FIXED SCREEN VIEW ==================== */
+                      <div className="space-y-3 h-full flex flex-col justify-between py-1">
+                        {selectedPresetKey === 'd2c' && (
+                          <div className="space-y-2.5">
+                            {/* Upfront Transparency Bar */}
+                            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                              <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                                <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                                Free Express Delivery
+                              </span>
+                              <span className="font-mono font-bold text-emerald-700 text-xs">₹0.00</span>
+                            </div>
+
+                            {/* Pre-filled Guest Address */}
+                            <div className="p-2.5 bg-white border border-neutral-200 rounded-xl text-xs">
+                              <div className="flex justify-between items-center mb-0.5">
+                                <span className="text-[10px] font-mono text-neutral-400 uppercase">Deliver To (Guest)</span>
+                                <span className="text-[10px] text-emerald-700 font-medium">Pre-filled ✓</span>
+                              </div>
+                              <div className="font-medium text-neutral-800 text-[11px]">Flat 402, Indiranagar, Bengaluru</div>
+                            </div>
+
+                            {/* 1-Tap UPI Apps Row */}
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-mono text-neutral-400 uppercase">Instant 1-Tap Payment</span>
+                              <div className="grid grid-cols-3 gap-1.5">
+                                {['Google Pay', 'PhonePe', 'Paytm'].map((app, i) => (
+                                  <div key={i} className={`p-1.5 rounded-lg border text-center text-[10px] font-mono font-medium ${i === 0 ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-700 border-neutral-200'}`}>
+                                    {app}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* High-Conversion Primary CTA Anchored Above Fold */}
+                            <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                              ⚡ 1-Tap Pay ₹1,850 · No Sign-in
+                            </button>
+                          </div>
+                        )}
+
+                        {selectedPresetKey === 'fintech' && (
+                          <div className="space-y-3">
+                            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                              <span className="font-bold text-xs text-emerald-900 block">Instant Paperless Verification</span>
+                              <p className="text-[11px] text-emerald-800">Verified Aadhaar & PAN pulled via DigiLocker. No live video queue wait.</p>
+                            </div>
+                            <button className="w-full py-3 bg-neutral-900 text-white rounded-xl text-xs font-mono uppercase font-bold">
+                              Verify in 10s via DigiLocker →
+                            </button>
+                          </div>
+                        )}
+
+                        {selectedPresetKey === 'edtech' && (
+                          <div className="space-y-3">
+                            <div className="p-3 bg-white border-2 border-emerald-500 rounded-xl space-y-1">
+                              <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase">7-Day Sprint Pass</span>
+                              <div className="text-xl font-bold font-mono text-neutral-900">₹149 <span className="text-xs font-normal text-neutral-500">/ week</span></div>
+                              <p className="text-[11px] text-neutral-600">Includes 2 free unlocked AI explanations. 1-click cancel anytime.</p>
+                            </div>
+                            <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-mono uppercase font-bold">
+                              Start ₹149 Sprint Pass →
+                            </button>
+                          </div>
+                        )}
+
+                        {selectedPresetKey === 'custom' && (
+                          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
+                            <span className="font-bold text-xs text-emerald-800 block">Auto-Remediated Screen</span>
+                            <p className="text-xs text-neutral-600">Friction points eliminated. High-converting 1-tap checkout active.</p>
+                            <div className="text-[10px] font-mono text-emerald-700 font-bold">Expected CR Lift: {currentData.lift}</div>
+                          </div>
+                        )}
+
+                        {/* Success Lift Banner */}
+                        <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-900 flex items-center justify-between">
+                          <span className="font-bold">✓ FRICTION ELIMINATED:</span>
+                          <span className="font-bold text-emerald-700">{currentData.lift}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Phone Home Bar */}
+                  <div className="pb-2 pt-1 flex justify-center bg-white border-t border-neutral-100">
+                    <div className="w-24 h-1 bg-neutral-300 rounded-full" />
+                  </div>
+
                 </div>
+              </div>
+
+              {/* Viewport Subtext */}
+              <div className="mt-4 text-[11px] font-mono text-neutral-400 text-center">
+                Interactive Viewport Simulation · Switch between <strong className="text-neutral-700">Problem</strong> & <strong className="text-emerald-700">The Fix</strong>
               </div>
             </div>
 
@@ -1279,10 +1634,10 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md font-mono text-xs text-neutral-600 mb-2">
                 <Terminal className="w-4 h-4 text-emerald-600" />
-                <span>MODULE 02 // QUANTITATIVE SQL TELEMETRY</span>
+                <span>DATA EVIDENCE // DROP-OFF PROOF</span>
               </div>
               <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-neutral-900">
-                BigQuery Correlation Proof
+                The Data Behind the Drop-Off
               </h2>
             </div>
             <div className="flex items-center gap-2">
@@ -1291,7 +1646,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 className="px-3.5 py-1.5 rounded-lg border border-neutral-200 hover:border-black font-mono text-xs text-neutral-700 hover:text-black flex items-center gap-1.5 transition cursor-pointer bg-white"
               >
                 {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedSql ? "Copied SQL" : "Copy Query"}</span>
+                <span>{copiedSql ? "Copied SQL" : "Copy SQL"}</span>
               </button>
             </div>
           </div>
@@ -1304,7 +1659,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 font-mono text-neutral-400">telemetry_rca_step4.sql</span>
+                  <span className="ml-2 font-mono text-neutral-400">telemetry_dropoff_analysis.sql</span>
                 </div>
                 <span className="text-[10px] text-emerald-400 font-mono">STATUS: EXECUTED (184ms)</span>
               </div>
@@ -1317,9 +1672,9 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             <div className="lg:col-span-5 bg-[#FAFAFA] border border-neutral-200 rounded-2xl p-5 flex flex-col justify-between h-full">
               <div>
                 <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 pb-3 mb-3 border-b border-neutral-200">
-                  <span className="uppercase">Cohort</span>
-                  <span>Latency / Dwell</span>
-                  <span>Churn Rate</span>
+                  <span className="uppercase">Device / Cohort</span>
+                  <span>Wait / Latency</span>
+                  <span>Exit Rate</span>
                 </div>
                 <div className="space-y-2.5">
                   {currentData.sqlResults.map((row, i) => (
@@ -1342,22 +1697,22 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
               </div>
 
               <div className="mt-4 pt-3 border-t border-neutral-200 text-[11px] font-mono text-neutral-500 leading-normal">
-                💡 <strong className="text-neutral-900">RCA Finding:</strong> {currentData.sqlFinding}
+                💡 <strong className="text-neutral-900">Key Finding:</strong> {currentData.sqlFinding}
               </div>
             </div>
           </div>
         </section>
 
-        {/* 6. MODULE 03: GEMINI AUTO-REMEDIATION & AUTO-PRD (THE 60s PAYOFF) */}
+        {/* 6. THE FIX: CODE & PRD SPECIFICATION */}
         <section id="remediation" className="bg-white border border-neutral-200 rounded-3xl p-8 lg:p-12 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between pb-6 mb-8 border-b border-neutral-100 gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-md font-mono text-xs text-emerald-800 mb-2">
                 <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>MODULE 03 // GEMINI 2.5 AUTO-REMEDIATION</span>
+                <span>AI-GENERATED SOLUTION</span>
               </div>
               <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-neutral-900">
-                Synthesized Remediation & Engineering Spec
+                The Solution: Ready-to-Ship Code & Specs
               </h2>
             </div>
 
@@ -1372,7 +1727,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                       : 'text-neutral-600 hover:text-black'
                   }`}
                 >
-                  01. Before vs After UI Diff
+                  01. Before vs After
                 </button>
                 <button
                   onClick={() => setActiveRemediationTab('prd')}
@@ -1382,7 +1737,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                       : 'text-neutral-600 hover:text-black'
                   }`}
                 >
-                  02. Executive PRD Spec
+                  02. Product Spec (PRD)
                 </button>
                 <button
                   onClick={() => setActiveRemediationTab('code')}
@@ -1392,17 +1747,17 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                       : 'text-neutral-600 hover:text-black'
                   }`}
                 >
-                  03. Production React Code
+                  03. Production Code
                 </button>
               </div>
 
               <button
                 onClick={handleDownloadFullRcaPackage}
                 className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-mono text-xs uppercase tracking-wider font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                title="Download Complete RCA Package"
+                title="Download Complete Fix Package"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Package (.md)</span>
+                <span>Download Package (.md)</span>
               </button>
             </div>
           </div>
@@ -1410,16 +1765,16 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           {/* TAB 1: BEFORE VS AFTER COMPARATOR */}
           {activeRemediationTab === 'diff' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch font-sans">
-              {/* Broken Baseline Window */}
+              {/* Broken Current Flow */}
               <div className="border border-rose-200 bg-rose-50/20 rounded-2xl p-6 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-rose-200/80 font-mono text-xs text-rose-800">
                     <span className="font-bold flex items-center gap-1.5">
                       <AlertTriangle className="w-4 h-4 text-rose-600" />
-                      BASELINE CONVERSION FRICTION
+                      CURRENT BROKEN FLOW
                     </span>
                     <span className="bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">
-                      {currentData.dropoff}% CHURN
+                      {currentData.dropoff}% DROP-OFF
                     </span>
                   </div>
 
@@ -1440,7 +1795,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-rose-200 text-xs font-mono text-rose-700 flex justify-between">
-                  <span>MONTHLY CAPITAL LOSS:</span>
+                  <span>MONEY LOST EVERY MONTH:</span>
                   <span className="font-bold">₹{leakedLakhs} Lakhs / mo</span>
                 </div>
               </div>
@@ -1451,7 +1806,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                   <div className="flex items-center justify-between pb-3 mb-4 border-b border-emerald-200 font-mono text-xs text-emerald-800">
                     <span className="font-bold flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      GEMINI AUTO-REMEDIATED REPAIR
+                      OPTIMIZED NEW FLOW
                     </span>
                     <span className="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-bold">
                       {currentData.lift}
@@ -1463,13 +1818,13 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
                   <div className="p-4 bg-white border border-emerald-200 rounded-xl space-y-3">
                     <div className="flex items-center justify-between font-mono text-xs text-emerald-800 pb-2 border-b border-emerald-100">
-                      <span>✓ Friction Point Eliminated</span>
+                      <span>✓ Conversion Friction Removed</span>
                       <span className="font-bold">Status: Fixed</span>
                     </div>
                     <ul className="text-xs text-neutral-800 space-y-2">
                       <li className="flex items-start gap-2">
                         <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Pre-filled credentials bypass mandatory authentication and OTP delays.</span>
+                        <span>Pre-filled credentials bypass mandatory login and OTP verification.</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-emerald-600 font-bold">✓</span>
@@ -1477,14 +1832,14 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Immediate action button anchored firmly within the thumb-reach zone.</span>
+                        <span>Instant payment button anchored comfortably within the thumb-reach zone.</span>
                       </li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-emerald-200 text-xs font-mono text-emerald-800 flex justify-between">
-                  <span>PROJECTED REVENUE RECOVERY:</span>
+                  <span>RECOVERABLE REVENUE:</span>
                   <span className="font-bold">+{currentData.recoveredLakhsEst} / mo</span>
                 </div>
               </div>
@@ -1498,7 +1853,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 <div>
                   <span className="text-[10px] text-neutral-400 block">SPECIFICATION ID: {currentData.prdDocumentId}</span>
                   <h4 className="font-sans text-lg font-bold text-neutral-900">
-                    Autonomous Product Requirements Document
+                    Product Requirements Document (PRD)
                   </h4>
                 </div>
                 <button
@@ -1506,7 +1861,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                   className="px-3.5 py-1.5 bg-neutral-900 text-white rounded-lg flex items-center gap-1.5 cursor-pointer text-xs font-medium hover:bg-black transition"
                 >
                   {copiedPrd ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedPrd ? "Copied Markdown" : "Export PRD (.MD)"}</span>
+                  <span>{copiedPrd ? "Copied Markdown" : "Copy PRD (.md)"}</span>
                 </button>
               </div>
 
@@ -1555,7 +1910,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                     {currentData.prdRolloutPlan}
                   </p>
                   <div className="text-[10px] font-mono text-neutral-500 bg-neutral-100 p-2 rounded">
-                    Primary Metric: Step 4 Conversion Rate · Guardrail: Gateway Timeout Error Rate
+                    Primary Metric: Step 4 Conversion Rate · Guardrail: Payment Error Rate
                   </div>
                 </div>
               </div>
@@ -1568,7 +1923,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-neutral-100 gap-2 font-mono text-xs">
                 <div className="flex items-center gap-2">
                   <Code2 className="w-4 h-4 text-emerald-600" />
-                  <span className="text-neutral-500">SYNTHESIZED COMPONENT:</span>
+                  <span className="text-neutral-500">READY-TO-USE COMPONENT:</span>
                   <span className="font-bold text-neutral-900">{currentData.remediationFileName}</span>
                 </div>
                 <button
@@ -1589,12 +1944,12 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           )}
         </section>
 
-        {/* 7. FINANCIAL SENSITIVITY & ROI MODEL */}
+        {/* 7. FINANCIAL SENSITIVITY & REVENUE RECOVERY */}
         <section id="calculator" className="bg-white border border-neutral-200 rounded-3xl p-10 lg:p-14 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
           <div className="border-b border-neutral-100 pb-6 mb-8 font-mono text-xs text-neutral-500 uppercase tracking-wider flex items-center justify-between">
-            <span>MODULE 04 // Financial Sensitivity & Revenue Recovery</span>
+            <span>REVENUE IMPACT // RECOVERY ESTIMATOR</span>
             <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              SHAPLEY VALUE ATTRIBUTION
+              ESTIMATED CONVERSION LIFT
             </span>
           </div>
 
@@ -1602,7 +1957,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             <div className="md:col-span-2 space-y-6 font-mono text-xs">
               <div>
                 <div className="flex justify-between mb-2 text-neutral-600">
-                  <span>MONTHLY CHECKOUT INITIATIONS:</span>
+                  <span>MONTHLY VISITORS REACHING CHECKOUT:</span>
                   <span className="font-bold text-neutral-900" suppressHydrationWarning>{visitors.toLocaleString()} Users</span>
                 </div>
                 <input 
@@ -1614,8 +1969,8 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
               <div>
                 <div className="flex justify-between mb-2 text-neutral-600">
-                  <span>STEP-04 DROP-OFF RATE:</span>
-                  <span className="font-bold text-rose-600" suppressHydrationWarning>{dropoff}% Abandonment</span>
+                  <span>CHECKOUT DROP-OFF RATE:</span>
+                  <span className="font-bold text-rose-600" suppressHydrationWarning>{dropoff}% Drop-off</span>
                 </div>
                 <input 
                   type="range" min="30" max="95" step="0.5"
@@ -1638,7 +1993,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             </div>
 
             <div className="border-t md:border-t-0 md:border-l border-neutral-200 md:pl-10 flex flex-col justify-center font-mono">
-              <span className="text-[11px] text-neutral-400 block mb-1">MONTHLY REVENUE LEAKED:</span>
+              <span className="text-[11px] text-neutral-400 block mb-1">MONTHLY REVENUE LOST:</span>
               <span className="text-3xl font-bold text-rose-600 mb-4 tracking-tight" suppressHydrationWarning>
                 ₹{leakedLakhs} L<span className="text-xs font-normal text-neutral-500"> /mo</span>
               </span>
@@ -1649,7 +2004,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
               </span>
 
               <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs">
-                <span className="text-neutral-400">ANNUALIZED VALUE:</span>
+                <span className="text-neutral-400">ADDED REVENUE PER YEAR:</span>
                 <span className="font-bold text-neutral-900" suppressHydrationWarning>
                   +₹{annualizedCr} Cr /yr
                 </span>
@@ -1664,13 +2019,13 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-neutral-100 rounded-md text-neutral-600 text-[11px] mb-2">
                 <Terminal className="w-3.5 h-3.5 text-emerald-600" />
-                <span>DEV TOOLCHAIN // CONTINUOUS CONVERSION TELEMETRY</span>
+                <span>DEVELOPER TOOL // CI/CD AUDIT</span>
               </div>
               <h3 className="font-sans text-xl font-bold text-neutral-900 tracking-tight">
                 Automate Funnel Audits in CI/CD via CLI
               </h3>
               <p className="font-sans text-xs text-neutral-600 mt-1">
-                Run FunnelDoctor as a GitHub Action or local terminal check on every deploy to detect conversion regressions.
+                Run FunnelDoctor as a GitHub Action or local terminal check on every deploy to detect conversion drops.
               </p>
             </div>
 
@@ -1727,10 +2082,10 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-neutral-900">
-                    Ingest Custom Funnel & Screen Inspection
+                    Upload Your Funnel Data
                   </h3>
                   <p className="text-xs text-neutral-500">
-                    Parse any GA4 / Mixpanel CSV export & run Gemini 2.5 Multimodal RCA
+                    Upload your GA4, Mixpanel, or custom analytics CSV to diagnose drop-offs
                   </p>
                 </div>
               </div>
