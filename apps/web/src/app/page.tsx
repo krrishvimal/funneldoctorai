@@ -1138,40 +1138,9 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                 <span className="text-neutral-900 font-bold text-sm">{currentData.tagline}</span>
               </div>
               
-              {/* Preset Switcher */}
-              <div className="flex flex-wrap items-center gap-1.5 bg-neutral-100 p-1 rounded-xl">
-                {[
-                  { key: 'd2c', label: '🛍️ Online Store' },
-                  { key: 'fintech', label: '💳 Banking & KYC' },
-                  { key: 'edtech', label: '🎓 Course Paywall' }
-                ].map(({ key, label }) => {
-                  const isSelected = selectedPresetKey === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => switchPreset(key as PresetKey)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
-                        isSelected 
-                          ? 'bg-white text-neutral-900 font-semibold shadow-2xs' 
-                          : 'text-neutral-600 hover:text-black'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-                {customDataset && (
-                  <button
-                    onClick={() => switchPreset('custom')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer ${
-                      selectedPresetKey === 'custom'
-                        ? 'bg-emerald-600 text-white font-semibold shadow-2xs'
-                        : 'text-emerald-700 hover:text-emerald-900'
-                    }`}
-                  >
-                    Custom Ingested
-                  </button>
-                )}
+              <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-500">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>STEP-BY-STEP DROP-OFF TELEMETRY</span>
               </div>
             </div>
 
@@ -1256,6 +1225,47 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             {/* Right Column: Realistic Interactive Mobile Screen Viewport */}
             <div className="lg:col-span-6 flex flex-col items-center justify-center bg-neutral-100/70 p-6 lg:p-10 rounded-2xl border border-neutral-200/60">
               
+              {/* Industry Category Switcher (Directly Above Device) */}
+              <div className="mb-6 w-full max-w-[340px] flex flex-col items-center gap-1.5">
+                <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider font-semibold">
+                  SELECT INDUSTRY FUNNEL:
+                </span>
+                <div className="w-full flex items-center justify-between p-1 bg-white rounded-xl border border-neutral-200/80 shadow-xs text-xs font-mono">
+                  {[
+                    { key: 'd2c', label: '🛍️ Online Store' },
+                    { key: 'fintech', label: '💳 Banking & KYC' },
+                    { key: 'edtech', label: '🎓 Course Paywall' }
+                  ].map(({ key, label }) => {
+                    const isSelected = selectedPresetKey === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => switchPreset(key as PresetKey)}
+                        className={`flex-1 py-1.5 px-2 rounded-lg text-center transition cursor-pointer text-[11px] font-medium ${
+                          isSelected 
+                            ? 'bg-neutral-900 text-white font-bold shadow-xs' 
+                            : 'text-neutral-600 hover:text-black hover:bg-neutral-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                  {customDataset && (
+                    <button
+                      onClick={() => switchPreset('custom')}
+                      className={`py-1.5 px-2 rounded-lg text-center transition cursor-pointer text-[11px] font-medium ${
+                        selectedPresetKey === 'custom'
+                          ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                          : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50'
+                      }`}
+                    >
+                      Custom Ingested
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Photorealistic Titanium CSS Device Frame */}
               <RealisticPhoneMockup
                 selectedIssue={selectedPin}
