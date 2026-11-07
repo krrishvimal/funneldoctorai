@@ -25,5 +25,5 @@ jobs:
       - name: Run Tests
         run: npm test
 
-      - name: Build Core Package
-        run: npm run build:core
+      - name: Build Monorepo (Core & Web)
+        run: npm run build
