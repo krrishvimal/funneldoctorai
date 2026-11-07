@@ -555,13 +555,16 @@ export default function FunnelDoctorMinimalist() {
   const [isSubmittingCustom, setIsSubmittingCustom] = useState(false);
   const [customError, setCustomError] = useState<string | null>(null);
 
+  // Pricing Modal State
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+
   // Financial Sliders
   const [visitors, setVisitors] = useState(currentData.visitors);
   const [dropoff, setDropoff] = useState(currentData.dropoff);
   const [aov, setAov] = useState(currentData.aov);
 
-  // Switch Preset Handler
-  const switchPreset = (key: PresetKey) => {
+  // Switch Preset Handler with URL Deep-Linking
+  const switchPreset = (key: PresetKey, updateUrl: boolean = true) => {
     setIsAuditing(true);
     setSelectedPresetKey(key);
     const next = key === 'custom' && customDataset ? customDataset : PRESET_DATASETS[key as Exclude<PresetKey, 'custom'>];
@@ -570,7 +573,42 @@ export default function FunnelDoctorMinimalist() {
     setVisitors(next.visitors);
     setDropoff(next.dropoff);
     setAov(next.aov);
+
+    if (updateUrl && typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (key === 'custom') {
+        url.searchParams.delete('preset');
+      } else {
+        url.searchParams.set('preset', key);
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+
     setTimeout(() => setIsAuditing(false), 450);
+  };
+
+  // URL Deep-Linking Initialization
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('preset');
+    if (p && (p === 'd2c' || p === 'fintech' || p === 'edtech')) {
+      switchPreset(p as PresetKey, false);
+    }
+  }, []);
+
+  // Target URL Input & Audit Submission Handler
+  const handleRunAudit = () => {
+    const trimmedInput = targetUrl.trim();
+    if (trimmedInput !== currentData.url.trim()) {
+      setCustomUrlInput(trimmedInput);
+      setIsCustomModalOpen(true);
+    } else {
+      switchPreset(selectedPresetKey);
+      setTimeout(() => {
+        document.getElementById('telemetry')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+    }
   };
 
   // Financial Math
@@ -607,7 +645,7 @@ export default function FunnelDoctorMinimalist() {
   };
 
   const handleCopyCli = () => {
-    navigator.clipboard?.writeText(`npx @funneldoctor/cli audit --file ./funnel.csv --url ${currentData.url}`);
+    navigator.clipboard?.writeText(`npx @funneldoctor/core audit --file ./funnel.csv --url ${currentData.url}`);
     setCopiedCli(true);
     setTimeout(() => setCopiedCli(false), 2000);
   };
@@ -872,12 +910,19 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             </div>
           </div>
           
-          <nav className="hidden lg:flex items-center gap-8 text-xs font-mono uppercase tracking-wider text-neutral-500">
+          <nav className="hidden lg:flex items-center gap-7 text-xs font-mono uppercase tracking-wider text-neutral-500">
             <a href="#telemetry" className="hover:text-black transition-colors">01. Telemetry</a>
             <a href="#xray" className="hover:text-black transition-colors">02. Vision X-Ray</a>
             <a href="#sql" className="hover:text-black transition-colors">03. SQL Proof</a>
             <a href="#remediation" className="hover:text-black transition-colors text-emerald-700 font-semibold">04. Synthesized Fix</a>
             <a href="#calculator" className="hover:text-black transition-colors">05. ROI Model</a>
+            <button 
+              onClick={() => setIsPricingModalOpen(true)}
+              className="hover:text-black transition-colors text-neutral-800 font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <span>Pricing</span>
+              <span className="text-[9px] bg-neutral-200 text-neutral-800 px-1 py-0.5 rounded font-mono">B2B</span>
+            </button>
           </nav>
 
           <div className="flex items-center gap-2.5">
@@ -892,14 +937,29 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
             <button 
               onClick={toggleVoice}
-              className={`px-3 py-2 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-2 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
                 isSpeaking 
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' 
+                  ? 'bg-neutral-900 text-white border-neutral-900 shadow-md ring-2 ring-emerald-500/30' 
                   : 'bg-white text-neutral-700 border-neutral-200 hover:border-black'
               }`}
+              title="Multimodal Voice RCA Briefing"
             >
-              <Volume2 className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">{isSpeaking ? 'Playing...' : 'Audio Brief'}</span>
+              {isSpeaking ? (
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-end gap-0.5 h-3">
+                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2" style={{ animationDuration: '0.4s' }} />
+                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-3" style={{ animationDuration: '0.6s' }} />
+                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-1.5" style={{ animationDuration: '0.5s' }} />
+                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2.5" style={{ animationDuration: '0.7s' }} />
+                  </div>
+                  <span className="text-emerald-400 font-bold hidden md:inline">Voice Playing</span>
+                </div>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-neutral-500" />
+                  <span className="hidden md:inline">Audio Brief</span>
+                </>
+              )}
             </button>
 
             <button 
@@ -931,24 +991,43 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           </p>
 
           {/* Minimalist Target Input Bar */}
-          <div className="max-w-2xl mx-auto bg-white border border-neutral-300/80 rounded-2xl p-2.5 flex flex-col sm:flex-row items-center gap-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+          <div className="max-w-2xl mx-auto bg-white border border-neutral-300/80 rounded-2xl p-2.5 flex flex-col sm:flex-row items-center gap-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-neutral-900/10 transition-all">
             <div className="flex items-center gap-2 px-3 py-2 w-full font-mono text-xs text-neutral-500 border-b sm:border-b-0 sm:border-r border-neutral-200">
               <span className="text-neutral-400 font-semibold">URL:</span>
               <input 
                 type="text" 
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleRunAudit();
+                  }
+                }}
+                placeholder="https://yourbrand.in/checkout/step-4"
                 className="w-full bg-transparent text-black focus:outline-none font-mono text-xs" 
               />
             </div>
             <button 
-              onClick={() => switchPreset(selectedPresetKey)}
+              onClick={handleRunAudit}
               disabled={isAuditing}
-              className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-xs"
             >
-              {isAuditing ? 'Auditing...' : 'Run Audit'} <ArrowRight className="w-3.5 h-3.5" />
+              {isAuditing 
+                ? 'Auditing...' 
+                : targetUrl.trim() !== currentData.url.trim()
+                  ? 'Audit Custom URL'
+                  : 'Run Audit'
+              } <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {targetUrl.trim() !== currentData.url.trim() && (
+            <div className="mt-3 text-[11px] font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 inline-flex items-center gap-1.5 px-3 py-1 rounded-full animate-in fade-in duration-200">
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              <span>Custom URL detected. Hit Enter or click Audit to ingest telemetry.</span>
+            </div>
+          )}
 
           {/* Preset Chips + Custom Upload Trigger */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-5 font-mono text-xs text-neutral-500">
@@ -1563,7 +1642,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
             <div className="bg-[#09090B] text-neutral-200 px-4 py-3 rounded-xl border border-neutral-800 flex items-center justify-between gap-4 w-full lg:w-auto shadow-inner">
               <code className="text-emerald-400 font-mono text-xs overflow-x-auto whitespace-nowrap">
-                npx @funneldoctor/cli audit --file ./funnel.csv --url {currentData.url}
+                npx @funneldoctor/core audit --file ./funnel.csv --url {currentData.url}
               </code>
               <button
                 onClick={handleCopyCli}
@@ -1722,6 +1801,212 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING VOICE BRIEFING HUD */}
+      {isSpeaking && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#09090B] text-white border border-neutral-800 rounded-2xl p-4 shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-lg border-l-4 border-l-emerald-500 font-sans">
+          <div className="flex items-end gap-1 h-5 shrink-0">
+            <span className="w-1 bg-emerald-400 rounded-full animate-bounce h-3" style={{ animationDuration: '0.4s' }} />
+            <span className="w-1 bg-emerald-400 rounded-full animate-bounce h-5" style={{ animationDuration: '0.6s' }} />
+            <span className="w-1 bg-emerald-400 rounded-full animate-bounce h-2" style={{ animationDuration: '0.5s' }} />
+            <span className="w-1 bg-emerald-400 rounded-full animate-bounce h-4" style={{ animationDuration: '0.7s' }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">Gemini 2.5 Voice RCA</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+            </div>
+            <p className="text-xs text-neutral-300 truncate mt-0.5">
+              {currentData.voiceSummary}
+            </p>
+          </div>
+          <button 
+            onClick={toggleVoice}
+            className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs rounded-lg font-mono transition-colors cursor-pointer shrink-0"
+          >
+            Stop
+          </button>
+        </div>
+      )}
+
+      {/* 11. VALUE-ANCHORED PRICING & ROI GUARANTEE MODAL */}
+      {isPricingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans">
+          <div className="relative w-full max-w-4xl bg-[#FBFBFB] border border-neutral-300 rounded-3xl p-6 sm:p-10 shadow-2xl text-neutral-900 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-6 border-b border-neutral-200">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-[11px] font-mono font-medium text-emerald-800 mb-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                  INSTITUTIONAL B2B PRICING & GUARANTEE
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+                  Monetization Architecture & Plans
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-600 mt-1 max-w-xl">
+                  FunnelDoctor replaces a ₹15L/year CRO agency retainer with autonomous 60-second multimodal AI diagnoses.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsPricingModalOpen(false)}
+                className="p-2 rounded-xl hover:bg-neutral-200/80 text-neutral-400 hover:text-neutral-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* ROI Guarantee Banner */}
+            <div className="my-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs text-emerald-900">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0" />
+                <div>
+                  <span className="font-bold uppercase tracking-wider">3x ROI Performance Guarantee:</span>
+                  <span className="text-emerald-800 ml-1.5 font-sans font-normal">
+                    If FunnelDoctor does not identify and help remediate at least 3x its subscription cost in leaked checkout revenue within 30 days, we issue an immediate 100% refund.
+                  </span>
+                </div>
+              </div>
+              <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-widest shrink-0 bg-emerald-100/80 px-2.5 py-1 rounded-lg">
+                Zero Risk
+              </div>
+            </div>
+
+            {/* Pricing Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 my-6">
+              {/* Plan 1: Growth */}
+              <div className="p-6 bg-white border border-neutral-200 rounded-2xl flex flex-col justify-between">
+                <div>
+                  <div className="font-mono text-xs text-neutral-500 uppercase tracking-wider mb-2">Growth Tier</div>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-3xl font-bold font-mono tracking-tight">$199</span>
+                    <span className="text-xs text-neutral-500 font-mono">/ mo (~₹16.5k)</span>
+                  </div>
+                  <p className="text-xs text-neutral-600 mb-5">
+                    For high-growth D2C stores doing ₹25L–₹1Cr GMV/month.
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-neutral-700 mb-6">
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>15 Autonomous Funnel Audits / mo</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Gemini Omni Spatial Screen Vision</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>React / Tailwind Component Code</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>CSV & PostHog Ingestion</span>
+                    </li>
+                  </ul>
+                </div>
+                <button 
+                  onClick={() => setIsPricingModalOpen(false)}
+                  className="w-full py-2.5 border border-neutral-300 rounded-xl text-xs font-mono uppercase tracking-wider hover:border-black transition font-semibold cursor-pointer"
+                >
+                  Start 14-Day Pilot
+                </button>
+              </div>
+
+              {/* Plan 2: Scale (Featured) */}
+              <div className="p-6 bg-white border-2 border-emerald-600 rounded-2xl flex flex-col justify-between relative shadow-lg">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full">
+                  Most Popular · Highest ROI
+                </div>
+                <div>
+                  <div className="font-mono text-xs text-emerald-700 uppercase tracking-wider mb-2 font-bold">Scale Tier</div>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-3xl font-bold font-mono tracking-tight text-neutral-900">$599</span>
+                    <span className="text-xs text-neutral-500 font-mono">/ mo (~₹49.5k)</span>
+                  </div>
+                  <p className="text-xs text-neutral-600 mb-5">
+                    For scaleups & fintechs doing ₹1Cr–₹10Cr GMV/month.
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-neutral-800 mb-6">
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span><strong>Unlimited</strong> Real-Time Funnel Audits</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Live BigQuery & Mixpanel Streaming Connector</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Gemini Live Voice RCA Consultations</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Automated GitHub PR Pull-Request Generation</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Slack & Teams Anomaly Alerts</span>
+                    </li>
+                  </ul>
+                </div>
+                <button 
+                  onClick={() => setIsPricingModalOpen(false)}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase tracking-wider transition font-semibold cursor-pointer shadow-sm"
+                >
+                  Deploy Scale License
+                </button>
+              </div>
+
+              {/* Plan 3: Enterprise */}
+              <div className="p-6 bg-white border border-neutral-200 rounded-2xl flex flex-col justify-between">
+                <div>
+                  <div className="font-mono text-xs text-neutral-500 uppercase tracking-wider mb-2">Enterprise Partner</div>
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-3xl font-bold font-mono tracking-tight">$2,499</span>
+                    <span className="text-xs text-neutral-500 font-mono">/ mo</span>
+                  </div>
+                  <p className="text-xs text-neutral-600 mb-5">
+                    For unicorn brands, banking KYC, and high-volume fintechs.
+                  </p>
+                  <ul className="space-y-2.5 text-xs text-neutral-700 mb-6">
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Dedicated GCP Vertex AI VPC Deployment</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Custom Design System & Multi-Framework Synthesis</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>Dedicated Senior CRO Solutions Architect</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span>99.9% Uptime SLA & SOC2 Compliance</span>
+                    </li>
+                  </ul>
+                </div>
+                <button 
+                  onClick={() => setIsPricingModalOpen(false)}
+                  className="w-full py-2.5 border border-neutral-900 bg-neutral-900 text-white hover:bg-black rounded-xl text-xs font-mono uppercase tracking-wider transition font-semibold cursor-pointer"
+                >
+                  Contact Enterprise Desk
+                </button>
+              </div>
+            </div>
+
+            {/* Unit Economics Footer */}
+            <div className="pt-4 border-t border-neutral-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono text-neutral-500">
+              <span>Average Customer Payback Period: <strong>&lt; 7 Days</strong> via recovered checkouts</span>
+              <div className="flex items-center gap-4">
+                <span>Invoicing in INR & USD</span>
+                <span>•</span>
+                <span>Annual Commit: 20% Off</span>
               </div>
             </div>
           </div>
