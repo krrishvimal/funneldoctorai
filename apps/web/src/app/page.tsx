@@ -1011,15 +1011,15 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
       <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 pt-16 pb-32 space-y-24">
         
         {/* 2. HERO SECTION: VALUE PROP & DUAL-ACTION AUDIT GATEWAY */}
-        <section className="max-w-4xl mx-auto text-center pt-8">
+        <section className="max-w-5xl mx-auto text-center pt-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-mono font-medium text-emerald-800 mb-6">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
             AI-Powered Conversion Optimization
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.08] text-[#09090B] mb-5">
-            See where your users drop off. <br />
-            <span className="text-neutral-400 font-normal">Fix it with clean code in 60s.</span>
+          <h1 className="text-3xl sm:text-5xl lg:text-[58px] font-bold tracking-tight leading-[1.12] text-[#09090B] mb-6">
+            <span className="block">See where your users drop&nbsp;off.</span>
+            <span className="block text-neutral-400 font-normal mt-1 sm:mt-2">Fix it with clean code in 60s.</span>
           </h1>
 
           <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
