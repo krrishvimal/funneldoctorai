@@ -24,7 +24,8 @@ import {
   Download,
   X,
   FileSpreadsheet,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Globe
 } from 'lucide-react';
 
 // 1. ULTRA-SMOOTH BEZIER TOPOGRAPHIC MESH BACKGROUND
@@ -537,7 +538,7 @@ export default function FunnelDoctorMinimalist() {
     ? customDataset 
     : PRESET_DATASETS[selectedPresetKey as Exclude<PresetKey, 'custom'>];
   
-  const [targetUrl, setTargetUrl] = useState(currentData.url);
+  const [targetUrl, setTargetUrl] = useState('');
   const [selectedPin, setSelectedPin] = useState(currentData.pins[0].id);
   const [activeRemediationTab, setActiveRemediationTab] = useState<'diff' | 'prd' | 'code'>('diff');
   const [isAuditing, setIsAuditing] = useState(false);
@@ -603,21 +604,15 @@ export default function FunnelDoctorMinimalist() {
   // Target URL Input & Audit Submission Handler
   const handleRunAudit = () => {
     const trimmedInput = targetUrl.trim();
-    if (!trimmedInput) return;
-
-    // If custom URL is entered, navigate directly to autonomous audit
-    if (trimmedInput !== currentData.url.trim()) {
-      const domainMatch = trimmedInput.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
-      const auditSlug = domainMatch.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'audit-report';
-      setIsAuditing(true);
-      router.push(`/audit/${auditSlug}`);
+    if (!trimmedInput) {
+      document.getElementById('telemetry')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
-    switchPreset(selectedPresetKey);
-    setTimeout(() => {
-      document.getElementById('telemetry')?.scrollIntoView({ behavior: 'smooth' });
-    }, 150);
+    const domainMatch = trimmedInput.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+    const auditSlug = domainMatch.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'audit-report';
+    setIsAuditing(true);
+    router.push(`/audit/${auditSlug}`);
   };
 
   // Financial Math
@@ -1027,153 +1022,171 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 pt-16 pb-32 space-y-24">
         
-        {/* 2. HERO SECTION WITH PRESET CHIPS & TARGET BAR */}
+        {/* 2. HERO SECTION: VALUE PROP & DUAL-ACTION AUDIT GATEWAY */}
         <section className="max-w-4xl mx-auto text-center pt-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-mono font-medium text-emerald-800 mb-6">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            Autonomous Multimodal Conversion & RCA Agent
+            Autonomous Multimodal CRO & RCA Agent
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] text-[#09090B] mb-6">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.08] text-[#09090B] mb-5">
             Diagnose conversion churn. <br />
             <span className="text-neutral-400 font-normal">Synthesize the fix in 60s.</span>
           </h1>
 
-          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-8">
-            Combine quantitative BigQuery funnel telemetry with Gemini Vision spatial screen inspection to output executive PRDs and production React code.
+          <p className="text-base md:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-10">
+            FunnelDoctor maps your checkout & signup stages, uncovers why users exit, and outputs production React fixes and executive PRDs.
           </p>
 
-          {/* Minimalist Target Input Bar */}
-          <div className="max-w-2xl mx-auto bg-white border border-neutral-300/80 rounded-2xl p-2.5 flex flex-col sm:flex-row items-center gap-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-neutral-900/10 transition-all">
-            <div className="flex items-center gap-2 px-3 py-2 w-full font-mono text-xs text-neutral-500 border-b sm:border-b-0 sm:border-r border-neutral-200">
-              <span className="text-neutral-400 font-semibold">URL:</span>
-              <input 
-                type="text" 
-                value={targetUrl}
-                onChange={(e) => setTargetUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleRunAudit();
-                  }
-                }}
-                placeholder="https://yourbrand.in/checkout/step-4"
-                className="w-full bg-transparent text-black focus:outline-none font-mono text-xs" 
-              />
-            </div>
-            <button 
-              onClick={handleRunAudit}
-              disabled={isAuditing}
-              className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-xs"
-            >
-              {isAuditing 
-                ? 'Auditing...' 
-                : targetUrl.trim() !== currentData.url.trim()
-                  ? 'Audit Custom URL'
-                  : 'Run Audit'
-              } <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {targetUrl.trim() !== currentData.url.trim() && (
-            <div className="mt-3 text-[11px] font-mono text-emerald-800 bg-emerald-50 border border-emerald-200 inline-flex items-center gap-1.5 px-3 py-1 rounded-full animate-in fade-in duration-200">
-              <Sparkles className="w-3 h-3 text-emerald-600" />
-              <span>Custom URL detected. Hit Enter or click Audit to ingest telemetry.</span>
-            </div>
-          )}
-
-          {/* Preset Chips + Custom Upload Trigger */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-5 font-mono text-xs text-neutral-500">
-            <span className="text-[11px] uppercase tracking-wider text-neutral-400 mr-1">PRESETS:</span>
-            {(['d2c', 'fintech', 'edtech'] as const).map((key) => {
-              const preset = PRESET_DATASETS[key];
-              const isSelected = selectedPresetKey === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => switchPreset(key)}
-                  className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer text-xs ${
-                    isSelected
-                      ? 'bg-neutral-900 text-white border-neutral-900 font-semibold shadow-xs'
-                      : 'bg-white text-neutral-700 border-neutral-200 hover:border-black'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-
-            {/* Custom Ingested Tab (if exists) */}
-            {customDataset && (
-              <button
-                onClick={() => switchPreset('custom')}
-                className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer text-xs ${
-                  selectedPresetKey === 'custom'
-                    ? 'bg-emerald-600 text-white border-emerald-600 font-semibold shadow-xs'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:border-emerald-600'
-                }`}
+          {/* UNIFIED HERO AUDIT COMMAND BOX */}
+          <div className="max-w-2xl mx-auto bg-white border border-neutral-300 rounded-2xl p-2.5 shadow-[0_12px_36px_rgba(0,0,0,0.06)] transition-all">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-2 w-full font-mono text-xs text-neutral-500">
+                <Globe className="w-4 h-4 text-neutral-400 shrink-0" />
+                <input 
+                  type="text" 
+                  value={targetUrl}
+                  onChange={(e) => setTargetUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleRunAudit();
+                    }
+                  }}
+                  placeholder="Enter store or SaaS URL (e.g. nike.in, linear.app, yourbrand.com)"
+                  className="w-full bg-transparent text-neutral-900 placeholder:text-neutral-400 focus:outline-none font-mono text-xs" 
+                />
+              </div>
+              <button 
+                onClick={handleRunAudit}
+                disabled={isAuditing}
+                className="w-full sm:w-auto px-6 py-3 bg-neutral-900 text-white text-xs font-mono uppercase tracking-wider rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-xs font-medium"
               >
-                {customDataset.label}
+                {isAuditing ? 'Auditing...' : 'Run Audit'} <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            )}
+            </div>
 
-            {/* Custom Modal Button */}
-            <button
-              onClick={() => setIsCustomModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg border border-dashed border-neutral-400/80 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <Upload className="w-3.5 h-3.5 text-neutral-600" />
-              <span>+ Ingest Custom CSV</span>
-            </button>
+            {/* Ingestion & Telemetry Quick Bar */}
+            <div className="mt-2.5 pt-2.5 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-2 px-2 text-[11px] font-mono">
+              <div className="flex items-center gap-1.5 text-neutral-500">
+                <span className="text-neutral-400">Try live audit:</span>
+                <button onClick={() => router.push('/audit/nike-in')} className="text-neutral-700 hover:text-black underline cursor-pointer">Nike</button>
+                <span className="text-neutral-300">·</span>
+                <button onClick={() => router.push('/audit/amazon')} className="text-neutral-700 hover:text-black underline cursor-pointer">Amazon</button>
+                <span className="text-neutral-300">·</span>
+                <button onClick={() => router.push('/audit/linear-app')} className="text-neutral-700 hover:text-black underline cursor-pointer">Linear</button>
+                <span className="text-neutral-300">·</span>
+                <button onClick={() => router.push('/audit/zerodha-com')} className="text-neutral-700 hover:text-black underline cursor-pointer">Zerodha</button>
+              </div>
+
+              <button
+                onClick={() => setIsCustomModalOpen(true)}
+                className="text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 cursor-pointer transition"
+              >
+                <Upload className="w-3 h-3 text-emerald-600" />
+                <span>Have GA4 / Mixpanel CSV? Ingest Telemetry →</span>
+              </button>
+            </div>
           </div>
 
-          {/* Live Benchmark Line */}
-          <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-neutral-500 pt-5">
-            <span className="flex items-center gap-1.5 text-neutral-800 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {currentData.tagline}
-            </span>
-            <span className="text-neutral-300">·</span>
-            <span>{currentData.recoveredLakhsEst} monthly recoverable</span>
-            <span className="text-neutral-300">·</span>
-            <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
-              {currentData.lift}
-            </span>
-          </div>
+          {/* 3-STEP EXPLANATION: HOW FUNNELDOCTOR WORKS */}
+          <div className="pt-12 grid grid-cols-1 md:grid-cols-3 gap-4 text-left max-w-4xl mx-auto">
+            {/* Step 1 */}
+            <div className="p-5 bg-white border border-neutral-200/80 rounded-2xl shadow-2xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="w-6 h-6 rounded-lg bg-neutral-100 text-neutral-900 font-mono text-xs font-bold flex items-center justify-center">
+                  01
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400 font-semibold">
+                  INGEST
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-neutral-900 mb-1">
+                Map Conversion Stages
+              </h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Paste any URL or upload your GA4 / Mixpanel CSV. FunnelDoctor maps sequential stages from first landing to checkout.
+              </p>
+            </div>
 
-          {/* 3-Step Breadcrumb Flow */}
-          <div className="pt-10 max-w-2xl mx-auto">
-            <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-neutral-400 border-t border-neutral-200/70 pt-6">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-[10px]">1</span>
-                <span className="text-neutral-700 font-medium">Ingest Telemetry</span>
+            {/* Step 2 */}
+            <div className="p-5 bg-white border border-neutral-200/80 rounded-2xl shadow-2xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-rose-700 font-mono text-xs font-bold flex items-center justify-center border border-rose-200">
+                  02
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-rose-600 font-semibold">
+                  DIAGNOSE
+                </span>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-300" />
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-neutral-900 text-white flex items-center justify-center font-bold text-[10px]">2</span>
-                <span className="text-neutral-700 font-medium">Vision + SQL RCA</span>
+              <h3 className="font-bold text-sm text-neutral-900 mb-1">
+                Isolate Root-Cause Churn
+              </h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Gemini 2.5 identifies the #1 drop-off bottleneck and uncovers why users exit (UX friction, pricing shock, or latency).
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="p-5 bg-white border border-neutral-200/80 rounded-2xl shadow-2xs">
+              <div className="flex items-center justify-between mb-3">
+                <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-800 font-mono text-xs font-bold flex items-center justify-center border border-emerald-200">
+                  03
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-700 font-semibold">
+                  REMEDIATE
+                </span>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-300" />
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px]">3</span>
-                <span className="text-emerald-800 font-semibold">PRD & 1-Tap Fix</span>
-              </div>
+              <h3 className="font-bold text-sm text-neutral-900 mb-1">
+                Ship Code Fix & PRD
+              </h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Instantly export production-ready React / Tailwind code to replace the broken screen, plus an executive PRD for Jira.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* 3. QUANTITATIVE FUNNEL STREAM */}
+        {/* 3. INTERACTIVE DIAGNOSTIC SANDBOX */}
         <section id="telemetry">
           <div className="bg-white border border-neutral-200 rounded-2xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-neutral-100 font-mono text-xs text-neutral-500 gap-2">
-              <span className="uppercase tracking-wider">01 // QUANTITATIVE FUNNEL STREAM</span>
-              <div className="flex items-center gap-2">
-                <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
-                  {currentData.lift} PROJECTED
-                </span>
-                <span className="text-rose-600 font-bold bg-rose-50 px-2.5 py-0.5 rounded border border-rose-200">
-                  Anomaly at Step 04 ({currentData.dropoff}% Churn)
-                </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-neutral-100 font-mono text-xs text-neutral-500 gap-3">
+              <div>
+                <span className="uppercase tracking-wider block text-[11px] text-neutral-400">Interactive Diagnostic Sandbox</span>
+                <span className="text-neutral-900 font-bold text-sm">{currentData.tagline}</span>
+              </div>
+              
+              {/* Clean Sandbox Switcher */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-neutral-100 p-1 rounded-xl">
+                {(['d2c', 'fintech', 'edtech'] as const).map((key) => {
+                  const preset = PRESET_DATASETS[key];
+                  const isSelected = selectedPresetKey === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => switchPreset(key)}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono transition cursor-pointer ${
+                        isSelected 
+                          ? 'bg-white text-neutral-900 font-semibold shadow-2xs' 
+                          : 'text-neutral-600 hover:text-black'
+                      }`}
+                    >
+                      {key.toUpperCase()}
+                    </button>
+                  );
+                })}
+                {customDataset && (
+                  <button
+                    onClick={() => switchPreset('custom')}
+                    className={`px-3 py-1 rounded-lg text-xs font-mono transition cursor-pointer ${
+                      selectedPresetKey === 'custom'
+                        ? 'bg-emerald-600 text-white font-semibold shadow-2xs'
+                        : 'text-emerald-700 hover:text-emerald-900'
+                    }`}
+                  >
+                    Custom Ingested
+                  </button>
+                )}
               </div>
             </div>
 
