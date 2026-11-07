@@ -1521,65 +1521,198 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                       <div className="space-y-3 h-full flex flex-col justify-between py-1">
                         {selectedPresetKey === 'd2c' && (
                           <div className="space-y-2.5">
-                            {/* Upfront Transparency Bar */}
-                            <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                              <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
-                                <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                                Free Express Delivery
-                              </span>
-                              <span className="font-mono font-bold text-emerald-700 text-xs">₹0.00</span>
-                            </div>
+                            {selectedPin === '01' && (
+                              /* FIX 1: 1-Tap Guest Checkout (Bypasses Forced Sign-in & OTP) */
+                              <div className="space-y-2.5">
+                                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                                  <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                                    Guest Checkout Active
+                                  </span>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO OTP REQUIRED</span>
+                                </div>
 
-                            {/* Pre-filled Guest Address */}
-                            <div className="p-2.5 bg-white border border-neutral-200 rounded-xl text-xs">
-                              <div className="flex justify-between items-center mb-0.5">
-                                <span className="text-[10px] font-mono text-neutral-400 uppercase">Deliver To (Guest)</span>
-                                <span className="text-[10px] text-emerald-700 font-medium">Pre-filled ✓</span>
-                              </div>
-                              <div className="font-medium text-neutral-800 text-[11px]">Flat 402, Indiranagar, Bengaluru</div>
-                            </div>
-
-                            {/* 1-Tap UPI Apps Row */}
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-mono text-neutral-400 uppercase">Instant 1-Tap Payment</span>
-                              <div className="grid grid-cols-3 gap-1.5">
-                                {['Google Pay', 'PhonePe', 'Paytm'].map((app, i) => (
-                                  <div key={i} className={`p-1.5 rounded-lg border text-center text-[10px] font-mono font-medium ${i === 0 ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-700 border-neutral-200'}`}>
-                                    {app}
+                                <div className="p-2.5 bg-white border border-neutral-200 rounded-xl text-xs">
+                                  <div className="flex justify-between items-center mb-0.5">
+                                    <span className="text-[10px] font-mono text-neutral-400 uppercase">Deliver To (Guest)</span>
+                                    <span className="text-[10px] text-emerald-700 font-medium">Auto-filled from device ✓</span>
                                   </div>
-                                ))}
-                              </div>
-                            </div>
+                                  <div className="font-medium text-neutral-800 text-[11px]">Flat 402, Indiranagar, Bengaluru</div>
+                                </div>
 
-                            {/* High-Conversion Primary CTA Anchored Above Fold */}
-                            <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
-                              ⚡ 1-Tap Pay ₹1,850 · No Sign-in
-                            </button>
+                                <div className="space-y-1">
+                                  <span className="text-[10px] font-mono text-neutral-400 uppercase">Instant 1-Tap Payment</span>
+                                  <div className="grid grid-cols-3 gap-1.5">
+                                    {['Google Pay', 'PhonePe', 'Paytm'].map((app, i) => (
+                                      <div key={i} className={`p-1.5 rounded-lg border text-center text-[10px] font-mono font-medium ${i === 0 ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-700 border-neutral-200'}`}>
+                                        {app}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                                  ⚡ 1-Tap Pay ₹1,850 · No Sign-in
+                                </button>
+
+                                <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                                  <span className="text-emerald-700 font-bold shrink-0">✓ FIX #01:</span>
+                                  <span>Mandatory login replaced with 1-tap guest checkout. Eliminates 41.2% drop-off.</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedPin === '02' && (
+                              /* FIX 2: Upfront Price Transparency (Zero Surprise Surcharges) */
+                              <div className="space-y-2.5">
+                                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                                  <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                                    100% Upfront Price Guarantee
+                                  </span>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">ZERO SURCHARGES</span>
+                                </div>
+
+                                <div className="p-3 bg-white rounded-xl border border-neutral-200 text-xs space-y-1.5">
+                                  <div className="flex justify-between text-neutral-700 text-[11px]">
+                                    <span>Items Subtotal</span>
+                                    <span className="font-mono">₹1,850</span>
+                                  </div>
+                                  <div className="flex justify-between text-neutral-700 text-[11px]">
+                                    <span>Delivery Fee (Free Express)</span>
+                                    <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
+                                  </div>
+                                  <div className="flex justify-between text-neutral-700 text-[11px]">
+                                    <span>Extra Handling / Surcharges</span>
+                                    <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
+                                  </div>
+                                  <div className="pt-2 border-t border-neutral-100 flex justify-between font-bold text-xs text-neutral-900">
+                                    <span>Final Confirmed Total</span>
+                                    <span className="text-emerald-700 font-mono text-sm">₹1,850</span>
+                                  </div>
+                                </div>
+
+                                <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                                  ⚡ Confirm & Pay ₹1,850
+                                </button>
+
+                                <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                                  <span className="text-emerald-700 font-bold shrink-0">✓ FIX #02:</span>
+                                  <span>All delivery & handling fees disclosed upfront. Zero surprise charges at checkout.</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedPin === '03' && (
+                              /* FIX 3: Primary CTA Anchored Above the 6.1" Fold */
+                              <div className="space-y-2">
+                                <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                                  <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                                    Anchored Above 6.1" Fold
+                                  </span>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">100% VISIBLE</span>
+                                </div>
+
+                                {/* Compact 1-line promo badge replaces bloated banner */}
+                                <div className="p-2 bg-amber-50/80 border border-amber-200 rounded-lg flex items-center justify-between text-[11px]">
+                                  <span className="text-amber-900 font-medium flex items-center gap-1">
+                                    <span>🎉</span> <strong>DIWALI2026</strong> (-15% Applied)
+                                  </span>
+                                  <span className="font-mono text-emerald-700 font-bold">-₹277.50</span>
+                                </div>
+
+                                {/* Summary */}
+                                <div className="flex justify-between items-center px-1 text-xs font-mono">
+                                  <span className="text-neutral-500">Total Payable:</span>
+                                  <span className="font-bold text-neutral-900 text-sm">₹1,572.50</span>
+                                </div>
+
+                                {/* High-Conversion Primary CTA Anchored in Prime Thumb Zone */}
+                                <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                                  ⚡ 1-Tap Pay ₹1,572.50 via UPI
+                                </button>
+
+                                {/* Screen Fold Line is now safely BELOW the CTA */}
+                                <div className="border-t-2 border-dashed border-emerald-300 my-1 relative text-center">
+                                  <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
+                                    ── 6.1" Screen Fold Line (CTA is 100% Visible) ──
+                                  </span>
+                                </div>
+
+                                <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                                  <span className="text-emerald-700 font-bold shrink-0">✓ FIX #03:</span>
+                                  <span>Payment CTA anchored above fold. 100% of shoppers see and tap without scrolling.</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
                         {selectedPresetKey === 'fintech' && (
                           <div className="space-y-3">
-                            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
-                              <span className="font-bold text-xs text-emerald-900 block">Instant Paperless Verification</span>
-                              <p className="text-[11px] text-emerald-800">Verified Aadhaar & PAN pulled via DigiLocker. No live video queue wait.</p>
-                            </div>
+                            {selectedPin === '01' ? (
+                              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                                <span className="font-bold text-xs text-emerald-900 block">DigiLocker Paperless Verification</span>
+                                <p className="text-[11px] text-emerald-800">Verified Aadhaar & PAN pulled via DigiLocker. Zero camera or mic permissions needed.</p>
+                              </div>
+                            ) : selectedPin === '02' ? (
+                              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                                <span className="font-bold text-xs text-emerald-900 block">UIDAI XML Direct Verification</span>
+                                <p className="text-[11px] text-emerald-800">Algorithmic cryptographic ID verification. 0% camera glare or angle rejections.</p>
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                                <span className="font-bold text-xs text-emerald-900 block">Instant AI Verification Engine</span>
+                                <p className="text-[11px] text-emerald-800">Identity approved in 8.4 seconds. Eliminates 4m live agent queue wait.</p>
+                              </div>
+                            )}
+
                             <button className="w-full py-3 bg-neutral-900 text-white rounded-xl text-xs font-mono uppercase font-bold">
-                              Verify in 10s via DigiLocker →
+                              ⚡ Verify in 10s via DigiLocker →
                             </button>
+
+                            <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                              <span className="text-emerald-700 font-bold shrink-0">✓ FIX #{selectedPin}:</span>
+                              <span>
+                                {selectedPin === '01' ? 'Zero camera permission block. Eliminates 48.2% drop-off.' : selectedPin === '02' ? 'Digital ID pull replaces camera photo. 0% glare failures.' : 'Instant automated approval eliminates 4m queue wait.'}
+                              </span>
+                            </div>
                           </div>
                         )}
 
                         {selectedPresetKey === 'edtech' && (
                           <div className="space-y-3">
-                            <div className="p-3 bg-white border-2 border-emerald-500 rounded-xl space-y-1">
-                              <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase">7-Day Sprint Pass</span>
-                              <div className="text-xl font-bold font-mono text-neutral-900">₹149 <span className="text-xs font-normal text-neutral-500">/ week</span></div>
-                              <p className="text-[11px] text-neutral-600">Includes 2 free unlocked AI explanations. 1-click cancel anytime.</p>
-                            </div>
+                            {selectedPin === '01' ? (
+                              <div className="p-3 bg-white border-2 border-emerald-500 rounded-xl space-y-1">
+                                <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase">7-Day Sprint Pass</span>
+                                <div className="text-xl font-bold font-mono text-neutral-900">₹149 <span className="text-xs font-normal text-neutral-500">/ week</span></div>
+                                <p className="text-[11px] text-neutral-600">Low-barrier trial with full mock test access. 1-click cancel anytime.</p>
+                              </div>
+                            ) : selectedPin === '02' ? (
+                              <div className="p-3 bg-white border-2 border-emerald-500 rounded-xl space-y-1">
+                                <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase">Freemium Preview Unlocked</span>
+                                <div className="text-xs font-bold text-neutral-900">2 Complete Solutions Unlocked</div>
+                                <p className="text-[11px] text-neutral-600">Students see step-by-step logic and answer explanations before buying.</p>
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-white border-2 border-emerald-500 rounded-xl space-y-1">
+                                <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase">Transparent AutoPay</span>
+                                <div className="text-xs font-bold text-neutral-900">1-Click Cancel Anytime</div>
+                                <p className="text-[11px] text-neutral-600">WhatsApp reminder sent 24 hours before renewal. Zero lock-in.</p>
+                              </div>
+                            )}
+
                             <button className="w-full py-3 bg-emerald-600 text-white rounded-xl text-xs font-mono uppercase font-bold">
-                              Start ₹149 Sprint Pass →
+                              ⚡ {selectedPin === '01' ? 'Start ₹149 Sprint Pass →' : selectedPin === '02' ? 'Unlock Unlimited Tests →' : 'Subscribe with 1-Click Cancel →'}
                             </button>
+
+                            <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                              <span className="text-emerald-700 font-bold shrink-0">✓ FIX #{selectedPin}:</span>
+                              <span>
+                                {selectedPin === '01' ? 'Low-friction ₹149 pass lifts conversions by +44%.' : selectedPin === '02' ? 'Freemium preview stops immediate paywall exits.' : 'Transparent cancellation policy builds buyer trust.'}
+                              </span>
+                            </div>
                           </div>
                         )}
 
@@ -1602,9 +1735,30 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
 
               </RealisticPhoneMockup>
 
-              {/* Viewport Subtext */}
-              <div className="mt-4 text-[11px] font-mono text-neutral-400 text-center">
-                Interactive Viewport Simulation · Switch between <strong className="text-neutral-700">Problem</strong> & <strong className="text-emerald-700">The Fix</strong>
+              {/* Viewport Subtext & Interactive Toggles */}
+              <div className="mt-4 text-[11px] font-mono text-neutral-500 text-center flex items-center justify-center gap-2">
+                <span>Interactive Viewport Simulation:</span>
+                <button 
+                  onClick={() => setScreenViewMode('flawed')}
+                  className={`px-2 py-0.5 rounded-md transition cursor-pointer font-semibold ${
+                    screenViewMode === 'flawed' 
+                      ? 'bg-rose-100 text-rose-700 border border-rose-200 shadow-2xs' 
+                      : 'text-neutral-400 hover:text-neutral-900 underline'
+                  }`}
+                >
+                  View Problem
+                </button>
+                <span className="text-neutral-300">·</span>
+                <button 
+                  onClick={() => setScreenViewMode('fixed')}
+                  className={`px-2 py-0.5 rounded-md transition cursor-pointer font-semibold ${
+                    screenViewMode === 'fixed' 
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs' 
+                      : 'text-neutral-400 hover:text-neutral-900 underline'
+                  }`}
+                >
+                  View The Fix
+                </button>
               </div>
             </div>
 

@@ -199,41 +199,124 @@ export default function RealisticPhoneMockup({
               ) : (
                 /* THE FIX VIEW */
                 <div className="space-y-3 py-1">
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                    <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
-                      <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                      Free Express Delivery
-                    </span>
-                    <span className="font-mono font-bold text-emerald-700 text-xs">₹0.00</span>
-                  </div>
+                  {selectedIssue === '01' && (
+                    <div className="space-y-2.5">
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                        <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                          Guest Checkout Active
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO OTP REQUIRED</span>
+                      </div>
 
-                  <div className="p-2.5 bg-white border border-neutral-200 rounded-xl text-xs">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className="text-[10px] font-mono text-neutral-400 uppercase">Deliver To (Guest)</span>
-                      <span className="text-[10px] text-emerald-700 font-medium">Pre-filled ✓</span>
-                    </div>
-                    <div className="font-medium text-neutral-800 text-[11px]">Flat 402, Indiranagar, Bengaluru</div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono text-neutral-400 uppercase">Instant 1-Tap UPI</span>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {['Google Pay', 'PhonePe', 'Paytm'].map((app, i) => (
-                        <div key={i} className={`p-1.5 rounded-lg border text-center text-[10px] font-mono font-medium ${i === 0 ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-700 border-neutral-200'}`}>
-                          {app}
+                      <div className="p-2.5 bg-white border border-neutral-200 rounded-xl text-xs">
+                        <div className="flex justify-between items-center mb-0.5">
+                          <span className="text-[10px] font-mono text-neutral-400 uppercase">Deliver To (Guest)</span>
+                          <span className="text-[10px] text-emerald-700 font-medium">Auto-filled from device ✓</span>
                         </div>
-                      ))}
+                        <div className="font-medium text-neutral-800 text-[11px]">Flat 402, Indiranagar, Bengaluru</div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-mono text-neutral-400 uppercase">Instant 1-Tap UPI</span>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {['Google Pay', 'PhonePe', 'Paytm'].map((app, i) => (
+                            <div key={i} className={`p-1.5 rounded-lg border text-center text-[10px] font-mono font-medium ${i === 0 ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-700 border-neutral-200'}`}>
+                              {app}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                        ⚡ 1-Tap Pay ₹1,850 · No Sign-in
+                      </button>
+
+                      <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                        <span className="text-emerald-700 font-bold shrink-0">✓ FIX #01:</span>
+                        <span>Mandatory login replaced with 1-tap guest checkout. Eliminates 41.2% drop-off.</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
-                    ⚡ 1-Tap Pay ₹1,850 · No Sign-in
-                  </button>
+                  {selectedIssue === '02' && (
+                    <div className="space-y-2.5">
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                        <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                          100% Upfront Price Guarantee
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">ZERO SURCHARGES</span>
+                      </div>
 
-                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-900 flex items-center justify-between">
-                    <span className="font-bold">✓ FRICTION ELIMINATED:</span>
-                    <span className="font-bold text-emerald-700">+38% CR Lift</span>
-                  </div>
+                      <div className="p-3 bg-white rounded-xl border border-neutral-200 text-xs space-y-1.5">
+                        <div className="flex justify-between text-neutral-700 text-[11px]">
+                          <span>Items Subtotal</span>
+                          <span className="font-mono">₹1,850</span>
+                        </div>
+                        <div className="flex justify-between text-neutral-700 text-[11px]">
+                          <span>Delivery Fee (Free Express)</span>
+                          <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
+                        </div>
+                        <div className="flex justify-between text-neutral-700 text-[11px]">
+                          <span>Extra Handling / Surcharges</span>
+                          <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
+                        </div>
+                        <div className="pt-2 border-t border-neutral-100 flex justify-between font-bold text-xs text-neutral-900">
+                          <span>Final Confirmed Total</span>
+                          <span className="text-emerald-700 font-mono text-sm">₹1,850</span>
+                        </div>
+                      </div>
+
+                      <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                        ⚡ Confirm & Pay ₹1,850
+                      </button>
+
+                      <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                        <span className="text-emerald-700 font-bold shrink-0">✓ FIX #02:</span>
+                        <span>All delivery & handling fees disclosed upfront. Zero surprise charges at checkout.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedIssue === '03' && (
+                    <div className="space-y-2">
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                        <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
+                          <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                          Anchored Above 6.1" Fold
+                        </span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">100% VISIBLE</span>
+                      </div>
+
+                      <div className="p-2 bg-amber-50/80 border border-amber-200 rounded-lg flex items-center justify-between text-[11px]">
+                        <span className="text-amber-900 font-medium flex items-center gap-1">
+                          <span>🎉</span> <strong>DIWALI2026</strong> (-15% Applied)
+                        </span>
+                        <span className="font-mono text-emerald-700 font-bold">-₹277.50</span>
+                      </div>
+
+                      <div className="flex justify-between items-center px-1 text-xs font-mono">
+                        <span className="text-neutral-500">Total Payable:</span>
+                        <span className="font-bold text-neutral-900 text-sm">₹1,572.50</span>
+                      </div>
+
+                      <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
+                        ⚡ 1-Tap Pay ₹1,572.50 via UPI
+                      </button>
+
+                      <div className="border-t-2 border-dashed border-emerald-300 my-1 relative text-center">
+                        <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
+                          ── 6.1" Screen Fold Line (CTA is 100% Visible) ──
+                        </span>
+                      </div>
+
+                      <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
+                        <span className="text-emerald-700 font-bold shrink-0">✓ FIX #03:</span>
+                        <span>Payment CTA anchored above fold. 100% of shoppers see and tap without scrolling.</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
