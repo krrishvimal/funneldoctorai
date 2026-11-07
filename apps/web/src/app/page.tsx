@@ -955,8 +955,15 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
       {/* Topographic Mesh Background */}
       <TopographicMesh />
 
+      {/* Atmospheric Ambient Glow (Apple / Linear Aesthetic) */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[950px] h-[550px] bg-gradient-to-b from-emerald-500/[0.04] via-teal-500/[0.015] to-transparent rounded-full blur-3xl" />
+        <div className="absolute top-[40%] -left-[10%] w-[500px] h-[500px] bg-blue-500/[0.015] rounded-full blur-3xl" />
+        <div className="absolute top-[65%] -right-[10%] w-[500px] h-[500px] bg-emerald-500/[0.02] rounded-full blur-3xl" />
+      </div>
+
       {/* 1. MINIMALIST, PREMIUM SWISS NAVBAR */}
-      <header className="sticky top-0 z-50 bg-[#FBFBFB]/85 backdrop-blur-md border-b border-neutral-200/70">
+      <header className="sticky top-0 z-50 bg-[#FBFBFB]/75 backdrop-blur-xl border-b border-neutral-200/60 shadow-[0_4px_24px_rgba(0,0,0,0.015)]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 h-16 flex items-center justify-between">
           
           {/* Brand Identity */}
@@ -1020,7 +1027,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           </p>
 
           {/* UNIFIED HERO AUDIT COMMAND BOX */}
-          <div className="max-w-2xl mx-auto bg-white border border-neutral-300 rounded-2xl p-2.5 shadow-[0_12px_36px_rgba(0,0,0,0.06)] transition-all">
+          <div className="max-w-2xl mx-auto bg-white/80 backdrop-blur-xl border border-neutral-200/90 rounded-2xl p-2.5 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.07),0_0_0_1px_rgba(255,255,255,0.9)_inset] transition-all hover:shadow-[0_16px_48px_-8px_rgba(0,0,0,0.1),0_0_0_1px_rgba(255,255,255,1)_inset]">
             <div className="flex flex-col sm:flex-row items-center gap-2">
               <div className="flex items-center gap-2 px-3 py-2 w-full font-mono text-xs text-neutral-500">
                 <Globe className="w-4 h-4 text-neutral-400 shrink-0" />
@@ -1171,14 +1178,14 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
         </section>
 
         {/* 4. SCREEN X-RAY: INTERACTIVE MOBILE INSPECTION */}
-        <section id="xray" className="bg-white border border-neutral-200 rounded-3xl p-10 lg:p-14 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
+        <section id="xray" className="bg-white/95 backdrop-blur-sm border border-neutral-200/80 rounded-3xl p-10 lg:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.03),0_0_0_1px_rgba(255,255,255,0.7)_inset]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left Column: Interactive Friction Findings */}
             <div className="lg:col-span-6 space-y-6">
               {/* Category Preset Switcher */}
               <div className="mb-2">
-                <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-neutral-100 rounded-xl border border-neutral-200/80 shadow-2xs">
+                <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-white/70 backdrop-blur-xl rounded-xl border border-neutral-200/70 shadow-[0_4px_16px_rgba(0,0,0,0.025),0_0_0_1px_rgba(255,255,255,0.8)_inset]">
                   {[
                     { key: 'd2c', label: '🛍️ Online Store' },
                     { key: 'fintech', label: '💳 Banking & KYC' },
