@@ -1011,7 +1011,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.08] text-[#09090B] mb-5">
-            Find where your store loses buyers. <br />
+            See where your users drop off. <br />
             <span className="text-neutral-400 font-normal">Fix it with clean code in 60s.</span>
           </h1>
 
