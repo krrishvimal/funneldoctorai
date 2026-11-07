@@ -199,6 +199,47 @@ const BENCHMARK_CATALOG: Record<string, Partial<DomainAuditReport>> = {
         category: "latency"
       }
     ]
+  },
+  "amazon": {
+    brandName: "Amazon",
+    category: "Global Marketplace & Retail E-Commerce",
+    visitors: 1250000,
+    dropoffRate: 58.4,
+    leakedMonthlyLakhs: 537.8,
+    recoverableMonthlyLakhs: 118.3,
+    aov: 1850,
+    worstStepName: "03. Delivery Address & Payment Selection",
+    worstStepIndex: 3,
+    steps: [
+      { name: "01. Search Results & Browsing", visitors: 1250000, dropoffRate: 32.5, isBottleneck: false },
+      { name: "02. Product Detail Page (PDP)", visitors: 843750, dropoffRate: 41.0, isBottleneck: false },
+      { name: "03. Delivery Address & Payment Selection", visitors: 497812, dropoffRate: 58.4, isBottleneck: true },
+      { name: "04. UPI Intent & OTP Verification", visitors: 207089, dropoffRate: 14.2, isBottleneck: false },
+      { name: "05. Order Confirmed & Dispatched", visitors: 177682, dropoffRate: 0, isBottleneck: false }
+    ],
+    findings: [
+      {
+        id: "1",
+        title: "Non-Prime Delivery Surcharge Sticker Shock",
+        plainEnglish: "Shoppers who are not Amazon Prime members discover unexpected fulfillment fees on orders under ₹499 right at the final payment screen. 36.2% abandon the cart rather than paying the shipping penalty.",
+        impact: "36.2% Cart Churn",
+        category: "pricing"
+      },
+      {
+        id: "2",
+        title: "Aggressive Prime & Amazon Pay Interstitial Modals",
+        plainEnglish: "Intrusive modal takeovers urging users to enroll in Prime or load Amazon Pay balance add 2 extra confirmation friction steps, causing users to drop off before completing payment.",
+        impact: "24.5% Exit Rate",
+        category: "ux"
+      },
+      {
+        id: "3",
+        title: "3,150 ms UPI Intent Redirect & Bank Gateway Handshake",
+        plainEnglish: "During peak sales hours, external UPI bank apps fail to acknowledge the payment handshake within the 45s timeout threshold, forcing mobile shoppers back to the cart.",
+        impact: "3,150 ms Latency",
+        category: "latency"
+      }
+    ]
   }
 };
 
@@ -277,6 +318,12 @@ Return STRICT JSON matching:
         const parsed = JSON.parse(res.response.text());
 
         if (parsed.brandName && Array.isArray(parsed.steps) && parsed.steps.length >= 3) {
+          const bStep = parsed.steps.find((s: any) => s.isBottleneck) || parsed.steps[Math.min(2, parsed.steps.length - 1)];
+          const bIndex = bStep ? parsed.steps.indexOf(bStep) + 1 : (Number(parsed.worstStepIndex) || 3);
+          const rawWorst = bStep?.name || parsed.worstStepName || "Primary Bottleneck";
+          const cleanedWorst = rawWorst.replace(/^(\d+[\s.)-]+\s*)+/, '').trim();
+          const alignedWorstName = `${bIndex.toString().padStart(2, '0')}. ${cleanedWorst || rawWorst}`;
+
           return {
             domain: fullUrl,
             brandName: parsed.brandName,
@@ -286,12 +333,12 @@ Return STRICT JSON matching:
             leakedMonthlyLakhs: Number(parsed.leakedMonthlyLakhs) || 32.4,
             recoverableMonthlyLakhs: Number(parsed.recoverableMonthlyLakhs) || 7.2,
             aov: Number(parsed.aov) || (isSaasDomain ? 1200 : 1650),
-            worstStepName: parsed.worstStepName || parsed.steps[2]?.name || "Primary Bottleneck",
-            worstStepIndex: Number(parsed.worstStepIndex) || 3,
+            worstStepName: alignedWorstName,
+            worstStepIndex: bIndex,
             steps: parsed.steps,
             findings: parsed.findings || [],
-            reactCode: parsed.reactCode || generateFallbackReactCode(parsed.brandName, parsed.worstStepName),
-            prdMarkdown: parsed.prdMarkdown || generateFallbackPRD(parsed.brandName, fullUrl, parsed.worstStepName)
+            reactCode: parsed.reactCode || generateFallbackReactCode(parsed.brandName, alignedWorstName),
+            prdMarkdown: parsed.prdMarkdown || generateFallbackPRD(parsed.brandName, fullUrl, alignedWorstName)
           };
         }
       } catch (err) {

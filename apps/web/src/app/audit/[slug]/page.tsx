@@ -866,10 +866,10 @@ function normalizeAuditData(raw: any, defaultDomain: string, defaultBrand: strin
   }
 
   const criticalStep = steps.find(s => s.isBottleneck) || steps[Math.min(2, steps.length - 1)];
-  const worstStepIndex = raw.worstStepIndex || (steps.indexOf(criticalStep) + 1) || 1;
-  const rawWorst = raw.worstStepName || criticalStep?.name || 'Primary Bottleneck';
+  const actualIndex = criticalStep ? steps.indexOf(criticalStep) + 1 : (Number(raw.worstStepIndex) || 1);
+  const rawWorst = criticalStep?.name || raw.worstStepName || 'Primary Bottleneck';
   const cleanedWorst = cleanStepName(rawWorst);
-  const worstStepName = `${worstStepIndex.toString().padStart(2, '0')}. ${cleanedWorst || rawWorst}`;
+  const worstStepName = `${actualIndex.toString().padStart(2, '0')}. ${cleanedWorst || rawWorst}`;
 
   let findings: AuditFinding[] = [];
   if (Array.isArray(raw.findings) && raw.findings.length > 0) {
@@ -900,7 +900,7 @@ function normalizeAuditData(raw: any, defaultDomain: string, defaultBrand: strin
     recoverableMonthlyLakhs,
     aov,
     worstStepName,
-    worstStepIndex,
+    worstStepIndex: actualIndex,
     steps,
     findings,
     reactCode: raw.reactCode || raw.remediationCode || `// Remediated Component for ${brand}\nexport function RemediatedStep() {\n  return <div>Fix implemented</div>;\n}`,
