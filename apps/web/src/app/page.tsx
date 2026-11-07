@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowRight,
+  ArrowDown,
   ScanEye,
   Code2,
   BarChart3,
@@ -18,6 +19,7 @@ import {
   Sparkles,
   Activity,
   Sliders,
+  Terminal,
 } from "lucide-react";
 
 // 1. ULTRA-SMOOTH BEZIER ARCHITECTURAL TOPOGRAPHIC MESH (NO JAGGED CORNERS)
@@ -99,7 +101,287 @@ function SwissTopographicMesh() {
   );
 }
 
-// 2. THREE REALISTIC STARTUP DATASETS
+// 2. SCROLL-DRIVEN SCROLLYTELLING AUDITOR SECTION
+function ScrollytellingAuditor() {
+  const containerRef = useRef<HTMLElement | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const totalScrollable = rect.height - windowHeight;
+
+      // Calculate progress between 0 and 1
+      const progress = Math.min(Math.max(-rect.top / totalScrollable, 0), 1);
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Determine the active phase based on scroll depth
+  const phase = scrollProgress < 0.33 ? 1 : scrollProgress < 0.68 ? 2 : 3;
+
+  return (
+    // 280vh creates a generous scroll distance without feeling sluggish
+    <section
+      ref={containerRef}
+      id="pipeline"
+      className="relative h-[280vh] bg-[#F7F7F8] border-y border-neutral-300 my-10"
+    >
+      {/* Sticky Viewport Container: stays pinned to the screen while scrolling */}
+      <div className="sticky top-0 h-screen w-full flex flex-col justify-between py-8 px-6 max-w-7xl mx-auto overflow-hidden">
+        {/* Top Header of Sticky Stage */}
+        <div className="flex flex-wrap items-center justify-between border-b border-neutral-200 pb-4 shrink-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+              <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">
+                SCROLL-DRIVEN PIPELINE // AUTONOMOUS MULTIMODAL SYNTHESIS
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-neutral-900 mt-1">
+              {phase === 1 && "Phase 01: Ingesting Screen & Detecting Visual Occlusion"}
+              {phase === 2 && "Phase 02: BigQuery SQL Correlation & Root Cause Isolation"}
+              {phase === 3 && "Phase 03: Autonomous Remediation & React Component Delivery"}
+            </h2>
+          </div>
+
+          {/* Precision Stage Indicator */}
+          <div className="flex items-center gap-3 font-mono text-xs">
+            <span className="text-neutral-400">SCROLL STAGE:</span>
+            <div className="flex items-center gap-1.5">
+              {[
+                { p: 1, label: "01. SCREEN" },
+                { p: 2, label: "02. SQL" },
+                { p: 3, label: "03. CODE" },
+              ].map((s) => (
+                <div
+                  key={s.p}
+                  className={`px-2.5 py-1 border transition-all ${
+                    phase === s.p
+                      ? "bg-black text-white border-black font-bold shadow-xs"
+                      : phase > s.p
+                      ? "bg-neutral-200 text-neutral-700 border-neutral-300"
+                      : "bg-white text-neutral-400 border-neutral-200"
+                  }`}
+                >
+                  {s.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Center Interactive Visual Canvas: Transforms dynamically on scroll */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-4">
+          {/* Left Column: Context / Step Narrative */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-neutral-300 text-xs font-mono">
+              <Layers className="w-3.5 h-3.5 text-neutral-600" />
+              {phase === 1 && "ACTIVE: GEMINI 2.5 SPATIAL SCANNER"}
+              {phase === 2 && "ACTIVE: GOOGLE AGENT BIGQUERY RUNNER"}
+              {phase === 3 && "ACTIVE: GEMINI SYNTHESIS ENGINE"}
+            </div>
+
+            <div className="min-h-[140px]">
+              {phase === 1 && (
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+                    Spatial Anomaly Detected on Mobile Viewport
+                  </h3>
+                  <p className="text-sm text-neutral-600 leading-relaxed">
+                    Gemini Vision scans the 390x844px layout and flags a blocking modal: users are forced into an
+                    email login barrier, followed by a ₹149 delivery fee revealed only at checkout.
+                  </p>
+                  <div className="font-mono text-xs text-rose-600 pt-1 font-bold">
+                    → 41.2% of users drop within 6 seconds of modal appearance.
+                  </div>
+                </div>
+              )}
+
+              {phase === 2 && (
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+                    SQL Agent Proves Latency + UX Compound Drop
+                  </h3>
+                  <p className="text-sm text-neutral-600 leading-relaxed">
+                    BigQuery telemetry isolates Android WebView users. A spike in P95 UPI intent latency (4,280ms)
+                    combines with the keyboard covering the primary CTA button.
+                  </p>
+                  <div className="font-mono text-xs text-neutral-800 pt-1 font-bold">
+                    → Churn rate on Android WebView hits an anomalous 78.4%.
+                  </div>
+                </div>
+              )}
+
+              {phase === 3 && (
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-neutral-900">
+                    Production React Fix Synthesized & Deployed
+                  </h3>
+                  <p className="text-sm text-neutral-600 leading-relaxed">
+                    The agent deprecates the login modal in favor of 1-Tap Guest UPI Express with an upfront
+                    free-shipping banner. All code, PRD requirements, and A/B test parameters are generated in 60s.
+                  </p>
+                  <div className="font-mono text-xs text-emerald-700 pt-1 font-bold">
+                    → Projected outcome: +38% Conversion Lift (+₹73.0L/mo recovered).
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Scroll Direction Prompt */}
+            <div className="flex items-center gap-2 font-mono text-[11px] text-neutral-400 pt-2">
+              <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
+              <span>
+                {phase < 3
+                  ? "Scroll down to advance autonomous diagnosis"
+                  : "Scroll past to explore telemetry & calculator"}
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: Visual Transformation Stage (Phone & Code Morph) */}
+          <div className="lg:col-span-7 bg-white border border-neutral-300 p-6 shadow-sm min-h-[380px] flex items-center justify-center relative">
+            {/* STAGE 1 VISUAL: Scanning Mobile Viewport */}
+            {phase === 1 && (
+              <div className="w-full max-w-sm border-2 border-black bg-white p-4 relative overflow-hidden shadow-md">
+                {/* Animated Laser Scan Bar */}
+                <div
+                  className="absolute left-0 right-0 h-1 bg-rose-600 shadow-[0_0_12px_#E11D48] z-20 pointer-events-none"
+                  style={{
+                    top: `${(scrollProgress * 250) % 90 + 5}%`,
+                    transition: "top 0.1s ease-out",
+                  }}
+                />
+
+                <div className="flex justify-between font-mono text-[10px] text-neutral-400 border-b pb-2 mb-3">
+                  <span>390x844 MOBILE VIEWPORT</span>
+                  <span className="text-rose-600 font-bold">● SCANNING</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-3 bg-rose-50 border border-rose-300 font-mono text-xs">
+                    <div className="flex justify-between text-rose-700 font-bold mb-1">
+                      <span>[FAULT #01] FORCED OTP MODAL</span>
+                      <span>41.2% DROP</span>
+                    </div>
+                    <p className="text-neutral-600 text-[11px]">User blocked before entering shipping address.</p>
+                  </div>
+
+                  <div className="p-2.5 bg-neutral-100 border border-neutral-200 text-xs font-mono text-neutral-500">
+                    Address: 42 Palm Avenue, Bengaluru...
+                  </div>
+
+                  <div className="p-3 bg-rose-50 border border-rose-300 font-mono text-xs">
+                    <div className="flex justify-between text-rose-700 font-bold mb-1">
+                      <span>[FAULT #02] LATE ₹149 SURCHARGE</span>
+                      <span>31.4% RAGE</span>
+                    </div>
+                    <p className="text-neutral-600 text-[11px]">Surprise fee introduced at the final submit step.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 2 VISUAL: BigQuery Telemetry Engine */}
+            {phase === 2 && (
+              <div className="w-full space-y-3 font-mono">
+                <div className="flex items-center justify-between text-xs border-b border-neutral-200 pb-2">
+                  <span className="text-neutral-500 flex items-center gap-1.5">
+                    <Terminal className="w-3.5 h-3.5 text-black" />
+                    BIGQUERY AGENT QUERY DISPATCH
+                  </span>
+                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200 text-[10px]">
+                    200 OK (110ms)
+                  </span>
+                </div>
+
+                <pre className="bg-[#0A0A0A] text-[#E5E5E7] p-3 text-[11px] leading-relaxed border border-neutral-900 overflow-x-auto">
+{`SELECT device_os, app_version,
+  ROUND(AVG(upi_intent_latency_ms), 0) AS p95_ms,
+  ROUND(SUM(dropped_step_4)*100.0/COUNT(*), 1) AS churn_pct
+FROM \`telemetry.checkout_funnel_v4\`
+WHERE step_index = 4
+GROUP BY 1, 2 ORDER BY churn_pct DESC;`}
+                </pre>
+
+                <div className="border border-neutral-200 p-2.5 bg-[#F7F7F8] text-[11px]">
+                  <div className="flex justify-between text-neutral-400 text-[10px] pb-1 border-b border-neutral-200">
+                    <span>DEVICE OS SEGMENT</span>
+                    <span>P95 LATENCY</span>
+                    <span>DROP CHURN</span>
+                  </div>
+                  <div className="flex justify-between py-1 text-rose-600 font-bold">
+                    <span>Android WebView (v4.2)</span>
+                    <span>4,280 ms</span>
+                    <span>78.4%</span>
+                  </div>
+                  <div className="flex justify-between py-1 text-neutral-700">
+                    <span>iOS Safari (v17)</span>
+                    <span>610 ms</span>
+                    <span>54.1%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 3 VISUAL: Clean 1-Tap UI Fix & Production React Code */}
+            {phase === 3 && (
+              <div className="w-full max-w-md border-2 border-emerald-600 bg-white p-5 shadow-lg space-y-4">
+                <div className="flex items-center justify-between border-b border-emerald-200 pb-2 font-mono text-xs text-emerald-900">
+                  <span className="font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    AUTONOMOUS REMEDIATION
+                  </span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">
+                    +38% CR LIFT
+                  </span>
+                </div>
+
+                <div className="p-3 bg-emerald-50 border border-emerald-200 font-mono text-xs text-emerald-900 space-y-1">
+                  <div className="font-bold">✓ FREE EXPRESS DELIVERY UNLOCKED</div>
+                  <div className="text-[11px] text-emerald-700">
+                    Zero hidden fees; transparent cart progress bar enabled.
+                  </div>
+                </div>
+
+                <button className="w-full py-3.5 bg-black text-white font-mono text-xs uppercase tracking-wider hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  Pay ₹1,850 via 1-Tap UPI [GPay / PhonePe]
+                </button>
+
+                <div className="pt-2 border-t border-neutral-200 flex justify-between font-mono text-[11px] text-neutral-500">
+                  <span>SPEC: AUTO-PRD READY</span>
+                  <span className="text-emerald-700 font-bold">+₹73.0L / MO RECOVERED</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Scroll Progress Bar */}
+        <div className="shrink-0 pt-4 border-t border-neutral-200 flex items-center justify-between font-mono text-[10px] text-neutral-400">
+          <span suppressHydrationWarning>PROGRESS: {(scrollProgress * 100).toFixed(0)}%</span>
+          <div className="w-48 h-1 bg-neutral-200 overflow-hidden">
+            <div
+              className="h-full bg-black transition-all duration-75"
+              style={{ width: `${scrollProgress * 100}%` }}
+            />
+          </div>
+          <span>AUTONOMOUS RCA COMPLETE AT 100%</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 3. THREE REALISTIC STARTUP DATASETS
 type PresetKey = "d2c" | "fintech" | "edtech";
 
 interface RcaWeight {
@@ -369,20 +651,23 @@ export default function FunnelDoctorSwissUltimate() {
           </div>
 
           <nav className="hidden xl:flex items-center gap-5 text-[11px] font-mono uppercase tracking-wider text-neutral-500">
+            <a href="#pipeline" className="hover:text-black transition-colors">
+              00. Scrollytelling
+            </a>
             <a href="#simulator" className="hover:text-black transition-colors">
-              00. Live Flow
+              01. Live Flow
             </a>
             <a href="#telemetry" className="hover:text-black transition-colors">
-              01. X-Ray & SQL
+              02. X-Ray & SQL
             </a>
             <a href="#remediation" className="hover:text-black transition-colors">
-              02. UI & PRD
+              03. UI & PRD
             </a>
             <a href="#warroom" className="hover:text-black transition-colors">
-              03. War Room
+              04. War Room
             </a>
             <a href="#calculator" className="hover:text-black transition-colors">
-              04. ROI
+              05. ROI
             </a>
           </nav>
 
@@ -466,7 +751,10 @@ export default function FunnelDoctorSwissUltimate() {
           </div>
         </section>
 
-        {/* 3. INTERACTIVE USER-STREAM SIMULATION (BETTER THAN A VIDEO) */}
+        {/* 3. SCROLL-DRIVEN SCROLLYTELLING AUDITOR SECTION (Between Hero & Modules) */}
+        <ScrollytellingAuditor />
+
+        {/* 4. INTERACTIVE USER-STREAM SIMULATION */}
         <section id="simulator" className="mb-6">
           <div className="bg-white border border-neutral-300 p-6 shadow-2xs">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-5 pb-4 border-b border-neutral-200">
@@ -689,7 +977,7 @@ export default function FunnelDoctorSwissUltimate() {
           </div>
         </section>
 
-        {/* 4. MODULE 01 (SPATIAL VISION WIREFRAME - ZERO OVERLAP) & MODULE 02 (SQL + RCA WEIGHTS) */}
+        {/* 5. MODULE 01 (SPATIAL VISION WIREFRAME) & MODULE 02 (SQL + RCA WEIGHTS) */}
         <section id="telemetry" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Module 01: True Visual Viewport X-Ray */}
           <div className="lg:col-span-7 bg-white border border-neutral-200 p-8 flex flex-col justify-between shadow-2xs">
@@ -877,7 +1165,7 @@ export default function FunnelDoctorSwissUltimate() {
           </div>
         </section>
 
-        {/* 5. MODULE 03: SIDE-BY-SIDE UI COMPARATOR + EXECUTIVE PRD + REACT CODE */}
+        {/* 6. MODULE 03: SIDE-BY-SIDE UI COMPARATOR + EXECUTIVE PRD + REACT CODE */}
         <section id="remediation" className="pt-14">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
             <div>
@@ -1155,7 +1443,7 @@ export function ExpressUpiCheckout({ cartTotal = ${aov}, freeShipMin = 999, onIn
           </div>
         </section>
 
-        {/* 6. MODULE 04: GEMINI LIVE VOICE PM WAR ROOM */}
+        {/* 7. MODULE 04: GEMINI LIVE VOICE PM WAR ROOM */}
         <section id="warroom" className="pt-14">
           <div className="bg-[#0A0A0A] text-white border border-black p-8 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-2 max-w-2xl">
@@ -1185,7 +1473,7 @@ export function ExpressUpiCheckout({ cartTotal = ${aov}, freeShipMin = 999, onIn
           </div>
         </section>
 
-        {/* 7. MODULE 05: FINANCIAL SENSITIVITY MODEL */}
+        {/* 8. MODULE 05: FINANCIAL SENSITIVITY MODEL */}
         <section id="calculator" className="pt-14">
           <div className="border-t border-neutral-200 pt-10">
             <span className="text-xs font-mono uppercase tracking-wider text-neutral-500">
