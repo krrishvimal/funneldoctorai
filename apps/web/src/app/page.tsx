@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, 
   ScanEye, 
@@ -14,6 +14,83 @@ import {
   Sparkles, 
   ChevronRight 
 } from 'lucide-react';
+
+// ULTRA-SMOOTH BEZIER TOPOGRAPHIC MESH BACKGROUND
+function TopographicMesh() {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let animationFrameId: number;
+    let t = 0;
+    let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      t += 0.006;
+
+      const waveCount = 6;
+      for (let i = 0; i < waveCount; i++) {
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = `rgba(0, 0, 0, ${0.03 + i * 0.012})`;
+
+        const baseHeight = canvas.height * 0.25 + i * 40;
+        const freq = 0.0016 + i * 0.00018;
+        const amp = 22 + i * 9;
+
+        for (let x = 0; x <= canvas.width; x += 2) {
+          const dx = x - mouse.x;
+          const dist = Math.sqrt(dx * dx);
+          const mouseInfluence = Math.exp(-(dist * dist) / 50000) * 24;
+
+          const y =
+            baseHeight +
+            Math.sin(x * freq + t + i * 0.5) * amp +
+            Math.cos(x * 0.001 - t * 0.5) * 10 -
+            mouseInfluence;
+
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none fixed inset-0 z-0"
+    />
+  );
+}
 
 interface FunnelStep {
   step: string;
@@ -111,8 +188,20 @@ export default function FunnelDoctorMinimalist() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBFBFB] text-[#09090B] font-sans selection:bg-emerald-500/20 selection:text-emerald-900">
+    <div className="min-h-screen bg-[#FBFBFB] text-[#09090B] font-sans selection:bg-emerald-500/20 selection:text-emerald-900 relative">
       
+      {/* Topographic Mesh Background */}
+      <TopographicMesh />
+
+      {/* Subtle Dot Grid */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 opacity-30"
+        style={{
+          backgroundImage: 'radial-gradient(#d4d4d8 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
+
       {/* 1. CLEAN, UN-CROWDED MINIMALIST NAVBAR */}
       <header className="sticky top-0 z-50 bg-[#FBFBFB]/90 backdrop-blur-md border-b border-neutral-200/80">
         <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
@@ -151,7 +240,7 @@ export default function FunnelDoctorMinimalist() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-8 pt-16 pb-32 space-y-24">
+      <main className="relative z-10 max-w-7xl mx-auto px-8 pt-16 pb-32 space-y-24">
         
         {/* 2. HERO SECTION */}
         <section className="max-w-4xl mx-auto text-center pt-8">
