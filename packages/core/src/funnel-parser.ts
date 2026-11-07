@@ -1,8 +1,57 @@
-import { parse } from "csv-parse/sync";
 import { FunnelAnalysisResult, FunnelStep } from "./types.js";
 
 interface RawRow {
   [key: string]: string | number;
+}
+
+/**
+ * Pure TypeScript CSV row parser with quote handling
+ */
+function parseCsvRows(csvContent: string): RawRow[] {
+  const lines = csvContent
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  if (lines.length < 2) {
+    throw new Error("CSV file contains no data rows.");
+  }
+
+  // Parse header row
+  const headers = lines[0]
+    .split(",")
+    .map((h) => h.replace(/^["']|["']$/g, "").trim());
+
+  const records: RawRow[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const rawLine = lines[i];
+    // Split by comma while respecting simple quoted strings
+    const values: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let c = 0; c < rawLine.length; c++) {
+      const char = rawLine[c];
+      if (char === '"' || char === "'") {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        values.push(current.trim().replace(/^["']|["']$/g, ""));
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^["']|["']$/g, ""));
+
+    const row: RawRow = {};
+    headers.forEach((h, idx) => {
+      row[h] = values[idx] !== undefined ? values[idx] : "";
+    });
+    records.push(row);
+  }
+
+  return records;
 }
 
 /**
@@ -20,11 +69,7 @@ function findKey(row: RawRow, candidates: string[]): string | undefined {
 }
 
 export function parseFunnelFromCsv(csvContent: string): FunnelAnalysisResult {
-  const records = parse(csvContent, {
-    columns: true,
-    skip_empty_lines: true,
-    trim: true,
-  }) as RawRow[];
+  const records = parseCsvRows(csvContent);
 
   if (records.length === 0) {
     throw new Error("CSV file contains no data rows.");
