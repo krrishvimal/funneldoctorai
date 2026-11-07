@@ -7,7 +7,6 @@ import {
   ArrowRight, 
   ScanEye, 
   Terminal, 
-  Volume2, 
   Copy, 
   Check, 
   Sparkles,
@@ -977,34 +976,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
           </nav>
 
           {/* Action Group */}
-          <div className="flex items-center gap-2">
-            {/* Audio Briefing */}
-            <button 
-              onClick={toggleVoice}
-              className={`px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider border rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                isSpeaking 
-                  ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs ring-2 ring-emerald-500/30' 
-                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-black shadow-2xs'
-              }`}
-              title="Multimodal Voice RCA Briefing"
-            >
-              {isSpeaking ? (
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-end gap-0.5 h-2.5">
-                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2" style={{ animationDuration: '0.4s' }} />
-                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2.5" style={{ animationDuration: '0.6s' }} />
-                    <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce h-1.5" style={{ animationDuration: '0.5s' }} />
-                  </div>
-                  <span className="text-emerald-400 font-bold hidden xl:inline text-[11px]">Playing</span>
-                </div>
-              ) : (
-                <>
-                  <Volume2 className="w-3.5 h-3.5 text-neutral-500" />
-                  <span className="hidden xl:inline text-[11px]">Audio</span>
-                </>
-              )}
-            </button>
-
+          <div className="flex items-center gap-2.5">
             {/* Export RCA Package */}
             <button 
               onClick={handleDownloadFullRcaPackage}
@@ -1018,7 +990,7 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             {/* Launch / Primary CTA */}
             <button 
               onClick={() => scrollToSection('remediation')}
-              className="px-3.5 py-1.5 text-xs font-mono uppercase tracking-wider bg-neutral-950 hover:bg-black text-white font-medium rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
+              className="px-4 py-1.5 text-xs font-mono uppercase tracking-wider bg-neutral-950 hover:bg-black text-white font-medium rounded-lg transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
             >
               Launch Fix →
             </button>
