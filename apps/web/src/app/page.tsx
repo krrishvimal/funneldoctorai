@@ -1176,6 +1176,44 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             
             {/* Left Column: Interactive Friction Findings */}
             <div className="lg:col-span-6 space-y-6">
+              {/* Category Preset Switcher */}
+              <div className="mb-2">
+                <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-neutral-100 rounded-xl border border-neutral-200/80 shadow-2xs">
+                  {[
+                    { key: 'd2c', label: '🛍️ Online Store' },
+                    { key: 'fintech', label: '💳 Banking & KYC' },
+                    { key: 'edtech', label: '🎓 Course Paywall' }
+                  ].map(({ key, label }) => {
+                    const isSelected = selectedPresetKey === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => switchPreset(key as PresetKey)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer flex items-center gap-1.5 ${
+                          isSelected 
+                            ? 'bg-neutral-900 text-white font-bold shadow-xs' 
+                            : 'text-neutral-600 hover:text-black hover:bg-white/60'
+                        }`}
+                      >
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                  {customDataset && (
+                    <button
+                      onClick={() => switchPreset('custom')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition cursor-pointer flex items-center gap-1.5 ${
+                        selectedPresetKey === 'custom'
+                          ? 'bg-emerald-600 text-white font-bold shadow-xs'
+                          : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50'
+                      }`}
+                    >
+                      <span>🔍 Custom Ingested</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-neutral-100 rounded-md font-mono text-xs text-neutral-700">
                 <ScanEye className="w-4 h-4 text-emerald-600" />
                 <span>SCREEN X-RAY // MOBILE AUDIT</span>
@@ -1225,47 +1263,6 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             {/* Right Column: Realistic Interactive Mobile Screen Viewport */}
             <div className="lg:col-span-6 flex flex-col items-center justify-center bg-neutral-100/70 p-6 lg:p-10 rounded-2xl border border-neutral-200/60">
               
-              {/* Industry Category Switcher (Directly Above Device) */}
-              <div className="mb-6 w-full max-w-[340px] flex flex-col items-center gap-1.5">
-                <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider font-semibold">
-                  SELECT INDUSTRY FUNNEL:
-                </span>
-                <div className="w-full flex items-center justify-between p-1 bg-white rounded-xl border border-neutral-200/80 shadow-xs text-xs font-mono">
-                  {[
-                    { key: 'd2c', label: '🛍️ Online Store' },
-                    { key: 'fintech', label: '💳 Banking & KYC' },
-                    { key: 'edtech', label: '🎓 Course Paywall' }
-                  ].map(({ key, label }) => {
-                    const isSelected = selectedPresetKey === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => switchPreset(key as PresetKey)}
-                        className={`flex-1 py-1.5 px-2 rounded-lg text-center transition cursor-pointer text-[11px] font-medium ${
-                          isSelected 
-                            ? 'bg-neutral-900 text-white font-bold shadow-xs' 
-                            : 'text-neutral-600 hover:text-black hover:bg-neutral-50'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                  {customDataset && (
-                    <button
-                      onClick={() => switchPreset('custom')}
-                      className={`py-1.5 px-2 rounded-lg text-center transition cursor-pointer text-[11px] font-medium ${
-                        selectedPresetKey === 'custom'
-                          ? 'bg-emerald-600 text-white font-bold shadow-xs'
-                          : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50'
-                      }`}
-                    >
-                      Custom Ingested
-                    </button>
-                  )}
-                </div>
-              </div>
-
               {/* Photorealistic Titanium CSS Device Frame */}
               <RealisticPhoneMockup
                 selectedIssue={selectedPin}
