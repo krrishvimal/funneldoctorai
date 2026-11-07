@@ -174,11 +174,11 @@ export default function RealisticPhoneMockup({
                       </div>
                       <div className="border-t-2 border-dashed border-rose-400 my-1 relative text-center">
                         <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
-                          ── 6.1" Fold Line ──
+                          ── Bottom of Phone Screen (Cut Off) ──
                         </span>
                       </div>
                       <div className="opacity-40 p-2 bg-neutral-100 rounded-lg text-center text-[11px] font-mono text-neutral-500">
-                        [ Pay via UPI (Off-screen) ]
+                        [ ⬇️ Pay Button is Hidden Below Screen ]
                       </div>
                     </div>
                   )}
@@ -192,7 +192,7 @@ export default function RealisticPhoneMockup({
                         ? 'Forced login popup blocks guest buyers. 41.2% exit within 6 seconds.'
                         : selectedIssue === '02'
                         ? 'Surprise fee reveals at final screen, causing 31.4% rage clicks.'
-                        : 'Payment CTA pushed below 6.1" fold. 64% never scroll down.'}
+                        : 'Pay button pushed below screen by promo banner. 64% never scroll down.'}
                     </p>
                   </div>
                 </>
@@ -244,37 +244,37 @@ export default function RealisticPhoneMockup({
                       <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
                         <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
                           <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                          100% Upfront Price Guarantee
+                          100% Upfront Pricing Guarantee
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">ZERO SURCHARGES</span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO LAST-MINUTE FEES</span>
                       </div>
 
                       <div className="p-3 bg-white rounded-xl border border-neutral-200 text-xs space-y-1.5">
                         <div className="flex justify-between text-neutral-700 text-[11px]">
-                          <span>Items Subtotal</span>
-                          <span className="font-mono">₹1,850</span>
+                          <span>Oversized Cotton Tee (All-Inclusive)</span>
+                          <span className="font-mono font-medium">₹1,999</span>
                         </div>
                         <div className="flex justify-between text-neutral-700 text-[11px]">
-                          <span>Delivery Fee (Free Express)</span>
-                          <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
+                          <span>Express Delivery & Handling</span>
+                          <span className="text-emerald-700 font-mono font-semibold">Included (₹0.00)</span>
                         </div>
                         <div className="flex justify-between text-neutral-700 text-[11px]">
-                          <span>Extra Handling / Surcharges</span>
+                          <span>Unexpected Last-Minute Fees</span>
                           <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
                         </div>
                         <div className="pt-2 border-t border-neutral-100 flex justify-between font-bold text-xs text-neutral-900">
                           <span>Final Confirmed Total</span>
-                          <span className="text-emerald-700 font-mono text-sm">₹1,850</span>
+                          <span className="text-emerald-700 font-mono text-sm">₹1,999</span>
                         </div>
                       </div>
 
                       <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
-                        ⚡ Confirm & Pay ₹1,850
+                        ⚡ Confirm & Pay Locked Total ₹1,999
                       </button>
 
                       <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
                         <span className="text-emerald-700 font-bold shrink-0">✓ FIX #02:</span>
-                        <span>All delivery & handling fees disclosed upfront. Zero surprise charges at checkout.</span>
+                        <span>All-inclusive ₹1,999 shown upfront. Zero last-minute price jumps stops 31.4% rage clicks.</span>
                       </div>
                     </div>
                   )}
@@ -284,9 +284,9 @@ export default function RealisticPhoneMockup({
                       <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
                         <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
                           <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                          Anchored Above 6.1" Fold
+                          Pay Button Instantly Visible
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">100% VISIBLE</span>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO SCROLLING NEEDED</span>
                       </div>
 
                       <div className="p-2 bg-amber-50/80 border border-amber-200 rounded-lg flex items-center justify-between text-[11px]">
@@ -307,13 +307,13 @@ export default function RealisticPhoneMockup({
 
                       <div className="border-t-2 border-dashed border-emerald-300 my-1 relative text-center">
                         <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
-                          ── 6.1" Screen Fold Line (CTA is 100% Visible) ──
+                          ── Bottom of Phone Screen (Pay button is 100% visible above) ──
                         </span>
                       </div>
 
                       <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
                         <span className="text-emerald-700 font-bold shrink-0">✓ FIX #03:</span>
-                        <span>Payment CTA anchored above fold. 100% of shoppers see and tap without scrolling.</span>
+                        <span>Pay button pinned to visible screen. 100% of shoppers see it immediately without scrolling.</span>
                       </div>
                     </div>
                   )}

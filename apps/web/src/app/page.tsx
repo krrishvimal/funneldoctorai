@@ -181,7 +181,7 @@ const PRESET_DATASETS: Record<Exclude<PresetKey, 'custom'>, Dataset> = {
     pins: [
       { id: '01', title: 'Forced Sign-In Pop-up', desc: 'Demanding an account and OTP before payment causes 41.2% of shoppers to leave immediately.', metric: '41.2% Drop-off' },
       { id: '02', title: 'Hidden Extra Fees', desc: 'Adding ₹149 delivery and handling fees at the final confirmation step shocks buyers.', metric: '31.4% Rage Clicks' },
-      { id: '03', title: 'Payment Button Pushed Offscreen', desc: 'A giant promo coupon banner pushes the Google Pay / PhonePe button below the screen fold.', metric: '64% Never See Button' },
+      { id: '03', title: 'Pay Button Cut Off at Bottom', desc: 'A giant promo banner pushes the "Pay Now" button off the phone screen. 64% of people never scroll down, so they leave without paying.', metric: '64% Never See Button' },
     ],
     sql: `SELECT device_os, app_version,
   ROUND(AVG(upi_latency_ms), 0) AS p95_ms,
@@ -1414,23 +1414,23 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                                     </div>
                                   </div>
 
-                                  {/* Red Fold Line */}
+                                  {/* Red Screen Cut-Off Line */}
                                   <div className="border-t-2 border-dashed border-rose-400 my-1 relative text-center">
                                     <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
-                                      ── 6.1" Mobile Screen Fold Line ──
+                                      ── Bottom of Phone Screen (Cut Off) ──
                                     </span>
                                   </div>
 
                                   {/* Cut Off Below Fold CTA */}
                                   <div className="opacity-40 p-2.5 bg-neutral-100 border border-neutral-300 rounded-xl text-center text-xs font-mono font-bold text-neutral-500">
-                                    ⚡ Pay with UPI (GPay / PhonePe)
+                                    [ ⬇️ Pay Button is Hidden Below Screen ]
                                   </div>
                                 </div>
 
                                 {/* Visual Hotspot Annotation */}
                                 <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-[11px] font-mono text-rose-900 flex items-start gap-2">
                                   <span className="text-rose-600 font-bold shrink-0">⚠️ ISSUE #03:</span>
-                                  <span>Payment button is pushed off-screen. 64% of shoppers never scroll down.</span>
+                                  <span>Pay button is pushed off the bottom of the screen. 64% of shoppers never scroll down and assume they cannot pay.</span>
                                 </div>
                               </div>
                             )}
@@ -1563,55 +1563,55 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                             )}
 
                             {selectedPin === '02' && (
-                              /* FIX 2: Upfront Price Transparency (Zero Surprise Surcharges) */
+                              /* FIX 2: All-Inclusive Upfront Pricing (₹1,999 shown directly, zero surprise jumps) */
                               <div className="space-y-2.5">
                                 <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
                                   <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
                                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                                    100% Upfront Price Guarantee
+                                    100% Upfront Pricing Guarantee
                                   </span>
-                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">ZERO SURCHARGES</span>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO LAST-MINUTE FEES</span>
                                 </div>
 
                                 <div className="p-3 bg-white rounded-xl border border-neutral-200 text-xs space-y-1.5">
                                   <div className="flex justify-between text-neutral-700 text-[11px]">
-                                    <span>Items Subtotal</span>
-                                    <span className="font-mono">₹1,850</span>
+                                    <span>Oversized Cotton Tee (All-Inclusive)</span>
+                                    <span className="font-mono font-medium">₹1,999</span>
                                   </div>
                                   <div className="flex justify-between text-neutral-700 text-[11px]">
-                                    <span>Delivery Fee (Free Express)</span>
-                                    <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
+                                    <span>Express Delivery & Handling</span>
+                                    <span className="text-emerald-700 font-mono font-semibold">Included (₹0.00)</span>
                                   </div>
                                   <div className="flex justify-between text-neutral-700 text-[11px]">
-                                    <span>Extra Handling / Surcharges</span>
+                                    <span>Unexpected Last-Minute Fees</span>
                                     <span className="text-emerald-700 font-mono font-semibold">₹0.00</span>
                                   </div>
                                   <div className="pt-2 border-t border-neutral-100 flex justify-between font-bold text-xs text-neutral-900">
                                     <span>Final Confirmed Total</span>
-                                    <span className="text-emerald-700 font-mono text-sm">₹1,850</span>
+                                    <span className="text-emerald-700 font-mono text-sm">₹1,999</span>
                                   </div>
                                 </div>
 
                                 <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-mono uppercase font-bold tracking-wider shadow-sm transition active:scale-[0.98]">
-                                  ⚡ Confirm & Pay ₹1,850
+                                  ⚡ Confirm & Pay Locked Total ₹1,999
                                 </button>
 
                                 <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
                                   <span className="text-emerald-700 font-bold shrink-0">✓ FIX #02:</span>
-                                  <span>All delivery & handling fees disclosed upfront. Zero surprise charges at checkout.</span>
+                                  <span>All-inclusive ₹1,999 shown upfront. Zero last-minute price jumps stops 31.4% rage clicks.</span>
                                 </div>
                               </div>
                             )}
 
                             {selectedPin === '03' && (
-                              /* FIX 3: Primary CTA Anchored Above the 6.1" Fold */
+                              /* FIX 3: Primary CTA Anchored Above the Fold (No Scrolling Needed) */
                               <div className="space-y-2">
                                 <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
                                   <span className="text-emerald-800 font-semibold flex items-center gap-1.5 text-[11px]">
                                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                                    Anchored Above 6.1" Fold
+                                    Pay Button Instantly Visible
                                   </span>
-                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">100% VISIBLE</span>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">NO SCROLLING NEEDED</span>
                                 </div>
 
                                 {/* Compact 1-line promo badge replaces bloated banner */}
@@ -1633,16 +1633,16 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
                                   ⚡ 1-Tap Pay ₹1,572.50 via UPI
                                 </button>
 
-                                {/* Screen Fold Line is now safely BELOW the CTA */}
+                                {/* Screen Cut-Off Line is now safely BELOW the CTA */}
                                 <div className="border-t-2 border-dashed border-emerald-300 my-1 relative text-center">
                                   <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase relative -top-2.5">
-                                    ── 6.1" Screen Fold Line (CTA is 100% Visible) ──
+                                    ── Bottom of Phone Screen (Pay button is 100% visible above) ──
                                   </span>
                                 </div>
 
                                 <div className="p-2 bg-emerald-50/90 border border-emerald-200 rounded-xl text-[10px] font-mono text-emerald-900 flex items-start gap-1.5">
                                   <span className="text-emerald-700 font-bold shrink-0">✓ FIX #03:</span>
-                                  <span>Payment CTA anchored above fold. 100% of shoppers see and tap without scrolling.</span>
+                                  <span>Pay button pinned right on screen. 100% of shoppers see it immediately without scrolling.</span>
                                 </div>
                               </div>
                             )}
