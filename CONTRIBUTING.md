@@ -8,8 +8,8 @@ Thank you for your interest in contributing to FunnelDoctor AI! We welcome bug f
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/krrishvimal/funneldoctor.git
-   cd funneldoctor
+   git clone https://github.com/krrishvimal/funneldoctorai.git
+   cd funneldoctorai
    ```
 
 2. **Install dependencies:**

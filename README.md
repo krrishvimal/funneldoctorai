@@ -9,7 +9,7 @@
 [![OpenAI Codex & GPT-4o Ready](https://img.shields.io/badge/OpenAI-Codex%20%26%20GPT--4o%20Ready-black.svg?style=flat-square&logo=openai)](https://openai.com/)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2%20App%20Router-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%205.6-blue.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg?style=flat-square)](https://github.com/krrishvimal/funneldoctor)
+[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg?style=flat-square)](https://github.com/krrishvimal/funneldoctorai)
 
 [Overview](#-executive-overview) · [Why FunnelDoctor](#-why-funneldoctor-vs-traditional-analytics) · [Monorepo Architecture](#-monorepo-architecture) · [Core Modules](#-the-4-core-modules) · [Universal Archetypes](#-universal-archetype-intelligence) · [Quickstart](#-quickstart) · [Developer CLI & SDK](#-developer-cli--programmatic-sdk) · [Monetization](#-b2b-monetization--roi-guarantee) · [Testing](#-testing--verification)
 
@@ -132,8 +132,8 @@ FunnelDoctor enforces a strict **Grade 6–8 Plain English standard**. All repor
 ### 1. Web Dashboard
 ```bash
 # Clone the repository
-git clone https://github.com/krrishvimal/funneldoctor.git
-cd funneldoctor
+git clone https://github.com/krrishvimal/funneldoctorai.git
+cd funneldoctorai
 
 # Install dependencies across monorepo workspaces
 npm install
