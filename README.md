@@ -2,16 +2,16 @@
 
 <div align="center">
 
-**Autonomous Multimodal Conversion & Root-Cause-Analysis Agent for Modern Web, Fintech & D2C Brands.**  
-*Built for the Startup Buildathon India 2026 · Powered by Google Cloud & Gemini 2.5 Active Engine.*
+**Autonomous Multimodal Conversion & Root-Cause-Analysis Engine for Modern Web & E-Commerce Apps.**  
+*An Open-Source Diagnostic & Code Remediation Framework for Web Funnels.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Powered By Gemini 2.5](https://img.shields.io/badge/Google%20Gemini-2.5%20Multimodal%20Active-emerald.svg?style=flat-square)](https://deepmind.google/technologies/gemini/)
+[![OpenAI Codex Ready](https://img.shields.io/badge/OpenAI-Codex%20%26%20GPT--4o%20Ready-black.svg?style=flat-square&logo=openai)](https://openai.com/)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2%20App%20Router-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict%205.6-blue.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen.svg?style=flat-square)](https://github.com/krrishvimal/funneldoctor)
 
-[Live Dashboard](#-web-dashboard-experience) · [Architecture](#-monorepo-architecture) · [CLI Quickstart](#-developer-cli) · [Business Model](#-b2b-monetization--roi-guarantee) · [Jury Pitch Guide](#-startup-buildathon-pitch)
+[Live Dashboard](#-web-dashboard-experience) · [Architecture](#-monorepo-architecture) · [CLI Quickstart](#-developer-cli) · [B2B Model](#-b2b-monetization--roi-guarantee)
 
 </div>
 
@@ -22,13 +22,13 @@
 Every online business loses fortunes in their conversion funnels:
 - **D2C Brands:** 70%+ of mobile shoppers churn at payment checkout due to late fee shocks, slow OTP modals, and WebView keyboard occlusion.
 - **Fintechs:** 60%+ of loan & account applicants drop out during video KYC due to camera permission timeouts and uncompressed Aadhaar upload failures.
-- **EdTechs:** 80%+ of learners abandon annual subscriptions due to lack of micro-pricing sachet tiers.
+- **EdTechs & SaaS:** 80%+ of learners and trial users abandon subscriptions due to complex onboarding wizards and lack of transparent pricing.
 
 Traditional analytics platforms (Google Analytics 4, Mixpanel, PostHog) only show **where** users leave—they cannot diagnose **why**, and they **never write the fix**. Traditional CRO consulting agencies charge ₹3,00,000–₹5,00,000/month retainers and take 6 weeks to deliver slide decks.
 
 **FunnelDoctor.ai** is an **Autonomous AI Staff CRO Engineer**:
-1. **Telemetry Ingestion:** Ingests raw event logs, BigQuery streams, or GA4/Mixpanel CSVs.
-2. **Spatial Vision X-Ray:** Cross-references quantitative drops with live viewport screenshots using **Gemini Omni Vision** to pinpoint cognitive friction, hidden costs, and UX bugs.
+1. **Telemetry Ingestion:** Ingests raw event logs, database streams, or GA4/Mixpanel CSVs.
+2. **Visual Screen X-Ray:** Cross-references quantitative drops with live viewport inspections using multimodal reasoning to pinpoint cognitive friction, hidden costs, and UX bugs.
 3. **BigQuery SQL Correlation:** Automatically writes and executes diagnostic telemetry queries isolating device OS latency bottlenecks.
 4. **The 60s Payoff:** Auto-synthesizes an **Executive Product Requirement Document (PRD)** and generates **production-ready React / TypeScript code** to recover lost conversions in one click.
 
@@ -64,7 +64,7 @@ funneldoctor/
 ### Module 01 · Quantitative Telemetry Waterfall
 Visualizes step-by-step conversion waterfalls across D2C, Fintech, and EdTech funnels with automated anomaly detection flagging outlier churn steps (e.g. `Step 04 Address & Payment: -71.7% Drop`).
 
-### Module 02 · Gemini Spatial Vision X-Ray
+### Module 02 · Visual Mobile X-Ray
 Renders live mobile phone viewports with interactive fault markers:
 - **Fault #01:** Forced OTP modal blocks guest checkout (41.2% exit rate).
 - **Fault #02:** Late ₹149 delivery fee hidden until the final commitment screen (31.4% rage clicks).
@@ -119,9 +119,9 @@ FunnelDoctor is anchored directly to **recovered client revenue**:
 
 | Tier | Price | Target Market | Key Deliverables |
 | :--- | :--- | :--- | :--- |
-| **Growth** | **\$199 / mo** (~₹16.5k) | D2C Stores doing ₹25L–₹1Cr GMV | 15 Audits/mo, Gemini Spatial Vision, React code export |
-| **Scale** | **\$599 / mo** (~₹49.5k) | Scaleups doing ₹1Cr–₹10Cr GMV | **Unlimited audits**, BigQuery/Mixpanel streaming, Gemini Live voice briefings, auto-PR GitHub PRs |
-| **Enterprise** | **\$2,499 / mo** | Fintechs, Unicorns, Banks | Dedicated GCP Vertex AI VPC deployment, 99.9% SLA, SOC2, dedicated CRO architect |
+| **Growth** | **\$199 / mo** (~₹16.5k) | D2C Stores doing ₹25L–₹1Cr GMV | 15 Audits/mo, Visual Screen X-Ray, React code export |
+| **Scale** | **\$599 / mo** (~₹49.5k) | Scaleups doing ₹1Cr–₹10Cr GMV | **Unlimited audits**, BigQuery/Mixpanel streaming, automated PR generation |
+| **Enterprise** | **\$2,499 / mo** | Fintechs, Unicorns, Banks | Custom cloud deployment, 99.9% SLA, SOC2, dedicated CRO architect |
 
 ### 🛡️ The 3x ROI Performance Guarantee
 > *If FunnelDoctor does not identify and help recover at least 3x its subscription cost in leaked checkout revenue within 30 days, we issue an immediate 100% refund.*
@@ -137,13 +137,14 @@ npm test
 ```
 ```
  ✓ test/funnel-parser.test.ts (3 tests)
+ ✓ test/domain-auditor.test.ts (4 tests)
  ✓ test/auditor.test.ts (1 test)
- Test Files  2 passed (2)
-      Tests  4 passed (4)
+ Test Files  3 passed (3)
+      Tests  8 passed (8)
 ```
 
 ---
 
 ## 📜 License & Credits
 Licensed under the [MIT License](./LICENSE).  
-Built for the **Startup Buildathon India 2026** by [Krrish Vimal](https://github.com/krrishvimal).
+Maintained by [Krrish Vimal](https://github.com/krrishvimal).

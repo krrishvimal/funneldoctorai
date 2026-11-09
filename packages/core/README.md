@@ -1,12 +1,12 @@
 # 🩺 FunnelDoctor Core (`@funneldoctor/core`)
 
 > **Autonomous Multimodal Conversion Rate Optimization (CRO) & Root-Cause-Analysis Engine.**  
-> Powered by Google Gemini Vision & Quantitative Event Analytics.
+> Powered by OpenAI Codex, Multimodal Reasoning & Quantitative Event Analytics.
 
 [![npm version](https://img.shields.io/npm/v/@funneldoctor/core.svg?style=flat-square)](https://www.npmjs.com/package/@funneldoctor/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg?style=flat-square)](https://www.typescriptlang.org/)
-[![Google Gemini](https://img.shields.io/badge/Powered%20By-Google%20Gemini-orange.svg?style=flat-square)](https://deepmind.google/technologies/gemini/)
+[![OpenAI Codex Ready](https://img.shields.io/badge/OpenAI-Codex%20%26%20GPT--4o%20Ready-black.svg?style=flat-square&logo=openai)](https://openai.com/)
 
 ---
 

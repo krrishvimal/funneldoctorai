@@ -4,12 +4,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FunnelDoctor AI — Autonomous Multimodal Conversion & RCA Platform",
   description:
-    "Clinical Swiss Diagnostic Telemetry for Multimodal Conversion Friction. Built for Startup Buildathon India 2026. Powered by Google DeepMind & Google Cloud Gemini 2.5.",
-  keywords: ["conversion rate optimization", "cro", "funnel analysis", "gemini vision", "bigquery telemetry", "startup buildathon india"],
+    "Open-source diagnostic telemetry and code remediation engine for web funnels. Diagnose conversion churn and synthesize clean code fixes in 60s.",
+  keywords: ["conversion rate optimization", "cro", "funnel analysis", "code remediation", "react components", "web analytics"],
   authors: [{ name: "FunnelDoctor Team" }],
   openGraph: {
     title: "FunnelDoctor AI — Autonomous Multimodal Conversion & RCA Platform",
-    description: "Diagnose conversion churn. Synthesize the fix in 60s. Powered by Google DeepMind & Gemini 2.5.",
+    description: "Diagnose conversion churn. Synthesize the clean code fix in 60s.",
     url: "https://funneldoctor.ai",
     siteName: "FunnelDoctor AI",
     locale: "en_IN",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "FunnelDoctor AI — Autonomous Multimodal Conversion & RCA Platform",
-    description: "Diagnose conversion churn. Synthesize the fix in 60s with Gemini 2.5 Multimodal RCA.",
+    description: "Diagnose conversion churn. Synthesize the clean code fix in 60s.",
   },
 };
 

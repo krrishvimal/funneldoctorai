@@ -696,7 +696,7 @@ ${currentData.prdRolloutPlan}
 **Generated At**: ${new Date().toISOString()}
 **Project URL**: ${currentData.url}
 **Industry & Segment**: ${currentData.tagline}
-**Diagnostic Engine**: Google Cloud & Gemini 2.5 Active Multimodal Pipeline
+**Diagnostic Engine**: Multimodal Conversion Diagnostic & Remediation Pipeline
 **Specification ID**: ${currentData.prdDocumentId}
 
 ================================================================================
@@ -766,7 +766,7 @@ ${currentData.remediationCode}
 \`\`\`
 
 ================================================================================
-END OF AUDIT PACKAGE · FUNNELDOCTOR AI · STARTUP BUILDATHON INDIA 2026
+END OF AUDIT PACKAGE · FUNNELDOCTOR AI · OPEN SOURCE ENGINE
 ================================================================================
 `;
     const blob = new Blob([pkg], { type: 'text/markdown;charset=utf-8;' });
@@ -2210,10 +2210,10 @@ GROUP BY 1, 2 ORDER BY drop_pct DESC;`,
             </div>
             <span className="font-semibold text-neutral-900">FunnelDoctor.ai</span>
             <span className="text-neutral-300">·</span>
-            <span>Startup Buildathon India 2026</span>
+            <span>Open Source Community Edition</span>
           </div>
           <div className="flex items-center gap-6">
-            <span>Powered by Google Cloud & Gemini 2.5</span>
+            <span>Autonomous CRO & Code Remediation</span>
             <span className="text-neutral-300">·</span>
             <button 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}

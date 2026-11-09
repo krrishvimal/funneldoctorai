@@ -248,7 +248,7 @@ const BENCHMARK_CATALOG: Record<string, Partial<DomainAuditReport>> = {
 // --------------------------------------------------------------------------
 export async function auditDomainWithGemini(
   inputUrl: string,
-  options: { apiKey?: string; modelName?: string } = {}
+  options: { apiKey?: string; openaiApiKey?: string; modelName?: string } = {}
 ): Promise<DomainAuditReport> {
   // Normalize domain
   let cleanDomain = inputUrl.trim().toLowerCase();
@@ -266,20 +266,7 @@ export async function auditDomainWithGemini(
     return assembleFullReport(fullUrl, cleanDomain, cachedBenchmark);
   }
 
-  // If apiKey is available, call Gemini for bespoke analysis
-  const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
-  if (apiKey) {
-    const candidateModels = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"];
-
-    for (const model of candidateModels) {
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const generativeModel = genAI.getGenerativeModel({
-          model,
-          generationConfig: { responseMimeType: "application/json" }
-        });
-
-        const prompt = `You are FunnelDoctor AI, a friendly, ultra-sharp product advisor. You explain conversion drop-offs in crystal-clear, everyday Plain English that any store owner, client, or non-technical founder understands in 5 seconds.
+  const prompt = `You are FunnelDoctor AI, a friendly, ultra-sharp product advisor. You explain conversion drop-offs in crystal-clear, everyday Plain English that any store owner, client, or non-technical founder understands in 5 seconds.
 
 Analyze the website domain: "${cleanDomain}" (${fullUrl}).
 
@@ -345,6 +332,79 @@ Return STRICT JSON matching:
   "reactCode": "string",
   "prdMarkdown": "string"
 }`;
+
+  // 1. Check for OpenAI API Key (Codex / GPT-4o engine)
+  const openaiKey = options.openaiApiKey || process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: options.modelName || "gpt-4o",
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are FunnelDoctor AI, an open-source conversion diagnostic and clean React code remediation engine.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (parsed.brandName && Array.isArray(parsed.steps) && parsed.steps.length >= 3) {
+            const bStep = parsed.steps.find((s: any) => s.isBottleneck) || parsed.steps[Math.min(2, parsed.steps.length - 1)];
+            const bIndex = bStep ? parsed.steps.indexOf(bStep) + 1 : (Number(parsed.worstStepIndex) || 3);
+            const rawWorst = bStep?.name || parsed.worstStepName || "Primary Bottleneck";
+            const cleanedWorst = rawWorst.replace(/^(\d+[\s.)-]+\s*)+/, "").trim();
+            const alignedWorstName = `${bIndex.toString().padStart(2, "0")}. ${cleanedWorst || rawWorst}`;
+
+            return {
+              domain: fullUrl,
+              brandName: parsed.brandName,
+              category: parsed.category || (isSaasDomain ? "B2B SaaS Platform" : "Digital Commerce"),
+              visitors: Number(parsed.visitors) || 150000,
+              dropoffRate: Number(parsed.dropoffRate) || 58.5,
+              leakedMonthlyLakhs: Number(parsed.leakedMonthlyLakhs) || 32.4,
+              recoverableMonthlyLakhs: Number(parsed.recoverableMonthlyLakhs) || 7.2,
+              aov: Number(parsed.aov) || (isSaasDomain ? 1200 : 1650),
+              worstStepName: alignedWorstName,
+              worstStepIndex: bIndex,
+              steps: parsed.steps,
+              findings: parsed.findings || [],
+              reactCode: parsed.reactCode || generateFallbackReactCode(parsed.brandName, alignedWorstName),
+              prdMarkdown: parsed.prdMarkdown || generateFallbackPRD(parsed.brandName, fullUrl, alignedWorstName),
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("OpenAI model call failed, checking secondary providers:", err);
+    }
+  }
+
+  // 2. Secondary Multimodal Provider
+  const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
+  if (apiKey) {
+    const candidateModels = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"];
+
+    for (const model of candidateModels) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const generativeModel = genAI.getGenerativeModel({
+          model,
+          generationConfig: { responseMimeType: "application/json" }
+        });
 
         const res = await generativeModel.generateContent(prompt);
         const parsed = JSON.parse(res.response.text());
