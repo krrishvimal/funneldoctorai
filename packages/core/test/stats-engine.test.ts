@@ -2,10 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   standardNormalCdf,
   calculateTwoProportionTest,
+  calculateFishersExactTest,
   applyBenjaminiHochberg,
   calculateRequiredSampleSize,
   classifyUserAgentCohort,
   rankIssuesByIceScore,
+  checkSimpsonsParadox,
+  sanitizeTelemetryEvents,
 } from "../src/stats-engine.js";
 
 describe("Senior Staff Product Analyst Stats Engine", () => {
@@ -199,6 +202,88 @@ describe("Senior Staff Product Analyst Stats Engine", () => {
       const ranked = rankIssuesByIceScore(items);
       expect(ranked[0].id).toBe("2"); // 1-Tap UPI comes first
       expect(ranked[1].id).toBe("1");
+    });
+  });
+
+  describe("Fisher's Exact Test & Small-Sample Robustness", () => {
+    it("calculates exact hypergeometric two-tailed p-value for 2x2 table", () => {
+      // Classic tea-tasting or 2x2 contingency: a=3, nA=4, c=1, nB=4
+      const pVal = calculateFishersExactTest(3, 4, 1, 4);
+      expect(pVal).toBeGreaterThan(0);
+      expect(pVal).toBeLessThanOrEqual(1.0);
+    });
+
+    it("ensures confidence intervals are strictly truncated to [-1, 1]", () => {
+      const result = calculateTwoProportionTest(
+        { name: "Group A", visitors: 4, conversions: 0 },
+        { name: "Group B", visitors: 4, conversions: 4 }
+      );
+      expect(result.confidenceInterval95[0]).toBeGreaterThanOrEqual(-1.0);
+      expect(result.confidenceInterval95[1]).toBeLessThanOrEqual(1.0);
+    });
+  });
+
+  describe("Indian D2C Cash on Delivery (COD) Net Revenue Logic", () => {
+    it("discounts COD revenue loss by 30% RTO to avoid gross overstatement", () => {
+      const results = applyBenjaminiHochberg([
+        {
+          cohortId: "cod_friction",
+          cohortName: "Cash on Delivery",
+          visitors: 5000,
+          conversions: 100,
+          baselineCr: 0.05,
+          observedCr: 0.02,
+          rawPValue: 0.0001,
+        },
+      ], { weeklyVisitors: 5000, aov: 1000 });
+
+      expect(results[0].weeklyRevenueLeakRange).toBeDefined();
+      expect(results[0].humanAdvice).toContain("Return-to-Origin RTO");
+    });
+  });
+
+  describe("Simpson's Paradox Detector", () => {
+    it("detects when aggregate metric contradicts segmented cohorts due to traffic mix shift", () => {
+      // Overall B appears worse (0.04 vs 0.05), but within both Android and iOS B is strictly better!
+      const paradox = checkSimpsonsParadox(
+        0.05, // overall A
+        0.04, // overall B
+        [
+          { name: "Android", crA: 0.02, crB: 0.03 }, // B is better!
+          { name: "iOS", crA: 0.08, crB: 0.09 },     // B is better!
+        ]
+      );
+
+      expect(paradox.hasParadox).toBe(true);
+      expect(paradox.warningMessage).toContain("Simpson's Paradox Detected");
+    });
+
+    it("returns hasParadox: false when trends are aligned", () => {
+      const aligned = checkSimpsonsParadox(
+        0.03,
+        0.05,
+        [
+          { name: "Android", crA: 0.02, crB: 0.04 },
+          { name: "iOS", crA: 0.06, crB: 0.08 },
+        ]
+      );
+      expect(aligned.hasParadox).toBe(false);
+    });
+  });
+
+  describe("Data Quality & Bot Sanitization", () => {
+    it("filters out search bots and deduplicates rapid burst beacons", () => {
+      const rawEvents = [
+        { sessionId: "s1", eventType: "click", userAgent: "Googlebot/2.1", timestamp: 1000 },
+        { sessionId: "s2", eventType: "pageview", userAgent: "Mozilla/5.0 Chrome", timestamp: 2000 },
+        { sessionId: "s2", eventType: "pageview", userAgent: "Mozilla/5.0 Chrome", timestamp: 2010 }, // duplicate burst within 50ms
+        { sessionId: "s2", eventType: "click", userAgent: "Mozilla/5.0 Chrome", timestamp: 2500 },
+      ];
+
+      const sanitized = sanitizeTelemetryEvents(rawEvents);
+      expect(sanitized.botEventsDropped).toBe(1);
+      expect(sanitized.duplicateEventsDropped).toBe(1);
+      expect(sanitized.cleanEvents.length).toBe(2);
     });
   });
 });

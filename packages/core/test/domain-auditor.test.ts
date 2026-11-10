@@ -64,11 +64,12 @@ describe("Domain Intelligence & Autonomous Auditor", () => {
     expect(stats.sampleSizeGuardrail.statusMessage).toBeDefined();
 
     // 2. Cohort comparisons with Benjamini-Hochberg FDR correction
-    expect(stats.cohorts.length).toBe(4);
+    expect(stats.cohorts.length).toBe(5);
     for (const cohort of stats.cohorts) {
       expect(cohort.adjustedQValue).toBeGreaterThanOrEqual(0);
       expect(cohort.adjustedQValue).toBeLessThanOrEqual(1);
       expect(cohort.weeklyRevenueLeak).toBeGreaterThanOrEqual(0);
+      expect(cohort.weeklyRevenueLeakRange).toBeDefined();
       expect(cohort.humanAdvice).toBeDefined();
     }
 
@@ -84,5 +85,10 @@ describe("Domain Intelligence & Autonomous Auditor", () => {
     // 4. A/B Test Plan with peeking and causal safeguards
     expect(stats.abTestPlan.hypothesis).toBeDefined();
     expect(stats.abTestPlan.safeguardNotes.length).toBeGreaterThanOrEqual(3);
+
+    // 5. Root-Cause Evidence & Causal Warnings
+    expect(stats.rootCauseEvidence).toBeDefined();
+    expect(stats.rootCauseEvidence?.paymentErrors.length).toBeGreaterThan(0);
+    expect(stats.causalAttributionWarning).toContain("Attribution Warning");
   });
 });

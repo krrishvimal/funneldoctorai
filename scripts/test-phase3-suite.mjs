@@ -5,10 +5,13 @@
 
 import {
   calculateTwoProportionTest,
+  calculateFishersExactTest,
   applyBenjaminiHochberg,
   calculateRequiredSampleSize,
   classifyUserAgentCohort,
   rankIssuesByIceScore,
+  checkSimpsonsParadox,
+  sanitizeTelemetryEvents,
   auditDomainWithGemini
 } from "../packages/core/dist/index.mjs";
 
@@ -184,14 +187,38 @@ assert(
   `Top Priority: ${rankedIce[0].title} (ICE Score: ${rankedIce[0].iceScore})`
 );
 
+// Simpson's Paradox Verification
+const paradoxCheck = checkSimpsonsParadox(0.05, 0.04, [
+  { name: "Android", crA: 0.02, crB: 0.03 },
+  { name: "iOS", crA: 0.08, crB: 0.09 },
+]);
+assert(
+  paradoxCheck.hasParadox === true,
+  "Accurately detects Simpson's Paradox when aggregate reverses subgroup trends",
+  `Paradox: ${paradoxCheck.hasParadox}, Warning: ${paradoxCheck.warningMessage?.slice(0, 40)}...`
+);
+
+// Telemetry Bot & Duplicate Sanitization
+const sanitized = sanitizeTelemetryEvents([
+  { sessionId: "s1", eventType: "click", userAgent: "Googlebot/2.1", timestamp: 1000 },
+  { sessionId: "s2", eventType: "pageview", userAgent: "Mozilla/5.0 Chrome", timestamp: 2000 },
+  { sessionId: "s2", eventType: "pageview", userAgent: "Mozilla/5.0 Chrome", timestamp: 2010 },
+]);
+assert(
+  sanitized.botEventsDropped === 1 && sanitized.duplicateEventsDropped === 1,
+  "Data Quality: Filters crawler bots and deduplicates rapid burst beacons",
+  `Bots Dropped: ${sanitized.botEventsDropped}, Duplicates Dropped: ${sanitized.duplicateEventsDropped}`
+);
+
 // Full Domain Auditor Integration
 const auditReport = await auditDomainWithGemini("teststore.com");
 assert(
   auditReport.statisticalBreakdown !== undefined &&
-  auditReport.statisticalBreakdown.cohorts.length === 4 &&
-  auditReport.statisticalBreakdown.sampleSizeGuardrail.totalRequiredVisitors > 0,
-  "Full Domain Auditor generates complete statistical breakdown payload",
-  `Cohorts evaluated: ${auditReport.statisticalBreakdown?.cohorts.length}`
+  auditReport.statisticalBreakdown.cohorts.length === 5 &&
+  auditReport.statisticalBreakdown.sampleSizeGuardrail.totalRequiredVisitors > 0 &&
+  auditReport.statisticalBreakdown.rootCauseEvidence !== undefined,
+  "Full Domain Auditor generates complete statistical breakdown with root causes & COD RTO",
+  `Cohorts evaluated: ${auditReport.statisticalBreakdown?.cohorts.length}, Root Cause Codes: ${auditReport.statisticalBreakdown?.rootCauseEvidence?.paymentErrors.length}`
 );
 
 console.log("\n================================================================================");

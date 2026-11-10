@@ -6,3 +6,7 @@ export * from "./domain-auditor.js";
 export * from "./dom-inspector.js";
 export * from "./viewport-capturer.js";
 export * from "./stats-engine.js";
+export * from "./multi-stack-synthesizer.js";
+export * from "./experiment-runner.js";
+export * from "./executive-reporter.js";
+
