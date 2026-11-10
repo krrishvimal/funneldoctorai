@@ -3,3 +3,5 @@ export * from "./funnel-parser.js";
 export * from "./heuristics.js";
 export * from "./gemini-auditor.js";
 export * from "./domain-auditor.js";
+export * from "./dom-inspector.js";
+export * from "./viewport-capturer.js";
