@@ -51,4 +51,38 @@ describe("Domain Intelligence & Autonomous Auditor", () => {
     expect(reportA.category).not.toBe(reportB.category);
     expect(reportA.aov).not.toBe(reportB.aov);
   });
+
+  it("enriches audit reports with complete senior product analyst statistical breakdown", async () => {
+    const report = await auditDomainWithGemini("teststore.in");
+
+    expect(report.statisticalBreakdown).toBeDefined();
+    const stats = report.statisticalBreakdown!;
+
+    // 1. Fixed-horizon sample size guardrail
+    expect(stats.sampleSizeGuardrail).toBeDefined();
+    expect(stats.sampleSizeGuardrail.totalRequiredVisitors).toBeGreaterThan(0);
+    expect(stats.sampleSizeGuardrail.statusMessage).toBeDefined();
+
+    // 2. Cohort comparisons with Benjamini-Hochberg FDR correction
+    expect(stats.cohorts.length).toBe(4);
+    for (const cohort of stats.cohorts) {
+      expect(cohort.adjustedQValue).toBeGreaterThanOrEqual(0);
+      expect(cohort.adjustedQValue).toBeLessThanOrEqual(1);
+      expect(cohort.weeklyRevenueLeak).toBeGreaterThanOrEqual(0);
+      expect(cohort.humanAdvice).toBeDefined();
+    }
+
+    // 3. ICE Prioritization matrix
+    expect(stats.icePrioritization.length).toBeGreaterThanOrEqual(3);
+    // Verified sorted in descending order of ICE score
+    for (let i = 0; i < stats.icePrioritization.length - 1; i++) {
+      expect(stats.icePrioritization[i].iceScore).toBeGreaterThanOrEqual(
+        stats.icePrioritization[i + 1].iceScore
+      );
+    }
+
+    // 4. A/B Test Plan with peeking and causal safeguards
+    expect(stats.abTestPlan.hypothesis).toBeDefined();
+    expect(stats.abTestPlan.safeguardNotes.length).toBeGreaterThanOrEqual(3);
+  });
 });

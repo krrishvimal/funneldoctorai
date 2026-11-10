@@ -1,6 +1,16 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { fetchAndInspectDomain, D2CDOMInspectionResult } from "./dom-inspector.js";
 import { captureMobileViewport, ViewportCaptureResult } from "./viewport-capturer.js";
+import {
+  calculateTwoProportionTest,
+  applyBenjaminiHochberg,
+  calculateRequiredSampleSize,
+  rankIssuesByIceScore,
+  CohortHypothesis,
+  CorrectedCohortHypothesis,
+  SampleSizeCalculation,
+  IceScoredItem,
+} from "./stats-engine.js";
 
 export interface DomainAuditStep {
   name: string;
@@ -15,6 +25,20 @@ export interface DomainAuditFinding {
   plainEnglish: string;
   impact: string;
   category: "ux" | "pricing" | "latency";
+}
+
+export interface StatisticalBreakdown {
+  sampleSizeGuardrail: SampleSizeCalculation;
+  cohorts: CorrectedCohortHypothesis[];
+  icePrioritization: IceScoredItem[];
+  abTestPlan: {
+    hypothesis: string;
+    targetMetric: string;
+    controlVariant: string;
+    treatmentVariant: string;
+    minimumDetectableEffect: string;
+    safeguardNotes: string[];
+  };
 }
 
 export interface DomainAuditReport {
@@ -42,6 +66,7 @@ export interface DomainAuditReport {
     flags: string[];
   };
   mobileScreenshotBase64?: string | null;
+  statisticalBreakdown?: StatisticalBreakdown;
 }
 
 // --------------------------------------------------------------------------
@@ -472,7 +497,7 @@ Return STRICT JSON matching:
             const cleanedWorst = rawWorst.replace(/^(\d+[\s.)-]+\s*)+/, "").trim();
             const alignedWorstName = `${bIndex.toString().padStart(2, "0")}. ${cleanedWorst || rawWorst}`;
 
-            return {
+            return enrichWithStatisticalBreakdown({
               domain: fullUrl,
               brandName: parsed.brandName,
               category: parsed.category || (isSaasDomain ? "B2B SaaS Platform" : "Digital Commerce"),
@@ -497,7 +522,7 @@ Return STRICT JSON matching:
                 flags: domInfo.heuristicFlags,
               } : undefined,
               mobileScreenshotBase64: viewportCapture?.screenshotBase64 || null,
-            };
+            });
           }
         }
       }
@@ -540,7 +565,7 @@ Return STRICT JSON matching:
           const cleanedWorst = rawWorst.replace(/^(\d+[\s.)-]+\s*)+/, '').trim();
           const alignedWorstName = `${bIndex.toString().padStart(2, '0')}. ${cleanedWorst || rawWorst}`;
 
-          return {
+          return enrichWithStatisticalBreakdown({
             domain: fullUrl,
             brandName: parsed.brandName,
             category: parsed.category || (isSaasDomain ? "B2B SaaS Platform" : "Digital Commerce"),
@@ -565,7 +590,7 @@ Return STRICT JSON matching:
               flags: domInfo.heuristicFlags,
             } : undefined,
             mobileScreenshotBase64: viewportCapture?.screenshotBase64 || null,
-          };
+          });
         }
       } catch (err) {
         console.warn(`Gemini model ${model} attempt failed:`, err);
@@ -576,6 +601,190 @@ Return STRICT JSON matching:
 
   // Deterministic domain-seeded fallback (ensures unique data for every domain even offline)
   return generateDeterministicFallback(cleanDomain, fullUrl, isSaasDomain, domInfo, viewportCapture);
+}
+
+// --------------------------------------------------------------------------
+// HELPER: BUILD SENIOR PRODUCT ANALYST STATISTICAL BREAKDOWN
+// --------------------------------------------------------------------------
+export function buildStatisticalBreakdown(
+  monthlyVisitors: number,
+  dropoffRate: number,
+  aov: number,
+  has1TapUpi: boolean = false,
+  hasLateShipping: boolean = false
+): StatisticalBreakdown {
+  const weeklyVisitors = Math.max(100, Math.round(monthlyVisitors / 4.3));
+  // Baseline conversion rate at the bottleneck step (proportion continuing past friction gate)
+  const baselineCr = Math.max(0.015, Math.min(0.40, (100 - dropoffRate) / 100));
+
+  // 1. Fixed-horizon sample size calculation (prevent peeking bias!)
+  const sampleSizeGuardrail = calculateRequiredSampleSize(
+    baselineCr,
+    0.15, // 15% MDE
+    weeklyVisitors,
+    0.05,
+    0.80
+  );
+
+  // 2. Build 4 realistic cohorts based on store attributes
+  // Cohort A: Android Instagram In-App WebView (high drop if no 1-tap or bad webview rendering)
+  const nInsta = Math.max(50, Math.round(weeklyVisitors * 0.38));
+  const crInsta = has1TapUpi ? baselineCr * 0.78 : baselineCr * 0.58;
+  const xInsta = Math.round(nInsta * crInsta);
+  const testInsta = calculateTwoProportionTest(
+    { name: "Store Baseline", visitors: weeklyVisitors, conversions: Math.round(weeklyVisitors * baselineCr) },
+    { name: "Android Instagram WebView", visitors: nInsta, conversions: xInsta }
+  );
+
+  // Cohort B: Manual VPA / Non-1-Tap Payment Flow
+  const nVpa = Math.max(50, Math.round(weeklyVisitors * 0.28));
+  const crVpa = has1TapUpi ? baselineCr * 0.82 : baselineCr * 0.64;
+  const xVpa = Math.round(nVpa * crVpa);
+  const testVpa = calculateTwoProportionTest(
+    { name: "Store Baseline", visitors: weeklyVisitors, conversions: Math.round(weeklyVisitors * baselineCr) },
+    { name: "Manual VPA & Card Entry", visitors: nVpa, conversions: xVpa }
+  );
+
+  // Cohort C: Late Shipping Surprise Checkout
+  const nShip = Math.max(50, Math.round(weeklyVisitors * 0.20));
+  const crShip = hasLateShipping ? baselineCr * 0.66 : baselineCr * 0.90;
+  const xShip = Math.round(nShip * crShip);
+  const testShip = calculateTwoProportionTest(
+    { name: "Store Baseline", visitors: weeklyVisitors, conversions: Math.round(weeklyVisitors * baselineCr) },
+    { name: "Late Shipping Fee Friction", visitors: nShip, conversions: xShip }
+  );
+
+  // Cohort D: iOS Native Safari (High intent control cohort)
+  const nSafari = Math.max(50, Math.round(weeklyVisitors * 0.14));
+  const crSafari = baselineCr * 1.05;
+  const xSafari = Math.round(nSafari * crSafari);
+  const testSafari = calculateTwoProportionTest(
+    { name: "Store Baseline", visitors: weeklyVisitors, conversions: Math.round(weeklyVisitors * baselineCr) },
+    { name: "iOS Native Safari (Control)", visitors: nSafari, conversions: xSafari }
+  );
+
+  const rawHypotheses: CohortHypothesis[] = [
+    {
+      cohortId: "instagram_android_webview",
+      cohortName: "Android Instagram WebView",
+      visitors: nInsta,
+      conversions: xInsta,
+      baselineCr,
+      observedCr: crInsta,
+      rawPValue: testInsta.pValue,
+    },
+    {
+      cohortId: "manual_vpa_friction",
+      cohortName: "Manual VPA & Card Entry",
+      visitors: nVpa,
+      conversions: xVpa,
+      baselineCr,
+      observedCr: crVpa,
+      rawPValue: testVpa.pValue,
+    },
+    {
+      cohortId: "late_shipping_drop",
+      cohortName: "Late Shipping Fee Disclosure",
+      visitors: nShip,
+      conversions: xShip,
+      baselineCr,
+      observedCr: crShip,
+      rawPValue: testShip.pValue,
+    },
+    {
+      cohortId: "ios_native_safari",
+      cohortName: "iOS Native Safari (Control)",
+      visitors: nSafari,
+      conversions: xSafari,
+      baselineCr,
+      observedCr: crSafari,
+      rawPValue: testSafari.pValue,
+    },
+  ];
+
+  // Apply Benjamini-Hochberg FDR correction across cohorts
+  const cohorts = applyBenjaminiHochberg(rawHypotheses, {
+    falseDiscoveryRate: 0.10,
+    weeklyVisitors,
+    aov,
+  });
+
+  // Calculate ICE Prioritization Items
+  const unrankedIce: IceScoredItem[] = [
+    {
+      id: "ice-1",
+      title: "1-Tap UPI Intent Deep-Links (GPay / PhonePe / Paytm)",
+      category: "payment",
+      weeklyRevenueImpactInr: Math.round(weeklyVisitors * 0.28 * (baselineCr * 0.25) * aov),
+      effortRating: 2, // Minimal effort (SDK intent button)
+      confidenceRating: 9, // Proven lift across Indian D2C
+      iceScore: Math.round((9 * 9) / 2),
+    },
+    {
+      id: "ice-2",
+      title: "Transparent Upfront Shipping / Free Delivery Threshold",
+      category: "pricing",
+      weeklyRevenueImpactInr: Math.round(weeklyVisitors * 0.20 * (baselineCr * 0.20) * aov),
+      effortRating: 3,
+      confidenceRating: 8,
+      iceScore: Math.round((8 * 8) / 3),
+    },
+    {
+      id: "ice-3",
+      title: "Numeric Keypad (inputmode='numeric') for Phone & OTP",
+      category: "form",
+      weeklyRevenueImpactInr: Math.round(weeklyVisitors * 0.35 * (baselineCr * 0.08) * aov),
+      effortRating: 1, // 5 minute HTML attribute change
+      confidenceRating: 9,
+      iceScore: Math.round((6 * 9) / 1),
+    },
+    {
+      id: "ice-4",
+      title: "In-App Browser UPI Fallback & External Browser Link",
+      category: "speed",
+      weeklyRevenueImpactInr: Math.round(weeklyVisitors * 0.38 * (baselineCr * 0.18) * aov),
+      effortRating: 3,
+      confidenceRating: 8,
+      iceScore: Math.round((7 * 8) / 3),
+    },
+  ];
+
+  const icePrioritization = rankIssuesByIceScore(unrankedIce);
+
+  return {
+    sampleSizeGuardrail,
+    cohorts,
+    icePrioritization,
+    abTestPlan: {
+      hypothesis: "Deploying 1-Tap UPI Intent with upfront delivery pricing will reduce checkout abandonment by at least 15% without impacting average order value.",
+      targetMetric: "Checkout Step-to-Completion Conversion Rate (%)",
+      controlVariant: "Original Multi-Step Form Checkout (50% traffic)",
+      treatmentVariant: "Remediated 1-Tap Checkout Component (50% traffic)",
+      minimumDetectableEffect: "+15% Relative Lift at 80% Power (p < 0.05)",
+      safeguardNotes: [
+        "Fixed-Horizon Rule: Do not stop testing or declare victory before reaching " + sampleSizeGuardrail.totalRequiredVisitors.toLocaleString() + " visitors.",
+        "External Variance Control: Track and flag marketing ad spend changes, influencer drops, or payment gateway outages occurring during the experiment window.",
+        "Multiple Testing Control: Use Benjamini-Hochberg FDR correction when analyzing segmented cohort performance."
+      ]
+    }
+  };
+}
+
+export function enrichWithStatisticalBreakdown(report: DomainAuditReport): DomainAuditReport {
+  const visitors = report.visitors || 150000;
+  const dropoffRate = report.dropoffRate || 58.5;
+  const aov = report.aov || 1650;
+  const has1TapUpi = report.domInspection ? report.domInspection.has1TapUpi : false;
+  const hasLateShipping = report.domInspection ? report.domInspection.hasLateShippingFee : false;
+
+  report.statisticalBreakdown = buildStatisticalBreakdown(
+    visitors,
+    dropoffRate,
+    aov,
+    has1TapUpi,
+    hasLateShipping
+  );
+  return report;
 }
 
 // --------------------------------------------------------------------------
@@ -596,7 +805,7 @@ function assembleFullReport(
   const leakedMonthlyLakhs = Number(((visitors * (dropoffRate / 100) * aov) / 100000).toFixed(1));
   const recoverableMonthlyLakhs = Number((leakedMonthlyLakhs * 0.22).toFixed(1));
 
-  return {
+  return enrichWithStatisticalBreakdown({
     domain: fullUrl,
     brandName,
     category: partial.category || "Digital Commerce",
@@ -613,7 +822,7 @@ function assembleFullReport(
     prdMarkdown: generateFallbackPRD(brandName, fullUrl, worstStep),
     domInspection: partial.domInspection,
     mobileScreenshotBase64: partial.mobileScreenshotBase64 || null
-  };
+  });
 }
 
 // --------------------------------------------------------------------------
@@ -661,7 +870,7 @@ function generateDeterministicFallback(
     const s4 = Math.round(s3 * 0.70);
     const s5 = Math.round(s4 * 0.85);
 
-    return {
+    return enrichWithStatisticalBreakdown({
       domain: fullUrl,
       brandName,
       category: "Creative Agency & Advertising Studio",
@@ -718,7 +927,7 @@ function generateDeterministicFallback(
         ]
       },
       mobileScreenshotBase64: viewportCapture?.screenshotBase64 || null
-    };
+    });
   }
 
   if (isSaasDomain) {
@@ -728,7 +937,7 @@ function generateDeterministicFallback(
     const s4 = Math.round(s3 * 0.75);
     const s5 = Math.round(s4 * 0.88);
 
-    return {
+    return enrichWithStatisticalBreakdown({
       domain: fullUrl,
       brandName,
       category: "B2B SaaS / Product-Led Growth (PLG)",
@@ -785,7 +994,7 @@ function generateDeterministicFallback(
         ]
       },
       mobileScreenshotBase64: viewportCapture?.screenshotBase64 || null
-    };
+    });
   }
 
   // D2C / E-Commerce Fallback
@@ -795,7 +1004,7 @@ function generateDeterministicFallback(
   const s4 = Math.round(s3 * (1 - worstDrop / 100));
   const s5 = Math.round(s4 * 0.91);
 
-  return {
+  return enrichWithStatisticalBreakdown({
     domain: fullUrl,
     brandName,
     category: "Direct-to-Consumer (D2C) Commerce",
@@ -853,7 +1062,7 @@ function generateDeterministicFallback(
       ]
     },
     mobileScreenshotBase64: viewportCapture?.screenshotBase64 || null
-  };
+  });
 }
 
 // --------------------------------------------------------------------------
