@@ -10,7 +10,9 @@
     "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
     "dev:web": "npm run --workspace=apps/web dev",
-    "build:core": "npm run --workspace=packages/core build"
+    "build:core": "npm run --workspace=packages/core build",
+    "build:tracker": "npm run --workspace=packages/tracker build",
+    "build:packages": "npm run --workspace=packages/core build && npm run --workspace=packages/tracker build"
   },
   "engines": {
     "node": ">=20.0.0"

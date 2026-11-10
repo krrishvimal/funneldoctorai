@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run --prefix ../../ build:core && next build",
+    "build": "npm run --prefix ../../ build:packages && next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@funneldoctor/core": "*",
+    "@funneldoctor/tracker": "*",
     "@google/generative-ai": "^0.21.0",
     "clsx": "^2.1.1",
     "framer-motion": "^14.10.1",
