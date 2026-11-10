@@ -107,7 +107,17 @@ export function inspectD2CDom(html: string, url: string): D2CDOMInspectionResult
   const pageText = $("body").text().toLowerCase();
 
   const hasUpi = pageText.includes("upi") || pageText.includes("gpay") || pageText.includes("phonepe") || pageText.includes("paytm") || pageText.includes("bhim");
-  const has1TapUpiIntent = pageText.includes("intent") || pageText.includes("pay via app") || pageText.includes("choose upi app") || $('[data-upi-intent], [class*="upi-app"], [id*="gpay"], [id*="phonepe"]').length > 0;
+  const has1TapUpiIntent =
+    pageText.includes("intent") ||
+    pageText.includes("pay via app") ||
+    pageText.includes("choose upi app") ||
+    pageText.includes("pay with gpay") ||
+    pageText.includes("pay with phonepe") ||
+    pageText.includes("pay with paytm") ||
+    pageText.includes("1-tap pay") ||
+    pageText.includes("1-tap express") ||
+    pageText.includes("upi intent") ||
+    $('[data-upi-intent], [class*="upi"], [class*="gpay"], [class*="phonepe"], [id*="gpay"], [id*="phonepe"]').length > 0;
   const hasManualVpaInput = pageText.includes("enter upi id") || pageText.includes("vpa") || pageText.includes("@okhdfcbank") || $('input[name*="vpa"], input[placeholder*="upi id"]').length > 0;
 
   if (hasUpi && hasManualVpaInput && !has1TapUpiIntent) {
@@ -133,8 +143,13 @@ export function inspectD2CDom(html: string, url: string): D2CDOMInspectionResult
   const hasLateShippingChargeMention =
     pageText.includes("shipping calculated at checkout") ||
     pageText.includes("delivery fee applies") ||
+    pageText.includes("delivery charge") ||
+    pageText.includes("shipping charge") ||
+    pageText.includes("shipping fee added") ||
+    pageText.includes("delivery charge added") ||
     pageText.includes("+ ₹") ||
-    pageText.includes("shipping: ₹");
+    pageText.includes("shipping: ₹") ||
+    pageText.includes("delivery: ₹");
 
   let shippingMentionText: string | null = null;
   if (hasLateShippingChargeMention) {
