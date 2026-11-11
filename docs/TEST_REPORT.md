@@ -1,7 +1,7 @@
 # FunnelDoctor AI: Consolidated Test Verification Report
 
-**Report Generated:** 2026-11-11T10:38:49.744Z
-**Execution Time:** 25.78s
+**Report Generated:** 2026-11-11T13:45:15.395Z
+**Execution Time:** 22.79s
 **Milestone Status:** Milestone 1: code complete, field verification pending.
 
 ## Summary
@@ -24,35 +24,35 @@
 *Status: PASS*
 
 ```
-✓ test/scipy-golden-dataset.test.ts (7 tests) 15ms
-✓ test/dashboard-rbac-isolation.test.ts (11 tests) 80ms
-✓ test/stats-engine.test.ts (16 tests) 93ms
-✓ test/state-store.test.ts (9 tests) 117ms
-✓ test/experiment-runner.test.ts (3 tests) 31ms
-✓ test/tenant-registry.test.ts (5 tests) 56ms
-✓ test/tenant-isolation.test.ts (4 tests) 56ms
-✓ test/backup-restore.test.ts (1 test) 26ms
-✓ test/retention-engine.test.ts (3 tests) 49ms
-✓ test/database-schema.test.ts (3 tests) 55ms
+✓ test/scipy-golden-dataset.test.ts (7 tests) 12ms
+✓ test/experiment-runner.test.ts (3 tests) 19ms
+✓ test/state-store.test.ts (9 tests) 107ms
+✓ test/dashboard-rbac-isolation.test.ts (11 tests) 140ms
+✓ test/stats-engine.test.ts (16 tests) 218ms
+✓ test/tenant-registry.test.ts (5 tests) 46ms
+✓ test/tenant-isolation.test.ts (4 tests) 73ms
+✓ test/backup-restore.test.ts (1 test) 28ms
+✓ test/retention-engine.test.ts (3 tests) 50ms
+✓ test/database-schema.test.ts (3 tests) 39ms
+✓ test/delivery-id-store.test.ts (4 tests) 93ms
+✓ test/redis-state-store.test.ts (1 test) 21ms
 ✓ test/multi-stack-synthesizer.test.ts (1 test) 16ms
-✓ test/delivery-id-store.test.ts (4 tests) 91ms
-✓ test/funnel-parser.test.ts (3 tests) 19ms
-✓ test/redis-state-store.test.ts (1 test) 19ms
-✓ test/crypto-vault.test.ts (3 tests) 31ms
-✓ test/aa-simulation.test.ts (2 tests) 251ms
-✓ test/shopify-config.test.ts (4 tests) 56ms
-✓ test/auditor.test.ts (1 test) 140ms
-✓ test/dom-inspector.test.ts (3 tests) 120ms
-✓ test/domain-auditor.test.ts (5 tests) 384ms
+✓ test/aa-simulation.test.ts (2 tests) 89ms
+✓ test/crypto-vault.test.ts (3 tests) 25ms
+✓ test/funnel-parser.test.ts (3 tests) 14ms
+✓ test/shopify-config.test.ts (4 tests) 18ms
+✓ test/auditor.test.ts (1 test) 86ms
+✓ test/dom-inspector.test.ts (3 tests) 25ms
+✓ test/domain-auditor.test.ts (5 tests) 138ms
 ```
 
 ### @funneldoctor/tracker (Vitest)
 *Status: PASS*
 
 ```
-✓ test/resilience.test.ts (2 tests) 10ms
-✓ test/pii-masker.test.ts (8 tests) 28ms
-✓ test/field-allowlist.test.ts (33 tests) 42ms
+✓ test/resilience.test.ts (2 tests) 6ms
+✓ test/pii-masker.test.ts (8 tests) 16ms
+✓ test/field-allowlist.test.ts (33 tests) 25ms
 ```
 
 ### SRI Immutability & Manifest Validator
