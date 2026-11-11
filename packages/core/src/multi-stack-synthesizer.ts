@@ -691,6 +691,14 @@ export default function FunnelDoctorOneTapCheckout({
             if (currentParams.has(key)) filteredParams.set(key, currentParams.get(key));
           });
 
+          // Carry over anonymous visitor ID via Shopify Cart Attributes in permalink to survive browser breakout
+          var vid = (window.FunnelDoctor && typeof window.FunnelDoctor.getSessionId === 'function')
+            ? window.FunnelDoctor.getSessionId()
+            : (window.localStorage ? window.localStorage.getItem('_fd_vid') : null);
+          if (vid) {
+            filteredParams.set('attributes[_fd_vid]', vid);
+          }
+
           var discountCode = '{{ cart.discount_applications.first.title | default: "" }}';
           if (discountCode && !filteredParams.has('discount')) filteredParams.set('discount', discountCode);
           var queryString = filteredParams.toString() ? ('&' + filteredParams.toString()) : '';

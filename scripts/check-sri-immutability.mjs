@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
 
 const manifestPath = path.resolve('scripts/sri-manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -65,6 +66,25 @@ for (const [ver, meta] of Object.entries(manifest)) {
     console.error(`❌ FAIL: Version '${ver}' in manifest is missing from disk!`);
     failures++;
   }
+}
+
+// 4. Git Branch Immutability Verification (Prevents PRs from altering existing frozen releases)
+try {
+  const gitDiff = execSync('git diff --name-only origin/main 2>nul || git diff --name-only HEAD~1 2>nul', { encoding: 'utf8' });
+  const modifiedFiles = gitDiff.split('\n').filter(Boolean);
+
+  for (const file of modifiedFiles) {
+    const match = file.match(/apps\/web\/public\/(v\d+\.\d+\.\d+)\//);
+    if (match) {
+      const version = match[1];
+      if (manifest[version] && manifest[version].status === 'deprecated') {
+        console.error(`❌ CRITICAL SECURITY ERROR: PR modifies frozen immutable release '${version}' (${file})!`);
+        failures++;
+      }
+    }
+  }
+} catch {
+  // Graceful fallback when running in clean commit tree
 }
 
 if (failures > 0) {
