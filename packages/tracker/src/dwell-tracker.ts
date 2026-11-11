@@ -1,5 +1,5 @@
 import { TelemetryEvent } from "./types.js";
-import { sanitizeElementTarget, scrubPiiText } from "./pii-masker.js";
+import { sanitizeElementTarget } from "./pii-masker.js";
 
 export interface DwellTrackerCallback {
   (event: TelemetryEvent): void;
@@ -7,6 +7,7 @@ export interface DwellTrackerCallback {
 
 // Standard W3C HTML5 autocomplete tokens for sensitive payment and authentication credentials
 const SENSITIVE_AUTOCOMPLETE_TOKENS = new Set([
+  "cc-name",
   "cc-number",
   "cc-csc",
   "cc-exp",
@@ -20,9 +21,14 @@ const SENSITIVE_AUTOCOMPLETE_TOKENS = new Set([
 
 /**
  * Checks whether an element contains sensitive financial, authentication, or PII inputs.
- * Uses an allowlist architecture combined with W3C autocomplete signals:
- * - Approved CRO fields (pincode, address, city, phone, email, coupon) are explicitly ALLOWED.
- * - Sensitive credentials (card numbers, CVV, OTP, passwords) are completely BYPASSED.
+ *
+ * Architecture & Governance Rule:
+ * 1. DENY RULES RUN FIRST AND ALWAYS WIN. If any attribute or label indicates a payment credential,
+ *    password, or security code, the field is rejected immediately.
+ * 2. Delimiter-aware token matching is used instead of \b (since \b treats underscores as word chars,
+ *    which causes \botp\b to miss 'phone_otp' and \baddress\b to miss 'shipping_address').
+ * 3. Approved CRO allowlist (pincodes, shipping addresses, phone, email, coupons) runs SECOND.
+ * 4. Anything unmatched is ignored/bypassed by default.
  */
 export function isSensitiveElement(el: HTMLElement | null): boolean {
   if (!el) return false;
@@ -31,10 +37,10 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
 
   const input = el as HTMLInputElement;
 
-  // 1. Password fields are always sensitive
+  // 1. Password fields are always sensitive (Immediate Deny)
   if (input.type === "password") return true;
 
-  // 2. Standard W3C Autocomplete Check (authoritative browser signal)
+  // 2. Standard W3C Autocomplete Check (Immediate Deny)
   const autocomplete = (input.autocomplete || "").trim().toLowerCase();
   if (autocomplete && SENSITIVE_AUTOCOMPLETE_TOKENS.has(autocomplete)) {
     return true;
@@ -51,6 +57,7 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
     }
   }
 
+  // Combine attributes with space delimiters
   const combined = [
     input.name,
     input.id,
@@ -63,19 +70,32 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
     .join(" ")
     .toLowerCase();
 
-  // 3. Approved CRO Allowlist (Delivery pincodes, shipping addresses, customer names, coupons)
-  // Must NOT be blocked by substring collisions (e.g. "pincode" containing "pin" or "express" containing "exp")
-  const isApprovedCroField = /\b(pincode|postal|zip|zipcode|postal_code|address|addr|street|city|state|province|phone|mobile|telephone|email|first_name|last_name|fname|lname|full_name|name|coupon|discount|promo|note|company)\b/i.test(combined);
+  // Normalize delimiters (replace underscores, hyphens, and brackets with spaces)
+  // This solves the JavaScript \b bug where \w treats '_' as a word character.
+  const normalized = combined.replace(/[_\[\]\-\.]+/g, " ");
 
-  // 4. Strict Sensitive Token Matching (Boundaried tokens only, avoiding bare "pin", "pan", "exp")
-  const isSensitiveToken = /\b(cvv|cvc|cvn|card_number|cardnumber|credit_card|debit_card|card_exp|card_expiry|otp|upi_pin|atm_pin|bank_account|ssn|aadhaar|secret)\b/i.test(combined) ||
-    /cc[-_](num|sec|csc)/i.test(combined);
+  // 3. DENY RULES (Run First): Strict Payment Credentials, CVVs, OTPs, PINs, and Cardholder Names
+  // Matches tokens even when prefixed/suffixed (e.g. 'phone_otp', 'billing_phone_otp', 'card_holder_name')
+  const isSensitiveCredential =
+    /\b(cvv|cvc|cvn|card_?number|credit_?card|debit_?card|card_?exp|card_?expiry|card_?holder|card_?name|otp|one_?time_?code|upi_?pin|atm_?pin|bank_?account|ssn|aadhaar|secret)\b/i.test(normalized) ||
+    /\bname on card\b/i.test(normalized) ||
+    /\b(card|cc)\s+(num|number|sec|csc|cvv|code|exp)\b/i.test(normalized);
 
-  if (isSensitiveToken) return true;
-  if (isApprovedCroField) return false;
+  if (isSensitiveCredential) {
+    return true; // Sensitive deny rule wins unconditionally
+  }
 
-  // Default: if field has unknown/suspicious keywords
-  return /\b(card|password|passwd|token)\b/i.test(combined);
+  // 4. APPROVED CRO ALLOWLIST (Runs Second): Non-sensitive delivery, address, and coupon fields
+  const isApprovedCroField =
+    /\b(pincode|postcode|postal|zip|zipcode|postal_?code|shipping_?address|billing_?address|address|addr|street|city|state|province|country|phone|mobile|telephone|email|first_?name|last_?name|fname|lname|full_?name|coupon|discount|promo|note|notes|comment|comments|company|shipping|delivery|express)\b/i.test(normalized) ||
+    /^(first|last)?name$/i.test(input.name || "");
+
+  if (isApprovedCroField) {
+    return false; // Approved CRO field, safe to track
+  }
+
+  // 5. DEFAULT DENY: Any unrecognized or ambiguous field is bypassed
+  return true;
 }
 
 export class DwellTracker {

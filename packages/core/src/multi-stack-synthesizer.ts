@@ -165,9 +165,12 @@ export default function FunnelDoctorOneTapCheckout({
       // 3. Mobile In-App WebView Routing with Fallback Intent and Attribution Persistence
       if (isInstagramWebView) {
         if (isAndroid) {
-          // Android: Direct Chrome Intent with Cart Permalink & S.browser_fallback_url
+          // Android: Direct Chrome Intent with dynamic Cart Permalink, actual query parameters, and S.browser_fallback_url
           const host = window.location.host;
-          const targetUrl = \`\${host}\${effectivePermalink}?checkout&utm_source=instagram&fd_var=treatment\`;
+          const currentSearch = typeof window !== 'undefined' && window.location.search 
+            ? window.location.search.replace(/^\\?/, '&') 
+            : '&fd_var=treatment';
+          const targetUrl = \`\${host}\${effectivePermalink}?checkout\${currentSearch}\`;
           const fallbackHttps = encodeURIComponent(\`https://\${targetUrl}\`);
           const chromeIntent = \`intent://\${targetUrl}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=\${fallbackHttps};end\`;
           window.location.href = chromeIntent;
@@ -658,12 +661,24 @@ export default function FunnelDoctorOneTapCheckout({
       }
 
       var orderRef = 'SHOPIFY_' + Date.now().toString(36).toUpperCase();
-      var firstVariantId = '{{ cart.items.first.variant_id }}';
-      var cartPermalink = '/cart/' + (firstVariantId || 'DEFAULT') + ':1?checkout';
+      // Dynamically compile all cart items and quantities into permalink slug
+      var permalinkItems = [];
+      {% for item in cart.items %}
+        permalinkItems.push('{{ item.variant_id }}:{{ item.quantity }}');
+      {% endfor %}
+      var itemsSlug = permalinkItems.length > 0 ? permalinkItems.join(',') : ('{{ cart.items.first.variant_id }}' + ':1');
+      var cartPermalink = '/cart/' + itemsSlug + '?checkout';
+
+      // Carry over actual shopper query parameters, discount, and variant
+      var currentParams = new URLSearchParams(window.location.search);
+      var discountCode = '{{ cart.discount_applications.first.title | default: "" }}';
+      if (discountCode) currentParams.set('discount', discountCode);
+      if (!currentParams.has('fd_var')) currentParams.set('fd_var', 'treatment');
+      var queryString = currentParams.toString() ? ('&' + currentParams.toString()) : '';
 
       if (isInstagram && isAndroid) {
         // Android: Chrome Intent with true Cart Permalink and S.browser_fallback_url to preserve cart items
-        var targetUrl = window.location.host + cartPermalink + '&utm_source=instagram&fd_var=treatment';
+        var targetUrl = window.location.host + cartPermalink + queryString;
         var fallbackHttps = encodeURIComponent('https://' + targetUrl);
         var intentUrl = 'intent://' + targetUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallbackHttps + ';end';
         window.location.href = intentUrl;

@@ -237,11 +237,18 @@ export function inspectD2CDom(html: string, url: string): D2CDOMInspectionResult
 }
 
 /**
- * Fast pre-flight check to block private, loopback, and cloud metadata targets (SSRF protection).
+ * Crawler SSRF Architecture Notice: Basic pre-flight check active; full container/proxy isolation pending.
+ * Blocks non-HTTP schemes (file:, chrome:, data:) and private subnets before launching requests.
  */
 function isDisallowedAuditorHost(targetUrl: string): boolean {
   try {
     const parsed = new URL(targetUrl);
+
+    // Strictly prohibit non-HTTP schemes
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return true;
+    }
+
     const host = parsed.hostname.toLowerCase();
     if (
       host === "localhost" ||
