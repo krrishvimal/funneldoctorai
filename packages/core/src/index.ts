@@ -17,3 +17,4 @@ export * from "./delivery-id-store.js";
 export * from "./crypto-vault.js";
 export * from "./database/index.js";
 export * from "./aa-simulator.js";
+export * from "./auth/index.js";

@@ -352,7 +352,9 @@ export function applyBenjaminiHochberg(
 
     // Indian D2C Nuance: Cash on Delivery (COD) Return-to-Origin (RTO) Discount
     // COD orders carry a 25% - 40% non-delivery/RTO rate. We adjust to net realized revenue.
-    const isCodCohort = c.cohortId.toLowerCase().includes("cod") || c.cohortName.toLowerCase().includes("cash on delivery");
+    const cohortIdStr = (c.cohortId || (c as any).id || "").toLowerCase();
+    const cohortNameStr = (c.cohortName || (c as any).title || "").toLowerCase();
+    const isCodCohort = cohortIdStr.includes("cod") || cohortNameStr.includes("cash on delivery");
     if (isCodCohort) {
       const rtoDiscountFactor = 0.70; // 30% RTO deduction
       weeklyRevenueLeak = Math.round(weeklyRevenueLeak * rtoDiscountFactor);

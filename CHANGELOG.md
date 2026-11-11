@@ -94,4 +94,28 @@ All notable changes to the FunnelDoctor AI codebase are documented in this file.
   - Validated exact hypergeometric distribution calculations against `scipy.stats.fisher_exact` across 2x2 contingency matrices (including Lady Tasting Tea and extreme separation cases).
   - Enforced small-sample fallback when conversion count $< 5$, clamping confidence intervals strictly within $[-1.0, 1.0]$.
 
+---
+
+## [Milestone 2 - Gate 5] - Multi-Tenant Merchant Dashboard & RBAC Isolation (2026-11-11)
+
+### Status Summary
+- **Gate 5 Status**: Code complete and fully verified.
+- **Verification Status**: 223 automated checks passing across 7 suites in `docs/TEST_REPORT.md` (up from 212).
+
+### Implemented Capabilities
+- **Cryptographic RBAC & Session Governance (`packages/core/src/auth/rbac.ts`)**:
+  - Session token creation and validation using HMAC-SHA256 signatures with constant-time equality checks (`timingSafeEqual`).
+  - Strict tenant boundary enforcement (`enforceTenantAccess`): User A attempting to query Tenant B's data is rejected with 403 Forbidden.
+  - Role-based permissions: `merchant_admin` (full governance, key rotation) vs `merchant_viewer` (read-only funnel metrics).
+- **Merchant Dashboard APIs (`apps/web/src/app/api/dashboard/`)**:
+  - `/api/dashboard/funnel`: Tenant-isolated step-by-step funnel drop-off analytics with sample size sufficiency guardrails.
+  - `/api/dashboard/audit-logs`: Tenant-isolated security ledger displaying secret rotations, DPDP retention purges, and configuration mutations.
+  - `/api/dashboard/keys`: Secret rotation with 24-hour overlap grace period and emergency revocation (0-hour grace), guarded by `merchant_admin` role.
+- **Merchant Command Center UI (`apps/web/src/app/dashboard/page.tsx`)**:
+  - Step progression visualizer with drop-off percentages.
+  - Statistical peeking guardrail banner: explicitly displays *"Notice: Collected 10,450 / 14,200 required visitors. Premature winner calling invalidates statistical validity"*.
+  - Clearly labeled projected revenue figures: *"PROJECTED REVENUE LEAKAGE: ₹51,166 - ₹115,123 / week (Range-based projection derived from observed cart-to-checkout abandonment)"*.
+  - Live security and DPDP compliance ledger tab.
+
+
 

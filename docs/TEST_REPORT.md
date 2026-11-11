@@ -1,14 +1,14 @@
 # FunnelDoctor AI: Consolidated Test Verification Report
 
-**Report Generated:** 2026-11-11T09:47:57.275Z
-**Execution Time:** 17.60s
+**Report Generated:** 2026-11-11T10:00:02.763Z
+**Execution Time:** 29.64s
 **Milestone Status:** Milestone 1: code complete, field verification pending.
 
 ## Summary
 
 | Suite | Status | Tests Passed | Purpose |
 | :--- | :--- | :--- | :--- |
-| @funneldoctor/core (Vitest) | **PASS** | 78 | Stats engine, state store, tenant registry, delivery ID deduplication, heuristics, shopify config |
+| @funneldoctor/core (Vitest) | **PASS** | 89 | Stats engine, state store, tenant registry, delivery ID deduplication, heuristics, shopify config |
 | @funneldoctor/tracker (Vitest) | **PASS** | 43 | PII scrub, Indian postal PIN allowlist, credential deny-first classifier, safe boot |
 | SRI Immutability & Manifest Validator | **PASS** | 2 | Dynamic scan of public version directories (v1.0.3, v1.0.4) against sri-manifest.json |
 | Enterprise SSRF, Pinning, Anti-Replay & Permalinks | **PASS** | 30 | Subnet filtering, port 443 governance, Happy Eyeballs agent, DNS rebinding, HMAC anti-replay |
@@ -16,7 +16,7 @@
 | Phase 3: Statistical Engine & Cohort Safeguards | **PASS** | 18 | Pooled Z, Agresti-Caffo small sample, SRM detection, Simpson's Paradox, FDR q-values |
 | Phase 4 & 5: Multi-Stack Remediation & Incident Alerting | **PASS** | 19 | Liquid snippet synthesis, circuit breaker sub-50ms trip, Slack/Teams/PagerDuty dispatch |
 
-**Total Tests Verified:** 212 passed, 0 failed
+**Total Tests Verified:** 223 passed, 0 failed
 
 ## Detailed Suite Breakdown
 
@@ -24,34 +24,36 @@
 *Status: PASS*
 
 ```
-✓ test/scipy-golden-dataset.test.ts (7 tests) 19ms
-✓ test/stats-engine.test.ts (16 tests) 58ms
-✓ test/state-store.test.ts (9 tests) 115ms
-✓ test/experiment-runner.test.ts (3 tests) 20ms
-✓ test/tenant-registry.test.ts (5 tests) 30ms
-✓ test/database-schema.test.ts (3 tests) 34ms
-✓ test/tenant-isolation.test.ts (4 tests) 47ms
-✓ test/backup-restore.test.ts (1 test) 28ms
-✓ test/retention-engine.test.ts (3 tests) 46ms
-✓ test/delivery-id-store.test.ts (4 tests) 95ms
-✓ test/multi-stack-synthesizer.test.ts (1 test) 13ms
-✓ test/redis-state-store.test.ts (1 test) 18ms
-✓ test/funnel-parser.test.ts (3 tests) 14ms
-✓ test/crypto-vault.test.ts (3 tests) 26ms
-✓ test/shopify-config.test.ts (4 tests) 18ms
-✓ test/aa-simulation.test.ts (2 tests) 98ms
-✓ test/auditor.test.ts (1 test) 80ms
-✓ test/domain-auditor.test.ts (5 tests) 403ms
-✓ test/dom-inspector.test.ts (3 tests) 109ms
+✓ test/scipy-golden-dataset.test.ts (7 tests) 21ms
+✓ test/experiment-runner.test.ts (3 tests) 32ms
+✓ test/stats-engine.test.ts (16 tests) 107ms
+✓ test/state-store.test.ts (9 tests) 101ms
+✓ test/tenant-registry.test.ts (5 tests) 36ms
+✓ test/dashboard-rbac-isolation.test.ts (11 tests) 108ms
+✓ test/tenant-isolation.test.ts (4 tests) 46ms
+✓ test/backup-restore.test.ts (1 test) 25ms
+✓ test/retention-engine.test.ts (3 tests) 47ms
+✓ test/database-schema.test.ts (3 tests) 237ms
+✓ test/multi-stack-synthesizer.test.ts (1 test) 62ms
+✓ test/delivery-id-store.test.ts (4 tests) 160ms
+✓ test/redis-state-store.test.ts (1 test) 39ms
+✓ test/funnel-parser.test.ts (3 tests) 34ms
+✓ test/crypto-vault.test.ts (3 tests) 44ms
+✓ test/shopify-config.test.ts (4 tests) 52ms
+✓ test/aa-simulation.test.ts (2 tests) 185ms
+✓ test/auditor.test.ts (1 test) 200ms
+✓ test/dom-inspector.test.ts (3 tests) 149ms
+✓ test/domain-auditor.test.ts (5 tests) 560ms
+✓ Domain Intelligence & Autonomous Auditor > generates distinct deterministic benchmarks for different un-cached domains 380ms
 ```
 
 ### @funneldoctor/tracker (Vitest)
 *Status: PASS*
 
 ```
-✓ test/resilience.test.ts (2 tests) 7ms
-✓ test/pii-masker.test.ts (8 tests) 17ms
-✓ test/field-allowlist.test.ts (33 tests) 19ms
+✓ test/resilience.test.ts (2 tests) 32ms
+✓ test/pii-masker.test.ts (8 tests) 47ms
+✓ test/field-allowlist.test.ts (33 tests) 62ms
 ```
 
 ### SRI Immutability & Manifest Validator
