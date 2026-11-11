@@ -6,18 +6,30 @@ export interface AuditOptions {
   apiKey?: string;
   projectUrl?: string;
   modelName?: string;
+  provider?: VisionAuditorProvider;
 }
 
-export async function runFunnelAudit(
-  metrics: FunnelAnalysisResult,
-  screenshots: StepScreenshot[] = [],
-  options: AuditOptions = {}
-): Promise<RCAReport> {
-  const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
-  const projectUrl = options.projectUrl || "Unknown URL";
+/**
+ * Model-Agnostic Vision & Multimodal Auditor Interface
+ * Decouples FunnelDoctor from any single proprietary LLM provider.
+ */
+export interface VisionAuditorProvider {
+  readonly name: string;
+  audit(
+    metrics: FunnelAnalysisResult,
+    screenshots: StepScreenshot[],
+    options: AuditOptions
+  ): Promise<RCAReport>;
+}
 
-  if (!apiKey) {
-    // Deterministic fallback mode (ideal for unit testing, offline CI/CD, and demo without keys)
+export class DeterministicVisionProvider implements VisionAuditorProvider {
+  readonly name = "deterministic-fallback";
+
+  async audit(
+    metrics: FunnelAnalysisResult,
+    screenshots: StepScreenshot[] = [],
+    options: AuditOptions = {}
+  ): Promise<RCAReport> {
     const findings = generateSyntheticFindings(metrics, screenshots);
     return {
       projectUrl: options.projectUrl,
@@ -28,6 +40,35 @@ export async function runFunnelAudit(
       generatedPRD: generateStandardPRD(metrics, findings),
       redesignCodeSuggestion: findings[0]?.recommendedCodeDiff,
     };
+  }
+}
+
+export class GeminiVisionProvider implements VisionAuditorProvider {
+  readonly name = "google-gemini";
+
+  async audit(
+    metrics: FunnelAnalysisResult,
+    screenshots: StepScreenshot[] = [],
+    options: AuditOptions = {}
+  ): Promise<RCAReport> {
+    return runFunnelAudit(metrics, screenshots, { ...options, provider: undefined });
+  }
+}
+
+export async function runFunnelAudit(
+  metrics: FunnelAnalysisResult,
+  screenshots: StepScreenshot[] = [],
+  options: AuditOptions = {}
+): Promise<RCAReport> {
+  if (options.provider) {
+    return options.provider.audit(metrics, screenshots, options);
+  }
+
+  const apiKey = options.apiKey || process.env.GEMINI_API_KEY;
+  const projectUrl = options.projectUrl || "Unknown URL";
+
+  if (!apiKey) {
+    return new DeterministicVisionProvider().audit(metrics, screenshots, options);
   }
 
   const promptText = `

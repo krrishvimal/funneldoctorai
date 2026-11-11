@@ -57,10 +57,21 @@ export class DwellTracker {
 
     // Filter out rapid tabbing through inputs (< 300ms)
     if (dwellMs >= 300) {
+      const inputEl = target as HTMLInputElement;
+      const isInput = typeof inputEl.value !== "undefined";
+      const charLength = isInput ? String(inputEl.value).length : 0;
+      const isValid = typeof inputEl.checkValidity === "function" ? inputEl.checkValidity() : true;
+
+      // Metadata-Only Tracking: Never read or transmit raw input.value string
       this.onEvent({
         type: "field_dwell",
         target: sanitizeElementTarget(target),
         dwellMs,
+        metadata: {
+          charLength,
+          isValid,
+          isDirty: this.dirtyFields.has(target),
+        },
         timestamp: Date.now(),
       });
     }
@@ -72,13 +83,26 @@ export class DwellTracker {
     const target = e.target as HTMLInputElement;
     if (!target) return;
 
-    const message = target.validationMessage ? scrubPiiText(target.validationMessage) : "Invalid input";
+    // Categorical validity reason without touching typed sensitive text
+    const validity = target.validity;
+    const reason = validity?.valueMissing
+      ? "required_field_missing"
+      : validity?.patternMismatch
+        ? "pattern_mismatch"
+        : validity?.typeMismatch
+          ? "type_mismatch"
+          : validity?.tooShort
+            ? "too_short"
+            : validity?.tooLong
+              ? "too_long"
+              : "validation_failed";
 
     this.onEvent({
       type: "field_error",
       target: sanitizeElementTarget(target),
       metadata: {
-        error: message,
+        errorType: reason,
+        isValid: false,
       },
       timestamp: Date.now(),
     });
@@ -106,11 +130,19 @@ export class DwellTracker {
     if (this.activeElement && this.dirtyFields.has(this.activeElement)) {
       const now = typeof performance !== "undefined" ? performance.now() : Date.now();
       const dwellMs = Math.round(now - this.focusStartTime);
+      const inputEl = this.activeElement as HTMLInputElement;
+      const isInput = typeof inputEl.value !== "undefined";
+      const charLength = isInput ? String(inputEl.value).length : 0;
 
+      // Metadata-Only Tracking: Record field length and timing, never typed value
       this.onEvent({
         type: "abandonment",
         target: sanitizeElementTarget(this.activeElement),
         dwellMs,
+        metadata: {
+          charLength,
+          isDirty: true,
+        },
         timestamp: Date.now(),
       });
     }

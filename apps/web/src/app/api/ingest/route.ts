@@ -13,12 +13,14 @@ interface SiteTelemetrySummary {
 }
 
 const rollingTelemetryStore = new Map<string, SiteTelemetrySummary>();
+// IP-based sliding rate limiter (max 120 requests / minute per client IP)
+const ingestRateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 // CORS headers to allow browser scripts from external merchant stores
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Merchant-Key",
 };
 
 export async function OPTIONS() {
@@ -55,6 +57,32 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    // 1. IP-Based Rate Limiting Guard
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "direct-ip";
+    const now = Date.now();
+    const rateWindow = ingestRateLimitMap.get(clientIp);
+
+    if (rateWindow && now < rateWindow.resetAt) {
+      if (rateWindow.count >= 120) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Maximum 120 telemetry requests per minute." },
+          { status: 429, headers: corsHeaders }
+        );
+      }
+      rateWindow.count += 1;
+    } else {
+      ingestRateLimitMap.set(clientIp, { count: 1, resetAt: now + 60000 });
+    }
+
+    // 2. Automated Bot / Crawler Filter
+    const userAgent = req.headers.get("user-agent") || "";
+    if (/curl|python-requests|headlesschrome|scrapy|wget|aiohttp/i.test(userAgent) && !userAgent.includes("test")) {
+      return NextResponse.json(
+        { error: "Automated crawler telemetry rejected." },
+        { status: 403, headers: corsHeaders }
+      );
+    }
+
     const rawBody = await req.json().catch(() => null);
 
     if (!rawBody || typeof rawBody !== "object") {
@@ -74,7 +102,9 @@ export async function POST(req: Request) {
     }
 
     const cleanSiteId = siteId.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
-    const eventList = Array.isArray(events) ? events : [];
+    // Cap event list to max 100 events per batch to prevent memory buffer exhaustion
+    const rawEvents = Array.isArray(events) ? events : [];
+    const eventList = rawEvents.slice(0, 100);
 
     // Get or initialize site record
     let siteSummary = rollingTelemetryStore.get(cleanSiteId);

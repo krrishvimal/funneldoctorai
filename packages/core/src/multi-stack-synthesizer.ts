@@ -87,7 +87,7 @@ export default function FunnelDoctorOneTapCheckout({
   const [pincode, setPincode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInstagramWebView, setIsInstagramWebView] = useState(false);
-  const [showQrModal, setShowQrModal] = useState(false);
+  const [showFallbackModal, setShowFallbackModal] = useState(false);
   const [copiedVpa, setCopiedVpa] = useState(false);
 
   // Detect Instagram / Meta In-App WebView where custom URI schemes are frequently sandboxed
@@ -155,8 +155,8 @@ export default function FunnelDoctorOneTapCheckout({
           const androidIntent = \`intent://pay?pa=\${encodeURIComponent(merchantVpa)}&pn=\${encodeURIComponent('${brand}')}&am=\${grandTotal.toFixed(2)}&cu=INR&tr=\${gatewayOrderId}#Intent;scheme=upi;package=\${intentPkg};end\`;
           window.location.href = androidIntent;
         } else {
-          // If iOS inside Instagram: open fallback dynamic QR code / Copy VPA modal
-          setShowQrModal(true);
+          // If iOS inside Instagram: open fallback UPI Collect / Browser breakout modal
+          setShowFallbackModal(true);
         }
       } else {
         // Standard Browser: Native UPI Intent Deep-Link (NPCI UPI Spec v2.0)
@@ -303,17 +303,17 @@ export default function FunnelDoctorOneTapCheckout({
         <span>256-Bit SSL · Designed for Data Minimization · Client Masked</span>
       </div>
 
-      {/* 7. Instagram / In-App WebView Fallback Modal */}
-      {showQrModal && (
+      {/* 7. Instagram / In-App WebView Safe Fallback Modal */}
+      {showFallbackModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-xl">
             <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto text-emerald-600">
-              <QrCode className="w-6 h-6" />
+              <ExternalLink className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-bold text-base text-neutral-900">Instagram Webview Safe Pay</h4>
+              <h4 className="font-bold text-base text-neutral-900">In-App Browser Safe Pay</h4>
               <p className="text-xs text-neutral-500 mt-1">
-                Instagram sandbox blocked direct app launch. Choose a safe payment method below:
+                Instagram sandbox blocks direct app launches. Choose a safe payment method below:
               </p>
             </div>
 
@@ -330,25 +330,25 @@ export default function FunnelDoctorOneTapCheckout({
 
             <div className="flex flex-col gap-2 pt-2">
               <button
-                onClick={copyVpa}
-                className="w-full py-2.5 bg-neutral-900 text-white font-mono text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer hover:bg-black transition"
-              >
-                {copiedVpa ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedVpa ? 'UPI ID Copied to Clipboard!' : 'Copy UPI ID & Open Your App'}</span>
-              </button>
-
-              <button
                 onClick={() => {
                   window.open(window.location.href, '_system');
                 }}
-                className="w-full py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-mono text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"
+                className="w-full py-2.5 bg-neutral-900 hover:bg-black text-white font-mono text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition shadow-xs"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open Page in Safari / Chrome</span>
+                <span>Open in Safari / Chrome (Recommended)</span>
               </button>
 
               <button
-                onClick={() => setShowQrModal(false)}
+                onClick={copyVpa}
+                className="w-full py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-mono text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition"
+              >
+                {copiedVpa ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedVpa ? 'UPI ID Copied to Clipboard!' : 'Copy UPI ID & Pay in Any App'}</span>
+              </button>
+
+              <button
+                onClick={() => setShowFallbackModal(false)}
                 className="text-xs text-neutral-400 hover:text-neutral-600 font-mono pt-1 cursor-pointer"
               >
                 Close Modal
@@ -742,7 +742,7 @@ export default function FunnelDoctorOneTapCheckout({
     shopifyPlacement: "For Shopify Basic/Shopify/Advanced: Add snippet to 'sections/cart-drawer.liquid' or 'sections/main-product.liquid' as an Express Checkout action. (Shopify Plus stores require a Shopify Checkout UI Extension).",
     wooCommercePlacement: "Paste snippet into 'templates/cart/cart.php' or hook into 'woocommerce_after_cart_totals'.",
     customStackPlacement: "Add '<div id=\"funneldoctor-checkout-mount\"></div>' at your checkout trigger element.",
-    instagramFallbackStrategy: "Tier 1: Android Intent URI scheme · Tier 2: Dynamic QR code · Tier 3: Copy VPA and open in external Safari/Chrome.",
+    instagramFallbackStrategy: "Tier 1: Android Intent URI scheme · Tier 2: Gateway UPI Collect push request · Tier 3: Copy VPA & Open in external Safari/Chrome breakout link.",
   };
 
   // 5. CANARY A/B TEST PLAN

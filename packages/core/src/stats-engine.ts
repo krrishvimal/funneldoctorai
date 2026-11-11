@@ -18,7 +18,7 @@
 
 /**
  * High-precision approximation of the error function erf(x)
- * Chebyshev polynomial approximation (Abramowitz & Stegun 7.1.26, max error < 1.5e-7)
+ * Abramowitz & Stegun 7.1.26 Rational Polynomial Approximation (Max error < 1.5e-7)
  */
 export function erf(x: number): number {
   const sign = x >= 0 ? 1 : -1;

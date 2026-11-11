@@ -17,7 +17,7 @@ describe("MultiStackSynthesizer", () => {
     expect(result.reactCode).toContain("FunnelDoctorOneTapCheckout");
     expect(result.reactCode).toContain("createGatewayOrderEndpoint");
     expect(result.reactCode).toContain("isInstagramWebView");
-    expect(result.reactCode).toContain("Instagram Webview Safe Pay");
+    expect(result.reactCode).toContain("In-App Browser Safe Pay");
     expect(result.reactCode).toContain('inputMode="numeric"');
     expect(result.reactCode).toContain("Connecting Gateway...");
 

@@ -1,7 +1,8 @@
 /**
- * @funneldoctor/tracker - Zero-Knowledge Client-Side PII Masker
+ * @funneldoctor/tracker - Client-Side Redaction & Data Minimization Engine
  * 
- * Complies with India DPDP Act 2023, GDPR, and PCI-DSS standards.
+ * Engineered for Data Minimization & Client-Side PII Masking.
+ * Complies with strict privacy standards (GDPR, DPDP Act 2023).
  * Ensures zero unmasked customer personal identity data (phone, email, card, UPI VPA)
  * ever leaves the user's browser device.
  */

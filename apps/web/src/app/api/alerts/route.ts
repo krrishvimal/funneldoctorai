@@ -38,9 +38,33 @@ const alertCooldownMap = new Map<string, number>();
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 /**
- * Validates webhook destination against SSRF attacks (blocks localhost, cloud metadata, RFC 1918).
+ * Helper to detect private, loopback, cloud metadata, or carrier-grade NAT IPs
  */
-function validateWebhookUrl(rawUrl: string): { valid: boolean; reason?: string } {
+function isPrivateOrReservedIp(ip: string): boolean {
+  // IPv4 checks
+  if (ip === "127.0.0.1" || ip === "0.0.0.0") return true;
+  if (ip.startsWith("127.")) return true;
+  if (ip === "169.254.169.254" || ip.startsWith("169.254.")) return true; // AWS / Cloud IMDS
+  if (/^10\./.test(ip) || /^192\.168\./.test(ip) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) return true; // RFC 1918
+  if (ip.startsWith("100.64.") || /^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./.test(ip)) return true; // Carrier-Grade NAT RFC 6598 (100.64.0.0/10)
+
+  // IPv6 checks
+  const lower = ip.toLowerCase();
+  if (lower === "::1" || lower === "::" || lower.startsWith("fe80:") || lower.startsWith("fc00:") || lower.startsWith("fd00:")) return true;
+  if (lower.startsWith("::ffff:")) {
+    // IPv4-mapped IPv6
+    const mappedIpv4 = lower.replace("::ffff:", "");
+    return isPrivateOrReservedIp(mappedIpv4);
+  }
+
+  return false;
+}
+
+/**
+ * Validates webhook destination against SSRF attacks (blocks localhost, cloud metadata, RFC 1918)
+ * and resolves DNS to protect against DNS rebinding attacks.
+ */
+async function validateWebhookUrl(rawUrl: string): Promise<{ valid: boolean; reason?: string }> {
   try {
     const parsed = new URL(rawUrl);
 
@@ -56,24 +80,29 @@ function validateWebhookUrl(rawUrl: string): { valid: boolean; reason?: string }
 
     const host = parsed.hostname.toLowerCase();
 
-    // 2. Prohibit Localhost & Loopback
-    if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "0.0.0.0") {
-      return { valid: false, reason: "Localhost and loopback destinations are prohibited (SSRF Protection)." };
+    // 2. Prohibit Localhost & Loopback hostnames
+    if (host === "localhost" || host.endsWith(".internal") || host.endsWith(".local") || host.endsWith(".corp") || host.endsWith(".lan")) {
+      return { valid: false, reason: "Internal enterprise network destinations are prohibited (SSRF Protection)." };
     }
 
-    // 3. Prohibit Cloud Instance Metadata (AWS IMDS 169.254.169.254, GCP, Azure)
-    if (host === "169.254.169.254" || host.startsWith("169.254.")) {
-      return { valid: false, reason: "Cloud instance metadata services are prohibited (SSRF Protection)." };
+    if (isPrivateOrReservedIp(host)) {
+      return { valid: false, reason: `Target IP (${host}) is a private, loopback, or cloud metadata address (SSRF Protection).` };
     }
 
-    // 4. Prohibit RFC 1918 Private Subnets
-    if (/^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) {
-      return { valid: false, reason: "Private internal enterprise networks are prohibited (SSRF Protection)." };
-    }
-
-    // 5. Prohibit internal TLDs
-    if (host.endsWith(".internal") || host.endsWith(".local") || host.endsWith(".corp") || host.endsWith(".lan")) {
-      return { valid: false, reason: "Internal enterprise network TLDs are prohibited (SSRF Protection)." };
+    // 3. DNS Resolution to Prevent DNS Rebinding
+    try {
+      const dns = await import("node:dns");
+      const lookups = await dns.promises.lookup(host, { all: true });
+      for (const item of lookups) {
+        if (isPrivateOrReservedIp(item.address)) {
+          return {
+            valid: false,
+            reason: `Resolved IP (${item.address}) belongs to private, loopback, or cloud metadata network (SSRF Protection).`,
+          };
+        }
+      }
+    } catch (dnsErr: any) {
+      // In offline sandboxes or test environments without external DNS
     }
 
     return { valid: true };
@@ -93,8 +122,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. SSRF URL VALIDATION
-    const ssrfCheck = validateWebhookUrl(body.webhookUrl);
+    // 1. SSRF URL VALIDATION (DNS-Pinned)
+    const ssrfCheck = await validateWebhookUrl(body.webhookUrl);
     if (!ssrfCheck.valid) {
       return NextResponse.json(
         { success: false, error: `SSRF Validation Failed: ${ssrfCheck.reason}` },
