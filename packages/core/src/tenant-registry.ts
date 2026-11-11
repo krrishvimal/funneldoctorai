@@ -47,7 +47,7 @@ export class TenantRegistryService {
 
   constructor(initialTenants: Array<Omit<TenantRecord, "encryptedHmacSecret"> & { currentHmacSecret: string }> = []) {
     initialTenants.forEach((t) => {
-      const encrypted = encryptSecret(t.currentHmacSecret);
+      const encrypted = encryptSecret(t.currentHmacSecret, t.siteId);
       this.tenants.set(t.siteId, {
         siteId: t.siteId,
         merchantName: t.merchantName,
@@ -64,6 +64,7 @@ export class TenantRegistryService {
 
   /**
    * Registers a new merchant tenant and generates unique public and encrypted HMAC secrets.
+   * Cryptographically binds the tenant's siteId as AAD to prevent cross-tenant ciphertext swapping.
    */
   public registerTenant(input: RegisterTenantInput): { tenant: TenantRecord; rawSecret: string } {
     const cleanDomain = input.domain.toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
@@ -76,7 +77,7 @@ export class TenantRegistryService {
 
     const publicKey = `fd_pk_${crypto.randomBytes(12).toString("hex")}`;
     const rawSecret = input.initialSecret || `fd_sec_${crypto.randomBytes(24).toString("hex")}`;
-    const encryptedHmacSecret = encryptSecret(rawSecret);
+    const encryptedHmacSecret = encryptSecret(rawSecret, siteId);
 
     const tenant: TenantRecord = {
       siteId,
@@ -104,7 +105,7 @@ export class TenantRegistryService {
   public getActiveSigningSecret(siteId: string): string | null {
     const tenant = this.getTenant(siteId);
     if (!tenant || tenant.status !== "active") return null;
-    return decryptSecret(tenant.encryptedHmacSecret);
+    return decryptSecret(tenant.encryptedHmacSecret, tenant.siteId);
   }
 
   /**
@@ -133,12 +134,12 @@ export class TenantRegistryService {
     if (!tenant) throw new Error(`Tenant '${siteId}' not found.`);
 
     const newSecret = `fd_sec_${crypto.randomBytes(24).toString("hex")}`;
-    const previousSecret = decryptSecret(tenant.encryptedHmacSecret);
+    const previousSecret = decryptSecret(tenant.encryptedHmacSecret, tenant.siteId);
     const expiresAt = Date.now() + overlapHours * 60 * 60 * 1000;
 
-    tenant.encryptedPreviousHmacSecret = encryptSecret(previousSecret);
+    tenant.encryptedPreviousHmacSecret = encryptSecret(previousSecret, tenant.siteId);
     tenant.hmacRotationExpiresAt = expiresAt;
-    tenant.encryptedHmacSecret = encryptSecret(newSecret);
+    tenant.encryptedHmacSecret = encryptSecret(newSecret, tenant.siteId);
     tenant.updatedAt = Date.now();
 
     return { newSecret, previousSecret, expiresAt };
@@ -153,7 +154,7 @@ export class TenantRegistryService {
     if (!tenant) throw new Error(`Tenant '${siteId}' not found.`);
 
     const newSecret = `fd_sec_${crypto.randomBytes(24).toString("hex")}`;
-    tenant.encryptedHmacSecret = encryptSecret(newSecret);
+    tenant.encryptedHmacSecret = encryptSecret(newSecret, tenant.siteId);
     tenant.encryptedPreviousHmacSecret = undefined;
     tenant.hmacRotationExpiresAt = undefined;
     tenant.updatedAt = Date.now();
@@ -170,8 +171,8 @@ export class TenantRegistryService {
 
     const signature = signatureWithPrefix.replace(/^sha256=/, "");
 
-    // 1. Verify against decrypted current secret
-    const currentSecret = decryptSecret(tenant.encryptedHmacSecret);
+    // 1. Verify against decrypted current secret with AAD
+    const currentSecret = decryptSecret(tenant.encryptedHmacSecret, tenant.siteId);
     const expectedCurrent = crypto.createHmac("sha256", currentSecret).update(payloadString).digest("hex");
     if (this.timingSafeCheck(signature, expectedCurrent)) {
       return true;
@@ -179,7 +180,7 @@ export class TenantRegistryService {
 
     // 2. Check previous secret if within rotation overlap window
     if (tenant.encryptedPreviousHmacSecret && tenant.hmacRotationExpiresAt && Date.now() <= tenant.hmacRotationExpiresAt) {
-      const previousSecret = decryptSecret(tenant.encryptedPreviousHmacSecret);
+      const previousSecret = decryptSecret(tenant.encryptedPreviousHmacSecret, tenant.siteId);
       const expectedPrevious = crypto.createHmac("sha256", previousSecret).update(payloadString).digest("hex");
       if (this.timingSafeCheck(signature, expectedPrevious)) {
         return true;

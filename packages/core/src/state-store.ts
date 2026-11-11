@@ -146,11 +146,24 @@ export class MemoryStateStore implements StateStore {
 
 /**
  * Global singleton StateStore resolver.
- * Defaults to MemoryStateStore; pluggable for Redis when REDIS_URL is configured.
+ * Defaults to MemoryStateStore for local dev / test suites.
+ * In production (NODE_ENV === "production"), strictly refuses silent fallback to memory
+ * to prevent multi-instance / serverless state bifurcation unless explicitly bypassed.
  */
 let activeStateStore: StateStore = new MemoryStateStore();
 
 export function getStateStore(): StateStore {
+  if (
+    process.env.NODE_ENV === "production" &&
+    activeStateStore instanceof MemoryStateStore &&
+    process.env.ALLOW_IN_MEMORY_STATESTORE !== "true"
+  ) {
+    throw new Error(
+      "FATAL_CONFIG_ERROR: Production environment requires a distributed StateStore (e.g. Redis). " +
+      "Silent in-memory fallback on serverless instances is strictly prohibited. " +
+      "Configure REDIS_URL or explicitly set ALLOW_IN_MEMORY_STATESTORE=true for single-instance staging."
+    );
+  }
   return activeStateStore;
 }
 

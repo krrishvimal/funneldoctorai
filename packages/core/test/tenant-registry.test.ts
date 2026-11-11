@@ -18,10 +18,13 @@ describe("TenantRegistryService", () => {
     expect(tenant.publicKey.startsWith("fd_pk_")).toBe(true);
     expect(rawSecret.startsWith("fd_sec_")).toBe(true);
 
-    // Cryptographic check: secret at rest is AES-256-GCM ciphertext, NOT plaintext
+    // Cryptographic check: secret at rest is AES-256-GCM ciphertext bound to tenant.siteId via AAD
     expect(tenant.encryptedHmacSecret.ciphertext).toBeDefined();
     expect(tenant.encryptedHmacSecret.ciphertext).not.toBe(rawSecret);
-    expect(decryptSecret(tenant.encryptedHmacSecret)).toBe(rawSecret);
+    expect(decryptSecret(tenant.encryptedHmacSecret, tenant.siteId)).toBe(rawSecret);
+
+    // Cross-tenant ciphertext swap rejection: attempting to decrypt with a different siteId fails
+    expect(() => decryptSecret(tenant.encryptedHmacSecret, "imposter-tenant.com")).toThrow();
 
     expect(tenant.status).toBe("active");
     expect(tenant.allowedOrigins).toContain("https://fashion-store.in");

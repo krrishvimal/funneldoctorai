@@ -107,4 +107,20 @@ describe("StateStore & MemoryStateStore", () => {
     }
     expect(threw).toBe(true);
   });
+
+  it("strictly refuses silent in-memory fallback in production environments", () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalAllow = process.env.ALLOW_IN_MEMORY_STATESTORE;
+    try {
+      process.env.NODE_ENV = "production";
+      delete process.env.ALLOW_IN_MEMORY_STATESTORE;
+      setStateStore(new MemoryStateStore());
+
+      expect(() => getStateStore()).toThrowError(/FATAL_CONFIG_ERROR/);
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+      process.env.ALLOW_IN_MEMORY_STATESTORE = originalAllow;
+      setStateStore(new MemoryStateStore()); // Reset to default clean memory store
+    }
+  });
 });

@@ -36,13 +36,30 @@ interface SiteTelemetrySummary {
 const rollingTelemetryStore = new Map<string, SiteTelemetrySummary>();
 
 // In-memory emergency backstop limiter for Redis/StateStore outages
+// Anti-OOM Memory Cap: strictly bounded to 10,000 entries with active TTL & oldest eviction
+const MAX_BACKSTOP_ENTRIES = 10000;
 const emergencyBackstopMap = new Map<string, { count: number; resetAt: number }>();
 
-function checkEmergencyBackstop(ip: string, maxRequests = 200, windowMs = 60000): boolean {
+function checkEmergencyBackstop(ip: string, maxRequestsPerIp = 200, windowMs = 60000): boolean {
   const now = Date.now();
+
+  // Active memory guardrail: prune expired keys when approaching map threshold
+  if (emergencyBackstopMap.size >= MAX_BACKSTOP_ENTRIES) {
+    for (const [key, val] of emergencyBackstopMap.entries()) {
+      if (now >= val.resetAt) {
+        emergencyBackstopMap.delete(key);
+      }
+    }
+    // If still at cap, evict oldest entry to prevent memory exhaustion DoS
+    if (emergencyBackstopMap.size >= MAX_BACKSTOP_ENTRIES) {
+      const oldestKey = emergencyBackstopMap.keys().next().value;
+      if (oldestKey) emergencyBackstopMap.delete(oldestKey);
+    }
+  }
+
   const entry = emergencyBackstopMap.get(ip);
   if (entry && now < entry.resetAt) {
-    if (entry.count >= maxRequests) return false;
+    if (entry.count >= maxRequestsPerIp) return false;
     entry.count++;
     return true;
   }
