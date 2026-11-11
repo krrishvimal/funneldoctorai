@@ -5,10 +5,24 @@ export interface DwellTrackerCallback {
   (event: TelemetryEvent): void;
 }
 
+// Standard W3C HTML5 autocomplete tokens for sensitive payment and authentication credentials
+const SENSITIVE_AUTOCOMPLETE_TOKENS = new Set([
+  "cc-number",
+  "cc-csc",
+  "cc-exp",
+  "cc-exp-month",
+  "cc-exp-year",
+  "cc-type",
+  "current-password",
+  "new-password",
+  "one-time-code",
+]);
+
 /**
  * Checks whether an element contains sensitive financial, authentication, or PII inputs.
- * When true, the element is completely bypassed—neither dwell time, character length,
- * validity status, nor abandonment telemetry is ever accessed, stored, or transmitted.
+ * Uses an allowlist architecture combined with W3C autocomplete signals:
+ * - Approved CRO fields (pincode, address, city, phone, email, coupon) are explicitly ALLOWED.
+ * - Sensitive credentials (card numbers, CVV, OTP, passwords) are completely BYPASSED.
  */
 export function isSensitiveElement(el: HTMLElement | null): boolean {
   if (!el) return false;
@@ -16,21 +30,52 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
   if (tag !== "input" && tag !== "textarea") return false;
 
   const input = el as HTMLInputElement;
+
+  // 1. Password fields are always sensitive
   if (input.type === "password") return true;
+
+  // 2. Standard W3C Autocomplete Check (authoritative browser signal)
+  const autocomplete = (input.autocomplete || "").trim().toLowerCase();
+  if (autocomplete && SENSITIVE_AUTOCOMPLETE_TOKENS.has(autocomplete)) {
+    return true;
+  }
+
+  // Find associated label text if available
+  let labelText = "";
+  if (input.id && typeof document !== "undefined") {
+    try {
+      const labelEl = document.querySelector(`label[for="${input.id}"]`);
+      if (labelEl) labelText = labelEl.textContent || "";
+    } catch {
+      // Selector parse error
+    }
+  }
 
   const combined = [
     input.name,
     input.id,
-    input.autocomplete,
     input.getAttribute("data-sensitive"),
     input.getAttribute("aria-label"),
     input.placeholder,
+    labelText,
   ]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 
-  return /(card|cc-|pan|cvv|cvc|exp|otp|pin|pass|ssn|aadhaar|vpa|secret)/i.test(combined);
+  // 3. Approved CRO Allowlist (Delivery pincodes, shipping addresses, customer names, coupons)
+  // Must NOT be blocked by substring collisions (e.g. "pincode" containing "pin" or "express" containing "exp")
+  const isApprovedCroField = /\b(pincode|postal|zip|zipcode|postal_code|address|addr|street|city|state|province|phone|mobile|telephone|email|first_name|last_name|fname|lname|full_name|name|coupon|discount|promo|note|company)\b/i.test(combined);
+
+  // 4. Strict Sensitive Token Matching (Boundaried tokens only, avoiding bare "pin", "pan", "exp")
+  const isSensitiveToken = /\b(cvv|cvc|cvn|card_number|cardnumber|credit_card|debit_card|card_exp|card_expiry|otp|upi_pin|atm_pin|bank_account|ssn|aadhaar|secret)\b/i.test(combined) ||
+    /cc[-_](num|sec|csc)/i.test(combined);
+
+  if (isSensitiveToken) return true;
+  if (isApprovedCroField) return false;
+
+  // Default: if field has unknown/suspicious keywords
+  return /\b(card|password|passwd|token)\b/i.test(combined);
 }
 
 export class DwellTracker {

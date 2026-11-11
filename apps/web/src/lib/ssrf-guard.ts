@@ -4,19 +4,24 @@
  *
  * Implements:
  * 1. Comprehensive Subnet Filtering:
- *    - 0.0.0.0 and 0.0.0.0/8
+ *    - 0.0.0.0 and 0.0.0.0/8 (Broadcast / Current Network)
  *    - 127.0.0.0/8 (Loopback)
  *    - RFC 1918 (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
  *    - RFC 3927 Link-Local / Cloud Metadata (169.254.0.0/16 - AWS IMDS)
  *    - RFC 6598 Carrier-Grade NAT (100.64.0.0/10)
- *    - IPv6 Loopback (::1, ::)
+ *    - RFC 2544 Benchmarking (198.18.0.0/15)
+ *    - Multicast (224.0.0.0/4) and Reserved Class E (240.0.0.0/4)
+ *    - IPv6 Loopback (::1, ::, ::/128)
  *    - IPv6 Link-Local (fe80::/10)
  *    - IPv6 Unique Local (fc00::/7)
  *    - IPv4-Mapped IPv6 (::ffff:0:0/96)
- * 2. Strict Port Restrictions: Allowed ports 443 and 80 only.
- * 3. True DNS Pinning: Socket connections are forced to the validated IP via Agent lookup override.
+ *    - NAT64 Translation (64:ff9b::/96)
+ *    - 6to4 Tunneling (2002::/16)
+ * 2. Strict Port Restrictions: Port 443 (HTTPS) only. Port 80 prohibited for webhooks to prevent cleartext exposure.
+ * 3. True DNS Pinning: Socket connections are forced to the validated IP via Agent lookup override,
+ *    handling both scalar and modern `options.all = true` (Happy Eyeballs / Undici) call shapes.
  * 4. Safe Redirect Validation: Follows redirects manually; re-validates URL, port, and IP on every hop.
- * 5. HMAC-SHA256 Payload & Anti-Replay Timestamp Signing: Signs `timestamp + "." + rawBody`.
+ * 5. HMAC-SHA256 Payload & Anti-Replay Timestamp Signing: Signs `timestamp + "." + deliveryId + "." + rawBody`.
  */
 
 import dns from "node:dns";
@@ -33,11 +38,9 @@ export function isPrivateOrReservedIp(rawIp: string): boolean {
   // IPv4-mapped IPv6 check (e.g. ::ffff:127.0.0.1 or ::ffff:7f00:1)
   if (ip.startsWith("::ffff:")) {
     const remainder = ip.replace("::ffff:", "");
-    // If dotted-decimal
     if (remainder.includes(".")) {
       return isPrivateOrReservedIp(remainder);
     }
-    // If hex-encoded mapped address (e.g., ::ffff:7f00:0001)
     const hexParts = remainder.split(":");
     if (hexParts.length === 2) {
       const num1 = parseInt(hexParts[0], 16);
@@ -53,6 +56,32 @@ export function isPrivateOrReservedIp(rawIp: string): boolean {
     return true; // Malformed or unrecognized mapped IPv6 fails closed
   }
 
+  // NAT64 IPv4/IPv6 translation prefix (64:ff9b::/96)
+  if (ip.startsWith("64:ff9b::")) {
+    const remainder = ip.replace("64:ff9b::", "");
+    if (remainder.includes(".")) {
+      return isPrivateOrReservedIp(remainder);
+    }
+    return true; // Fails closed for NAT64 translation space
+  }
+
+  // 6to4 tunneling prefix (2002::/16)
+  if (ip.startsWith("2002:")) {
+    const parts = ip.split(":");
+    if (parts.length >= 3) {
+      const p1 = parseInt(parts[1], 16);
+      const p2 = parseInt(parts[2], 16);
+      if (!isNaN(p1) && !isNaN(p2)) {
+        const o1 = (p1 >> 8) & 255;
+        const o2 = p1 & 255;
+        const o3 = (p2 >> 8) & 255;
+        const o4 = p2 & 255;
+        return isPrivateOrReservedIp(`${o1}.${o2}.${o3}.${o4}`);
+      }
+    }
+    return true;
+  }
+
   // IPv4 Checks
   if (ip === "0.0.0.0" || ip.startsWith("0.")) return true; // RFC 1122 Current network (0.0.0.0/8)
   if (ip === "127.0.0.1" || ip.startsWith("127.")) return true; // RFC 1122 Loopback (127.0.0.0/8)
@@ -61,10 +90,17 @@ export function isPrivateOrReservedIp(rawIp: string): boolean {
   if (/^192\.168\./.test(ip)) return true; // RFC 1918 (192.168.0.0/16)
   if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) return true; // RFC 1918 (172.16.0.0/12)
   if (ip.startsWith("100.64.") || /^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./.test(ip)) return true; // RFC 6598 Carrier-Grade NAT (100.64.0.0/10)
-  if (ip.startsWith("198.18.") || ip.startsWith("198.19.")) return true; // RFC 2544 Benchmarking
+  if (ip.startsWith("198.18.") || ip.startsWith("198.19.")) return true; // RFC 2544 Benchmarking (198.18.0.0/15)
+
+  // Multicast & Class E Reserved
+  const firstOctet = parseInt(ip.split(".")[0], 10);
+  if (!isNaN(firstOctet)) {
+    if (firstOctet >= 224 && firstOctet <= 239) return true; // Multicast (224.0.0.0/4)
+    if (firstOctet >= 240) return true; // Reserved Class E (240.0.0.0/4)
+  }
 
   // IPv6 Checks
-  if (ip === "::1" || ip === "::") return true; // Loopback & unspecified
+  if (ip === "::1" || ip === "::" || ip === "::/128") return true; // Loopback & unspecified
   // fe80::/10 covers fe80: to febf:
   if (/^fe[89ab][0-9a-f]:/i.test(ip) || ip.startsWith("fe80:")) return true;
   // fc00::/7 covers fc00: to fdff: (IPv6 Unique Local)
@@ -82,7 +118,7 @@ export interface WebhookValidationResult {
 }
 
 /**
- * Validates a destination URL against SSRF, checks allowed ports, resolves DNS,
+ * Validates a destination URL against SSRF, enforces strict port 443 (HTTPS), resolves DNS,
  * and extracts the validated IP for true connection pinning.
  */
 export async function validateAndPinDestination(rawUrl: string): Promise<WebhookValidationResult> {
@@ -94,15 +130,18 @@ export async function validateAndPinDestination(rawUrl: string): Promise<Webhook
       return { valid: true, pinnedIp: "93.184.216.34", port: 443, parsedUrl: parsed };
     }
 
-    // 1. Enforce HTTPS strictly
+    // 1. Enforce HTTPS strictly (Cleartext HTTP prohibited for webhook payloads)
     if (parsed.protocol !== "https:") {
-      return { valid: false, reason: "Webhook URL must strictly use HTTPS protocol." };
+      return { valid: false, reason: "Webhook URL must strictly use HTTPS protocol. Cleartext HTTP is prohibited." };
     }
 
-    // 2. Strict Port Restrictions (443 and 80 only)
+    // 2. Strict Port Restrictions (Port 443 only)
     const port = parsed.port ? parseInt(parsed.port, 10) : 443;
-    if (port !== 443 && port !== 80) {
-      return { valid: false, reason: `Port ${port} is prohibited. Outgoing webhook dispatches are restricted strictly to ports 443 and 80.` };
+    if (port !== 443) {
+      return {
+        valid: false,
+        reason: `Port ${port} is prohibited. Outgoing webhook dispatches are restricted strictly to port 443 (HTTPS) to prevent cleartext exposure.`,
+      };
     }
 
     const host = parsed.hostname.toLowerCase();
@@ -154,13 +193,20 @@ export async function validateAndPinDestination(rawUrl: string): Promise<Webhook
 
 /**
  * Creates an HTTPS Agent whose DNS lookup is permanently overridden to the pinned IP.
- * This guarantees the socket connects strictly to the validated IP, eliminating TOCTOU DNS rebinding.
+ * Handles both scalar and modern `options.all = true` (Happy Eyeballs / Undici) call signatures,
+ * guaranteeing the socket connects strictly to the validated IP and eliminating TOCTOU DNS rebinding.
  */
 export function createPinnedHttpsAgent(pinnedIp: string): https.Agent {
   const isIpv6 = pinnedIp.includes(":");
+  const family = isIpv6 ? 6 : 4;
+
   return new https.Agent({
-    lookup: (_hostname, _options, callback) => {
-      callback(null, pinnedIp, isIpv6 ? 6 : 4);
+    lookup: (_hostname, options, callback) => {
+      if (options && typeof options === "object" && (options as any).all) {
+        callback(null, [{ address: pinnedIp, family }] as any);
+      } else {
+        callback(null, pinnedIp, family);
+      }
     },
     keepAlive: false,
     maxSockets: 10,
@@ -169,41 +215,46 @@ export function createPinnedHttpsAgent(pinnedIp: string): https.Agent {
 }
 
 /**
- * Signs webhook payload with HMAC-SHA256 and includes an anti-replay timestamp in the signed string.
- * Signed string format: `${timestamp}.${rawBody}`
+ * Signs webhook payload with HMAC-SHA256 and includes an anti-replay timestamp and unique delivery ID.
+ * Signed string format: `${timestamp}.${deliveryId}.${rawBody}`
  */
 export function signWebhookPayload(
   payloadObj: Record<string, any>,
   secret: string,
-  timestamp?: string
-): { signature: string; timestamp: string; rawBody: string; headers: Record<string, string> } {
+  timestamp?: string,
+  deliveryId?: string
+): { signature: string; timestamp: string; deliveryId: string; rawBody: string; headers: Record<string, string> } {
   const ts = timestamp || Date.now().toString();
+  const dId = deliveryId || crypto.randomUUID();
   const rawBody = JSON.stringify(payloadObj);
-  const signedString = `${ts}.${rawBody}`;
+  const signedString = `${ts}.${dId}.${rawBody}`;
   const signature = crypto.createHmac("sha256", secret).update(signedString).digest("hex");
 
   return {
     signature: `sha256=${signature}`,
     timestamp: ts,
+    deliveryId: dId,
     rawBody,
     headers: {
       "Content-Type": "application/json",
       "X-FunnelDoctor-Signature": `sha256=${signature}`,
       "X-FunnelDoctor-Timestamp": ts,
+      "X-FunnelDoctor-Delivery-Id": dId,
     },
   };
 }
 
 /**
  * Receiver-side verification helper.
- * Validates timestamp anti-replay freshness (within tolerance, e.g. 5 mins)
- * and performs timing-safe signature comparison.
+ * Validates timestamp anti-replay freshness (within tolerance, e.g. 5 mins),
+ * enforces signature length check, and performs timing-safe signature comparison.
  */
 export function verifyWebhookSignature(
   rawBody: string,
   signatureHeader: string,
   timestampHeader: string,
   secret: string,
+  deliveryIdHeader?: string,
   toleranceSeconds = 300
 ): { valid: boolean; reason?: string } {
   const ts = parseInt(timestampHeader, 10);
@@ -216,13 +267,18 @@ export function verifyWebhookSignature(
     return { valid: false, reason: `Timestamp outside acceptable window (${toleranceSeconds}s tolerance). Possible replay attack.` };
   }
 
-  const signedString = `${timestampHeader}.${rawBody}`;
+  const dId = deliveryIdHeader || "";
+  const signedString = dId ? `${timestampHeader}.${dId}.${rawBody}` : `${timestampHeader}.${rawBody}`;
   const expectedSig = `sha256=${crypto.createHmac("sha256", secret).update(signedString).digest("hex")}`;
 
   try {
     const sigBuffer = Buffer.from(signatureHeader);
     const expectedBuffer = Buffer.from(expectedSig);
-    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+    // Explicit length comparison before timingSafeEqual to prevent uncaught RangeError
+    if (sigBuffer.length !== expectedBuffer.length) {
+      return { valid: false, reason: "HMAC signature length mismatch." };
+    }
+    if (!crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
       return { valid: false, reason: "HMAC signature mismatch. Payload or timestamp was modified in transit." };
     }
   } catch {

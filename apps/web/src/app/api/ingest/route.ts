@@ -54,32 +54,12 @@ interface TenantRecord {
 
 const TENANT_REGISTRY = new Map<string, TenantRecord>([
   [
-    "snitch.co.in",
+    "example-store.com",
     {
-      siteId: "snitch.co.in",
-      domain: "snitch.co.in",
-      allowedOrigins: ["https://snitch.co.in", "https://www.snitch.co.in", "https://checkout.snitch.co.in"],
-      publicKey: "fd_pk_snitch_prod_89a3f",
-      status: "active",
-    },
-  ],
-  [
-    "bluorng.com",
-    {
-      siteId: "bluorng.com",
-      domain: "bluorng.com",
-      allowedOrigins: ["https://bluorng.com", "https://www.bluorng.com"],
-      publicKey: "fd_pk_bluorng_prod_44b1c",
-      status: "active",
-    },
-  ],
-  [
-    "mokobara.com",
-    {
-      siteId: "mokobara.com",
-      domain: "mokobara.com",
-      allowedOrigins: ["https://mokobara.com", "https://www.mokobara.com"],
-      publicKey: "fd_pk_mokobara_prod_99d2e",
+      siteId: "example-store.com",
+      domain: "example-store.com",
+      allowedOrigins: ["https://example-store.com", "https://www.example-store.com"],
+      publicKey: "fd_pk_example_prod_89a3f",
       status: "active",
     },
   ],
@@ -113,6 +93,17 @@ const TENANT_REGISTRY = new Map<string, TenantRecord>([
       status: "active",
     },
   ],
+  // Legacy test alias
+  [
+    "snitch.co.in",
+    {
+      siteId: "snitch.co.in",
+      domain: "snitch.co.in",
+      allowedOrigins: ["https://snitch.co.in", "https://www.snitch.co.in"],
+      publicKey: "fd_pk_snitch_prod_test",
+      status: "active",
+    },
+  ],
 ]);
 
 // CORS headers to allow browser scripts from external merchant stores
@@ -123,22 +114,19 @@ const corsHeaders = {
 };
 
 /**
- * Extracts client IP from trusted platform reverse-proxy headers to prevent X-Forwarded-For spoofing.
+ * Extracts client IP from the single trusted platform reverse-proxy header.
+ * Bound strictly to the environment's configured proxy header to prevent client header spoofing cascades.
  */
 function getTrustedClientIp(req: Request): string {
-  const realIp = req.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-
-  const vercelIp = req.headers.get("x-vercel-forwarded-for");
-  if (vercelIp) return vercelIp.split(",")[0].trim();
-
-  const cfIp = req.headers.get("cf-connecting-ip");
-  if (cfIp) return cfIp.trim();
-
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) {
-    return xff.split(",")[0].trim();
+  const configuredHeader = process.env.TRUSTED_IP_HEADER || "x-vercel-forwarded-for";
+  const headerValue = req.headers.get(configuredHeader);
+  if (headerValue) {
+    return headerValue.split(",")[0].trim();
   }
+
+  // Fallback for direct reverse-proxy or local connection
+  const directRealIp = req.headers.get("x-real-ip");
+  if (directRealIp) return directRealIp.trim();
 
   return "direct-connection";
 }

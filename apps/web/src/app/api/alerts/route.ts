@@ -187,9 +187,9 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // 6. CRYPTOGRAPHIC HMAC-SHA256 SIGNING (Signs timestamp + body)
+    // 6. CRYPTOGRAPHIC HMAC-SHA256 SIGNING (Signs timestamp + deliveryId + body)
     const webhookSecret = process.env.FUNNELDOCTOR_WEBHOOK_SECRET || "fd_webhook_secret_default";
-    const { signature, timestamp } = signWebhookPayload(payload, webhookSecret);
+    const { signature, timestamp, deliveryId } = signWebhookPayload(payload, webhookSecret);
 
     // In local sandbox / testing without live webhook network access, return validated success
     const isMock = webhookUrl.includes("example.com") || webhookUrl.includes("mock") || webhookUrl.includes("hooks.slack.com/services/MOCK");
@@ -202,6 +202,7 @@ export async function POST(req: NextRequest) {
         pinnedIp: ssrfCheck.pinnedIp,
         hmacSignature: signature,
         timestamp,
+        deliveryId,
         payloadSent: payload,
       });
     }
@@ -216,6 +217,7 @@ export async function POST(req: NextRequest) {
       pinnedIp: ssrfCheck.pinnedIp,
       hmacSignature: signature,
       timestamp,
+      deliveryId,
       error: dispatchResult.error,
     });
   } catch (err: any) {

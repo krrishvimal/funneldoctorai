@@ -237,6 +237,45 @@ export function inspectD2CDom(html: string, url: string): D2CDOMInspectionResult
 }
 
 /**
+ * Fast pre-flight check to block private, loopback, and cloud metadata targets (SSRF protection).
+ */
+function isDisallowedAuditorHost(targetUrl: string): boolean {
+  try {
+    const parsed = new URL(targetUrl);
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host.endsWith(".internal") ||
+      host.endsWith(".local") ||
+      host.endsWith(".corp") ||
+      host.endsWith(".lan") ||
+      host.endsWith(".test")
+    ) {
+      return true;
+    }
+    if (
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host.startsWith("127.") ||
+      host === "169.254.169.254" ||
+      host.startsWith("169.254.") ||
+      host.startsWith("100.64.")
+    ) {
+      return true;
+    }
+    if (/^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) {
+      return true;
+    }
+    if (host === "::1" || host === "::" || host.startsWith("fe80:") || host.startsWith("fc00:") || host.startsWith("64:ff9b::")) {
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Fetch a live e-commerce URL with mobile headers and inspect DOM
  */
 export async function fetchAndInspectDomain(
@@ -246,6 +285,14 @@ export async function fetchAndInspectDomain(
   let normalizedUrl = targetUrl.trim();
   if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
     normalizedUrl = `https://${normalizedUrl}`;
+  }
+
+  // SSRF Protection: Prevent crawler from hitting cloud metadata, localhost, or internal subnets
+  if (isDisallowedAuditorHost(normalizedUrl)) {
+    return generateUnreachableResult(
+      normalizedUrl,
+      "SSRF Blocked: Internal enterprise network and cloud metadata destinations are prohibited."
+    );
   }
 
   const controller = new AbortController();
