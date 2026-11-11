@@ -15,6 +15,10 @@ const PUBLISHED_VERSIONS = {
     relPath: 'apps/web/public/v1.0.3/funneldoctor.js',
     expectedSri: 'sha384-xcpt/f62Rzx7mkV4eEPyWsmt6dQ0fkcdTplK2spcWno7/90v0WnlSU3ZwCQ6Happ',
   },
+  'v1.0.4': {
+    relPath: 'apps/web/public/v1.0.4/funneldoctor.js',
+    expectedSri: 'sha384-ssMBIjgOM2gj+8r5ct9B9lLJB0a4zOWE20oIMa6hVb1SwbYS5TO/RNvgUFKmDEV6',
+  },
 };
 
 console.log('='.repeat(80));

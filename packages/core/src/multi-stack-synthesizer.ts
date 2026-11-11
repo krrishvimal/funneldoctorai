@@ -661,39 +661,60 @@ export default function FunnelDoctorOneTapCheckout({
       }
 
       var orderRef = 'SHOPIFY_' + Date.now().toString(36).toUpperCase();
-      // Dynamically compile all cart items and quantities into permalink slug
-      var permalinkItems = [];
-      {% for item in cart.items %}
-        permalinkItems.push('{{ item.variant_id }}:{{ item.quantity }}');
-      {% endfor %}
-      var itemsSlug = permalinkItems.length > 0 ? permalinkItems.join(',') : ('{{ cart.items.first.variant_id }}' + ':1');
-      var cartPermalink = '/cart/' + itemsSlug + '?checkout';
 
-      // Carry over actual shopper query parameters, discount, and variant
-      var currentParams = new URLSearchParams(window.location.search);
-      var discountCode = '{{ cart.discount_applications.first.title | default: "" }}';
-      if (discountCode) currentParams.set('discount', discountCode);
-      if (!currentParams.has('fd_var')) currentParams.set('fd_var', 'treatment');
-      var queryString = currentParams.toString() ? ('&' + currentParams.toString()) : '';
+      // Dynamically fetch fresh cart state from /cart.js to support AJAX drawers
+      fetch('/cart.js')
+        .then(function(r) { return r.json(); })
+        .catch(function() { return null; })
+        .then(function(liveCart) {
+          var itemsSlug = '';
+          if (liveCart && liveCart.items && liveCart.items.length > 0) {
+            itemsSlug = liveCart.items.map(function(item) {
+              return item.variant_id + ':' + item.quantity;
+            }).join(',');
+          } else {
+            // Fallback to server-rendered Liquid loop if /cart.js is unavailable
+            var permalinkItems = [];
+            {% for item in cart.items %}
+              permalinkItems.push('{{ item.variant_id }}:{{ item.quantity }}');
+            {% endfor %}
+            itemsSlug = permalinkItems.length > 0 ? permalinkItems.join(',') : ('{{ cart.items.first.variant_id }}' + ':1');
+          }
 
-      if (isInstagram && isAndroid) {
-        // Android: Chrome Intent with true Cart Permalink and S.browser_fallback_url to preserve cart items
-        var targetUrl = window.location.host + cartPermalink + queryString;
-        var fallbackHttps = encodeURIComponent('https://' + targetUrl);
-        var intentUrl = 'intent://' + targetUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallbackHttps + ';end';
-        window.location.href = intentUrl;
-      } else if (isInstagram && !isAndroid) {
-        // iOS: Guidance to use Safari menu
-        alert('Instagram blocks UPI app switching. Please tap ••• in top-right > Open in Safari to complete your order with your cart preserved.');
-      } else {
-        // Standard Browser UPI Intent
-        var upiUrl = 'upi://pay?pa=' + encodeURIComponent(merchantVpa) +
-                     '&pn=' + encodeURIComponent(brandName) +
-                     '&am=' + totalAmountRupees.toFixed(2) +
-                     '&cu=INR&tr=' + orderRef +
-                     '&tn=' + encodeURIComponent('Order from ' + brandName);
-        window.location.href = upiUrl;
-      }
+          var cartPermalink = '/cart/' + itemsSlug + '?checkout';
+
+          // Carry over only allowlisted attribution and marketing parameters
+          var allowlist = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'discount', 'fd_var'];
+          var currentParams = new URLSearchParams(window.location.search);
+          var filteredParams = new URLSearchParams();
+          allowlist.forEach(function(key) {
+            if (currentParams.has(key)) filteredParams.set(key, currentParams.get(key));
+          });
+
+          var discountCode = '{{ cart.discount_applications.first.title | default: "" }}';
+          if (discountCode && !filteredParams.has('discount')) filteredParams.set('discount', discountCode);
+          if (!filteredParams.has('fd_var')) filteredParams.set('fd_var', 'treatment');
+          var queryString = filteredParams.toString() ? ('&' + filteredParams.toString()) : '';
+
+          if (isInstagram && isAndroid) {
+            // Android: Chrome Intent with true Cart Permalink and S.browser_fallback_url to preserve cart items
+            var targetUrl = window.location.host + cartPermalink + queryString;
+            var fallbackHttps = encodeURIComponent('https://' + targetUrl);
+            var intentUrl = 'intent://' + targetUrl + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + fallbackHttps + ';end';
+            window.location.href = intentUrl;
+          } else if (isInstagram && !isAndroid) {
+            // iOS: Guidance to use Safari menu
+            alert('Instagram blocks UPI app switching. Please tap ••• in top-right > Open in Safari to complete your order with your cart preserved.');
+          } else {
+            // Standard Browser UPI Intent
+            var upiUrl = 'upi://pay?pa=' + encodeURIComponent(merchantVpa) +
+                         '&pn=' + encodeURIComponent(brandName) +
+                         '&am=' + totalAmountRupees.toFixed(2) +
+                         '&cu=INR&tr=' + orderRef +
+                         '&tn=' + encodeURIComponent('Order from ' + brandName);
+            window.location.href = upiUrl;
+          }
+        });
     });
   })();
 </script>`;

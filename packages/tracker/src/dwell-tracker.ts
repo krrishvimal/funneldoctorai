@@ -58,7 +58,7 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
   }
 
   // Combine attributes with space delimiters
-  const combined = [
+  const rawCombined = [
     input.name,
     input.id,
     input.getAttribute("data-sensitive"),
@@ -67,17 +67,20 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
     labelText,
   ]
     .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+    .join(" ");
 
-  // Normalize delimiters (replace underscores, hyphens, and brackets with spaces)
+  // Normalize camelCase (e.g. 'phoneOtp' -> 'phone Otp', 'cardNumber' -> 'card Number', 'postalCode' -> 'postal Code')
+  const splitCamel = rawCombined.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+
+  // Normalize delimiters (replace underscores, hyphens, brackets, dots with spaces)
   // This solves the JavaScript \b bug where \w treats '_' as a word character.
-  const normalized = combined.replace(/[_\[\]\-\.]+/g, " ");
+  const normalized = splitCamel.toLowerCase().replace(/[_\[\]\-\.]+/g, " ");
 
   // 3. DENY RULES (Run First): Strict Payment Credentials, CVVs, OTPs, PINs, and Cardholder Names
-  // Matches tokens even when prefixed/suffixed (e.g. 'phone_otp', 'billing_phone_otp', 'card_holder_name')
+  // Matches tokens even when prefixed/suffixed (e.g. 'phone_otp', 'phoneOtp', 'card_holder_name')
+  // Note: Bare 'pin' is NOT used to prevent collision with Indian postal 'pin_code' or 'billing_pin'.
   const isSensitiveCredential =
-    /\b(cvv|cvc|cvn|card_?number|credit_?card|debit_?card|card_?exp|card_?expiry|card_?holder|card_?name|otp|one_?time_?code|upi_?pin|atm_?pin|bank_?account|ssn|aadhaar|secret)\b/i.test(normalized) ||
+    /\b(cvv|cvc|cvn|card\s*number|credit\s*card|debit\s*card|card\s*exp|card\s*expiry|card\s*holder|card\s*name|otp|one\s*time\s*code|upi\s*pin|atm\s*pin|security\s*pin|bank\s*account|ssn|aadhaar|secret)\b/i.test(normalized) ||
     /\bname on card\b/i.test(normalized) ||
     /\b(card|cc)\s+(num|number|sec|csc|cvv|code|exp)\b/i.test(normalized);
 
@@ -86,8 +89,12 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
   }
 
   // 4. APPROVED CRO ALLOWLIST (Runs Second): Non-sensitive delivery, address, and coupon fields
+  if (autocomplete === "postal-code" || autocomplete === "tel" || autocomplete === "email") {
+    return false; // Standard W3C non-sensitive CRO fields
+  }
+
   const isApprovedCroField =
-    /\b(pincode|postcode|postal|zip|zipcode|postal_?code|shipping_?address|billing_?address|address|addr|street|city|state|province|country|phone|mobile|telephone|email|first_?name|last_?name|fname|lname|full_?name|coupon|discount|promo|note|notes|comment|comments|company|shipping|delivery|express)\b/i.test(normalized) ||
+    /\b(pin\s*code|pincode|postcode|post\s*code|postal|postal\s*code|zip|zipcode|zip\s*code|billing\s*pin|delivery\s*pin|shipping\s*pin|shipping\s*address|billing\s*address|address|addr|street|city|state|province|country|phone|mobile|telephone|email|first\s*name|last\s*name|fname|lname|full\s*name|coupon|discount|promo|note|notes|comment|comments|company|shipping|delivery|express)\b/i.test(normalized) ||
     /^(first|last)?name$/i.test(input.name || "");
 
   if (isApprovedCroField) {
