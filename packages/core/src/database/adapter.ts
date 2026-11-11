@@ -11,6 +11,7 @@
 
 declare const __non_webpack_require__: any;
 
+import { createRequire } from "node:module";
 import { MIGRATION_001_SQL } from "./schema.js";
 
 // Safe dynamic loader for node:sqlite to support ESM, CJS, and prevent Webpack client bundler errors
@@ -20,22 +21,16 @@ function loadSqliteDatabaseSync(): any {
   }
   const modName = ["node", "sqlite"].join(":");
   try {
-    const dynamicRequire =
-      typeof __non_webpack_require__ !== "undefined"
-        ? __non_webpack_require__
-        : typeof require !== "undefined"
-        ? require
-        : eval("require");
-    return dynamicRequire(modName).DatabaseSync;
-  } catch {
-    try {
-      const modulePkg = ["node", "module"].join(":");
-      const nodeModule = (typeof require !== "undefined" ? require : eval("require"))(modulePkg);
-      const dynamicReq = nodeModule.createRequire(process.cwd() + "/package.json");
-      return dynamicReq(modName).DatabaseSync;
-    } catch {
-      throw new Error("Unable to load node:sqlite. Node.js >= 22.0.0 is required.");
+    if (typeof __non_webpack_require__ !== "undefined") {
+      return __non_webpack_require__(modName).DatabaseSync;
     }
+  } catch {}
+
+  try {
+    const dynamicReq = createRequire(process.cwd() + "/package.json");
+    return dynamicReq(modName).DatabaseSync;
+  } catch (err: any) {
+    throw new Error(`Unable to load node:sqlite: ${err?.message || err}. Node.js >= 22.0.0 is required.`);
   }
 }
 
