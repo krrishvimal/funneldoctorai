@@ -20,6 +20,7 @@ export interface RateLimitResult {
 export interface StateStore {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ttlSeconds?: number): Promise<void>;
+  setNX(key: string, value: string, ttlSeconds?: number): Promise<boolean>;
   del(key: string): Promise<void>;
   incr(key: string, ttlSeconds?: number): Promise<number>;
   rateLimit(key: string, maxRequests: number, windowSeconds: number): Promise<RateLimitResult>;
@@ -49,6 +50,23 @@ export class MemoryStateStore implements StateStore {
   public async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
     const expiresAt = ttlSeconds ? Date.now() + ttlSeconds * 1000 : null;
     this.kv.set(key, { value, expiresAt });
+  }
+
+  /**
+   * Atomic set-if-not-exists (NX) with TTL.
+   * Checks existence and sets synchronously within the same event tick to prevent async microtask interleaving.
+   * Returns true if the key was set (did not exist or had expired).
+   * Returns false if the key already exists and has not expired.
+   */
+  public async setNX(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
+    const now = Date.now();
+    const entry = this.kv.get(key);
+    if (entry && (!entry.expiresAt || now <= entry.expiresAt)) {
+      return false; // Key already exists and has not expired
+    }
+    const expiresAt = ttlSeconds ? now + ttlSeconds * 1000 : null;
+    this.kv.set(key, { value, expiresAt });
+    return true;
   }
 
   public async del(key: string): Promise<void> {

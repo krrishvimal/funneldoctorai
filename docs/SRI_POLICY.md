@@ -15,13 +15,14 @@ When bug fixes, feature enhancements, or telemetry changes are implemented:
 3. **Manifest Entry**: The new version is registered in `scripts/sri-manifest.json` as `current_stable`.
 4. **Previous Versions**: The previous version is marked as `deprecated`, but remains served indefinitely to avoid breaking merchant storefronts with pinned script tags.
 
-## 3. Deprecation & Sunset Policy
-- **Minimum Deprecation Grace Period**: 90 days.
-- During the grace period:
-  - Both `deprecated` and `current_stable` scripts are served via HTTP CDN with immutable caching headers (`Cache-Control: public, max-age=31536000, immutable`).
-  - Merchants using deprecated script tags receive non-breaking notifications in their dashboard and via automated health checks.
-  - Deprecated bundles continue to verify against their published SRI hashes.
-- **Sunset Procedure**: A bundle is only sunset after active merchant migration is confirmed. Under no circumstance will a script tag fail closed due to hash tampering.
+## 3. Deprecation & Permanent Availability Policy
+- **Permanent Hosting**: Published version bundles (`v1.0.3`, `v1.0.4`, etc.) are **NEVER deleted or removed from the CDN**. Storefronts with pinned SRI tags will never break due to 404s.
+- **Meaning of Deprecation**:
+  - The version is marked as `"deprecated"` in `scripts/sri-manifest.json`.
+  - The merchant dashboard displays a non-blocking upgrade recommendation, showing which bundle version their site is reporting.
+  - No new feature enhancements are backported to deprecated bundles.
+  - Both deprecated and stable files continue to be served with immutable CDN caching headers (`Cache-Control: public, max-age=31536000, immutable`).
+- **Zero Storefront Disruption**: Even after a major release, legacy versions remain accessible indefinitely with valid integrity hashes.
 
 ## 4. Current Version Directory Manifest
 | Version | Status | Published Date | SHA-384 Integrity Hash |

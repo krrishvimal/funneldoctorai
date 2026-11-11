@@ -28,9 +28,9 @@ export class DeliveryIdStore {
   }
 
   /**
-   * Attempts to claim a delivery ID.
+   * Attempts to claim a delivery ID atomically via setNX.
    * Returns true if successfully claimed (first time seen, not a duplicate).
-   * Returns false if already recorded within the TTL (duplicate/replay).
+   * Returns false if already recorded within the TTL (duplicate/replay race condition prevented).
    */
   public async claimDeliveryId(deliveryId: string, source = "generic"): Promise<boolean> {
     if (!deliveryId || typeof deliveryId !== "string" || !deliveryId.trim()) {
@@ -40,19 +40,14 @@ export class DeliveryIdStore {
     const cleanId = deliveryId.trim();
     const key = `${this.prefix}${cleanId}`;
 
-    const existing = await this.store.get(key);
-    if (existing !== null) {
-      return false; // Duplicate delivery ID detected
-    }
-
     const record: DeliveryIdRecord = {
       deliveryId: cleanId,
       source,
       recordedAt: Date.now(),
     };
 
-    await this.store.set(key, JSON.stringify(record), this.defaultTtlSeconds);
-    return true; // Successfully recorded
+    // Atomic set-if-not-exists (NX) with TTL eliminates check-then-set race condition
+    return await this.store.setNX(key, JSON.stringify(record), this.defaultTtlSeconds);
   }
 
   /**

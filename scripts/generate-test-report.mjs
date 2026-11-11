@@ -105,6 +105,69 @@ try {
   });
 }
 
+// 5. Phase 1 & Phase 2 Integration Suite
+console.log("Running Phase 1 & 2 integration suite...");
+try {
+  const p12Output = execSync("node scripts/test-phase1-and-phase2-suite.mjs", { encoding: "utf8" });
+  const passes = p12Output.split("\n").filter(l => l.includes("✅ PASS")).map(l => l.trim());
+  testSuites.push({
+    name: "Phase 1 & 2: Headless DOM & PII Scrubbing Suite",
+    status: "PASS",
+    testCount: passes.length,
+    description: "Form fatigue, numeric keyboard checks, UPI intent detection, zero-knowledge PII scrubbing",
+    details: passes,
+  });
+} catch (err) {
+  testSuites.push({
+    name: "Phase 1 & 2: Headless DOM & PII Scrubbing Suite",
+    status: "FAIL",
+    testCount: 0,
+    error: err.stdout || err.message,
+  });
+}
+
+// 6. Phase 3 Statistical Engine Suite
+console.log("Running Phase 3 statistical suite...");
+try {
+  const p3Output = execSync("node scripts/test-phase3-suite.mjs", { encoding: "utf8" });
+  const passes = p3Output.split("\n").filter(l => l.includes("✅ PASS")).map(l => l.trim());
+  testSuites.push({
+    name: "Phase 3: Statistical Engine & Cohort Safeguards",
+    status: "PASS",
+    testCount: passes.length,
+    description: "Pooled Z, Agresti-Caffo small sample, SRM detection, Simpson's Paradox, FDR q-values",
+    details: passes,
+  });
+} catch (err) {
+  testSuites.push({
+    name: "Phase 3: Statistical Engine & Cohort Safeguards",
+    status: "FAIL",
+    testCount: 0,
+    error: err.stdout || err.message,
+  });
+}
+
+// 7. Phase 4 & Phase 5 Remediation & Alerting Suite
+console.log("Running Phase 4 & 5 remediation & alerts suite...");
+try {
+  const p45Output = execSync("node scripts/test-phase4-and-phase5-suite.mjs", { encoding: "utf8" });
+  const passes = p45Output.split("\n").filter(l => l.includes("✅ PASS")).map(l => l.trim());
+  testSuites.push({
+    name: "Phase 4 & 5: Multi-Stack Remediation & Incident Alerting",
+    status: "PASS",
+    testCount: passes.length,
+    description: "Liquid snippet synthesis, circuit breaker sub-50ms trip, Slack/Teams/PagerDuty dispatch",
+    details: passes,
+  });
+} catch (err) {
+  testSuites.push({
+    name: "Phase 4 & 5: Multi-Stack Remediation & Incident Alerting",
+    status: "FAIL",
+    testCount: 0,
+    error: err.stdout || err.message,
+  });
+}
+
 const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
 
 // Calculate Totals

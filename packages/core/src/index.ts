@@ -13,3 +13,4 @@ export * from "./shopify-config.js";
 export * from "./state-store.js";
 export * from "./tenant-registry.js";
 export * from "./delivery-id-store.js";
+export * from "./crypto-vault.js";

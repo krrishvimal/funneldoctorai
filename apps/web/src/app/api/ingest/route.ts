@@ -22,6 +22,7 @@ import { scrubPiiText } from "@funneldoctor/tracker";
 import { getStateStore, tenantRegistry, TenantRecord } from "@funneldoctor/core";
 
 // In-Memory rolling telemetry store for live analytics (keyed by siteId/domain)
+// Note: Instance cache for local dev / edge compute. Milestone 2 Gate 3 migrates persistent storage to PostgreSQL / SQLite.
 interface SiteTelemetrySummary {
   siteId: string;
   totalSessions: number;
@@ -33,6 +34,21 @@ interface SiteTelemetrySummary {
 }
 
 const rollingTelemetryStore = new Map<string, SiteTelemetrySummary>();
+
+// In-memory emergency backstop limiter for Redis/StateStore outages
+const emergencyBackstopMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkEmergencyBackstop(ip: string, maxRequests = 200, windowMs = 60000): boolean {
+  const now = Date.now();
+  const entry = emergencyBackstopMap.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= maxRequests) return false;
+    entry.count++;
+    return true;
+  }
+  emergencyBackstopMap.set(ip, { count: 1, resetAt: now + windowMs });
+  return true;
+}
 
 // CORS headers to allow browser scripts from external merchant stores
 const corsHeaders: Record<string, string> = {
@@ -146,26 +162,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    // 1. IP-Based Sliding Rate Limiter via StateStore
     const clientIp = getTrustedClientIp(req);
-    const rateResult = await getStateStore().rateLimit(`rate:ingest:${clientIp}`, 120, 60);
 
-    if (!rateResult.allowed) {
-      return NextResponse.json(
-        { error: "Rate limit exceeded. Maximum 120 telemetry requests per minute per IP." },
-        {
-          status: 429,
-          headers: {
-            ...corsHeaders,
-            "X-RateLimit-Limit": rateResult.totalLimit.toString(),
-            "X-RateLimit-Remaining": rateResult.remaining.toString(),
-            "X-RateLimit-Reset": Math.ceil(rateResult.resetAt / 1000).toString(),
-          },
-        }
-      );
-    }
-
-    // 2. Automated Bot / Crawler Filter
+    // 1. Automated Bot / Crawler Filter
     const userAgent = req.headers.get("user-agent") || "";
     if (/curl|python-requests|headlesschrome|scrapy|wget|aiohttp/i.test(userAgent) && !userAgent.includes("test")) {
       return NextResponse.json(
@@ -188,6 +187,45 @@ export async function POST(req: Request) {
     if (!siteId || typeof siteId !== "string") {
       return NextResponse.json(
         { error: "Missing required 'siteId' string." },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // 2. Multi-Dimensional Distributed Rate Limiting (IP, Merchant Key, Session)
+    // Protected by in-memory emergency backstop during StateStore/Redis disconnects
+    try {
+      const store = getStateStore();
+      const [ipLimit, keyLimit, sessionLimit] = await Promise.all([
+        store.rateLimit(`rate:ip:${clientIp}`, 120, 60),
+        store.rateLimit(`rate:key:${merchantKey || "anon"}`, 300, 60),
+        sessionId ? store.rateLimit(`rate:session:${sessionId}`, 60, 60) : Promise.resolve({ allowed: true, remaining: 60, resetAt: Date.now() + 60000, totalLimit: 60 }),
+      ]);
+
+      if (!ipLimit.allowed || !keyLimit.allowed || !sessionLimit.allowed) {
+        const rejected = !ipLimit.allowed ? ipLimit : (!keyLimit.allowed ? keyLimit : sessionLimit);
+        return NextResponse.json(
+          { error: "Rate limit exceeded across IP, merchant key, or session threshold." },
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              "X-RateLimit-Limit": rejected.totalLimit.toString(),
+              "X-RateLimit-Remaining": rejected.remaining.toString(),
+              "X-RateLimit-Reset": Math.ceil(rejected.resetAt / 1000).toString(),
+            },
+          }
+        );
+      }
+    } catch (storeErr) {
+      // Emergency Backstop: If distributed StateStore is unreachable, enforce local backstop
+      console.warn("[RATELIMIT_BACKSTOP] StateStore unreachable, enforcing local emergency backstop:", storeErr);
+      if (!checkEmergencyBackstop(clientIp, 200)) {
+        return NextResponse.json(
+          { error: "Emergency backstop rate limit exceeded during service degradation." },
+          { status: 429, headers: corsHeaders }
+        );
+      }
+    }
         { status: 400, headers: corsHeaders }
       );
     }

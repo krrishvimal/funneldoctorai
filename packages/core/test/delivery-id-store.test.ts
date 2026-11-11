@@ -46,4 +46,23 @@ describe("DeliveryIdStore (Webhook Deduplication)", () => {
     expect(await deliveryStore.isDuplicate(deliveryId)).toBe(false);
     expect(await deliveryStore.claimDeliveryId(deliveryId)).toBe(true);
   });
+
+  it("atomically handles concurrent duplicate claims with exactly one winner (no race condition)", async () => {
+    const memoryStore = new MemoryStateStore();
+    const deliveryStore = new DeliveryIdStore(memoryStore, 3600);
+    const concurrentDeliveryId = "del_concurrent_surge_999";
+
+    // Launch 10 simultaneous claim requests concurrently
+    const claims = await Promise.all(
+      Array.from({ length: 10 }).map(() =>
+        deliveryStore.claimDeliveryId(concurrentDeliveryId, "webhook_surge")
+      )
+    );
+
+    const successfulClaims = claims.filter((res) => res === true);
+    const rejectedClaims = claims.filter((res) => res === false);
+
+    expect(successfulClaims.length).toBe(1);
+    expect(rejectedClaims.length).toBe(9);
+  });
 });
