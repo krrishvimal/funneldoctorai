@@ -29,6 +29,7 @@ describe("Field-Name Governance & Deny-First Allowlist", () => {
     // Sensitive Payment & Auth Credentials (Must be Denied / Skipped unconditionally)
     { name: "billing_phone_otp", type: "text", expectedSensitive: true, desc: "SMS/Phone OTP input with underscore" },
     { name: "phoneOtp", type: "text", expectedSensitive: true, desc: "CamelCase phone OTP input" },
+    { name: "OTPCode", type: "text", expectedSensitive: true, desc: "Acronym run OTPCode input" },
     { name: "cardNumber", type: "text", expectedSensitive: true, desc: "CamelCase card number" },
     { name: "checkout[credit_card][number]", type: "text", autocomplete: "cc-number", expectedSensitive: true, desc: "Credit card number" },
     { name: "checkout[credit_card][verification_value]", type: "text", autocomplete: "cc-csc", expectedSensitive: true, desc: "Card CVV / CSC" },
@@ -37,6 +38,10 @@ describe("Field-Name Governance & Deny-First Allowlist", () => {
     { name: "user_password", type: "password", expectedSensitive: true, desc: "Account password" },
     { name: "auth_one_time_code", type: "text", autocomplete: "one-time-code", expectedSensitive: true, desc: "MFA one-time code" },
     { name: "upi_pin_input", type: "password", expectedSensitive: true, desc: "UPI PIN input" },
+    { name: "upiPin", type: "password", expectedSensitive: true, desc: "CamelCase UPI PIN input" },
+    { name: "atmPin", type: "password", expectedSensitive: true, desc: "CamelCase ATM PIN input" },
+    { name: "customer_mpin", type: "password", expectedSensitive: true, desc: "Indian Mobile Banking MPIN" },
+    { name: "debit_card_pin", type: "password", expectedSensitive: true, desc: "Debit card PIN input" },
 
     // Default Deny: Unknown / ambiguous custom field should be bypassed by default
     { name: "custom_thirdparty_meta_prop", type: "text", expectedSensitive: true, desc: "Unknown proprietary custom field (Default Deny)" }

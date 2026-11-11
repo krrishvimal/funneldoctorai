@@ -1,0 +1,14 @@
+{
+  "v1.0.3": {
+    "relPath": "apps/web/public/v1.0.3/funneldoctor.js",
+    "expectedSri": "sha384-xcpt/f62Rzx7mkV4eEPyWsmt6dQ0fkcdTplK2spcWno7/90v0WnlSU3ZwCQ6Happ",
+    "status": "deprecated",
+    "notice": "Preserved for merchants with v1.0.3 tags; upgrade recommended to v1.0.4"
+  },
+  "v1.0.4": {
+    "relPath": "apps/web/public/v1.0.4/funneldoctor.js",
+    "expectedSri": "sha384-xsi1CrDRxInIfUNB3NbLKxS+UP6YULzNNRaVehyj+TNEKR00E6p78hYQmLLGO1KC",
+    "status": "current_stable",
+    "notice": "Production standard release with delimiter normalization and acronym run checks"
+  }
+}

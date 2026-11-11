@@ -236,20 +236,34 @@ export function inspectD2CDom(html: string, url: string): D2CDOMInspectionResult
   };
 }
 
+// Strict protocol allowlist: Only http: and https: are permitted. All others (file:, chrome:, data:, etc.) are rejected.
+const ALLOWED_CRAWLER_PROTOCOLS = new Set(["https:", "http:"]);
+
 /**
  * Crawler SSRF Architecture Notice: Basic pre-flight check active; full container/proxy isolation pending.
- * Blocks non-HTTP schemes (file:, chrome:, data:) and private subnets before launching requests.
+ * Enforces strict http/https protocol allowlist, blocks private/cloud-metadata subnets,
+ * and validates domain ownership against verified merchant tenants when provided.
  */
-function isDisallowedAuditorHost(targetUrl: string): boolean {
+function isDisallowedAuditorHost(targetUrl: string, allowedDomains?: string[]): boolean {
   try {
     const parsed = new URL(targetUrl);
 
-    // Strictly prohibit non-HTTP schemes
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    // 1. Strict Protocol Allowlist (Reject anything that is not https: or http:)
+    if (!ALLOWED_CRAWLER_PROTOCOLS.has(parsed.protocol)) {
       return true;
     }
 
     const host = parsed.hostname.toLowerCase();
+
+    // 2. Verified Domain Enforcement: If allowedDomains whitelist is supplied, enforce membership
+    if (allowedDomains && allowedDomains.length > 0) {
+      const isVerified = allowedDomains.some((d) => host === d.toLowerCase() || host.endsWith("." + d.toLowerCase()));
+      if (!isVerified) {
+        return true; // Reject unverified merchant domain
+      }
+    }
+
+    // 3. Reject local, corporate, and internal domain names
     if (
       host === "localhost" ||
       host.endsWith(".internal") ||
@@ -287,18 +301,19 @@ function isDisallowedAuditorHost(targetUrl: string): boolean {
  */
 export async function fetchAndInspectDomain(
   targetUrl: string,
-  timeoutMs = 6000
+  timeoutMs = 6000,
+  allowedDomains?: string[]
 ): Promise<D2CDOMInspectionResult> {
   let normalizedUrl = targetUrl.trim();
   if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
     normalizedUrl = `https://${normalizedUrl}`;
   }
 
-  // SSRF Protection: Prevent crawler from hitting cloud metadata, localhost, or internal subnets
-  if (isDisallowedAuditorHost(normalizedUrl)) {
+  // SSRF Protection: Enforce protocol allowlist, domain verification, and internal network blocking
+  if (isDisallowedAuditorHost(normalizedUrl, allowedDomains)) {
     return generateUnreachableResult(
       normalizedUrl,
-      "SSRF Blocked: Internal enterprise network and cloud metadata destinations are prohibited."
+      "SSRF Blocked: Destination protocol, unverified merchant domain, or internal IP is prohibited."
     );
   }
 

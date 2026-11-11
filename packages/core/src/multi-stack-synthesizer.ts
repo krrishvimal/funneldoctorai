@@ -683,8 +683,8 @@ export default function FunnelDoctorOneTapCheckout({
 
           var cartPermalink = '/cart/' + itemsSlug + '?checkout';
 
-          // Carry over only allowlisted attribution and marketing parameters
-          var allowlist = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'discount', 'fd_var'];
+          // Carry over only legitimate marketing/attribution parameters (preventing visitor variant tampering)
+          var allowlist = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'discount'];
           var currentParams = new URLSearchParams(window.location.search);
           var filteredParams = new URLSearchParams();
           allowlist.forEach(function(key) {
@@ -693,7 +693,6 @@ export default function FunnelDoctorOneTapCheckout({
 
           var discountCode = '{{ cart.discount_applications.first.title | default: "" }}';
           if (discountCode && !filteredParams.has('discount')) filteredParams.set('discount', discountCode);
-          if (!filteredParams.has('fd_var')) filteredParams.set('fd_var', 'treatment');
           var queryString = filteredParams.toString() ? ('&' + filteredParams.toString()) : '';
 
           if (isInstagram && isAndroid) {

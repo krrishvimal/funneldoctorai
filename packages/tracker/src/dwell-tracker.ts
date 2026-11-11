@@ -69,18 +69,21 @@ export function isSensitiveElement(el: HTMLElement | null): boolean {
     .filter(Boolean)
     .join(" ");
 
-  // Normalize camelCase (e.g. 'phoneOtp' -> 'phone Otp', 'cardNumber' -> 'card Number', 'postalCode' -> 'postal Code')
-  const splitCamel = rawCombined.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  // 1. Split uppercase acronym runs (e.g. 'OTPCode' -> 'OTP Code', 'UPINumber' -> 'UPI Number')
+  const splitAcronyms = rawCombined.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
 
-  // Normalize delimiters (replace underscores, hyphens, brackets, dots with spaces)
+  // 2. Normalize standard camelCase (e.g. 'phoneOtp' -> 'phone Otp', 'cardNumber' -> 'card Number', 'upiPin' -> 'upi Pin')
+  const splitCamel = splitAcronyms.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+
+  // 3. Normalize delimiters (replace underscores, hyphens, brackets, dots with spaces)
   // This solves the JavaScript \b bug where \w treats '_' as a word character.
   const normalized = splitCamel.toLowerCase().replace(/[_\[\]\-\.]+/g, " ");
 
   // 3. DENY RULES (Run First): Strict Payment Credentials, CVVs, OTPs, PINs, and Cardholder Names
-  // Matches tokens even when prefixed/suffixed (e.g. 'phone_otp', 'phoneOtp', 'card_holder_name')
+  // Matches tokens even when prefixed/suffixed (e.g. 'phone_otp', 'phoneOtp', 'OTPCode', 'upiPin', 'mpin')
   // Note: Bare 'pin' is NOT used to prevent collision with Indian postal 'pin_code' or 'billing_pin'.
   const isSensitiveCredential =
-    /\b(cvv|cvc|cvn|card\s*number|credit\s*card|debit\s*card|card\s*exp|card\s*expiry|card\s*holder|card\s*name|otp|one\s*time\s*code|upi\s*pin|atm\s*pin|security\s*pin|bank\s*account|ssn|aadhaar|secret)\b/i.test(normalized) ||
+    /\b(cvv|cvc|cvn|card\s*number|credit\s*card|debit\s*card|debit\s*card\s*pin|card\s*exp|card\s*expiry|card\s*holder|card\s*name|otp|one\s*time\s*code|upi\s*pin|atm\s*pin|security\s*pin|mpin|m\s*pin|bank\s*account|ssn|aadhaar|secret)\b/i.test(normalized) ||
     /\bname on card\b/i.test(normalized) ||
     /\b(card|cc)\s+(num|number|sec|csc|cvv|code|exp)\b/i.test(normalized);
 
