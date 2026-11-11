@@ -21,6 +21,8 @@ import { NextResponse } from "next/server";
 import { scrubPiiText } from "@funneldoctor/tracker";
 import { getStateStore, tenantRegistry, TenantRecord } from "@funneldoctor/core";
 
+export const dynamic = "force-dynamic";
+
 // In-Memory rolling telemetry store for live analytics (keyed by siteId/domain)
 // Note: Instance cache for local dev / edge compute. Milestone 2 Gate 3 migrates persistent storage to PostgreSQL / SQLite.
 interface SiteTelemetrySummary {
@@ -242,9 +244,6 @@ export async function POST(req: Request) {
           { status: 429, headers: corsHeaders }
         );
       }
-    }
-        { status: 400, headers: corsHeaders }
-      );
     }
 
     // 3. Tenant Identification & Origin Authentication Check

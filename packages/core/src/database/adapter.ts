@@ -9,19 +9,33 @@
  * - Write-Ahead Logging (WAL) for high-concurrency read/write throughput
  */
 
-import { createRequire } from "node:module";
+declare const __non_webpack_require__: any;
+
 import { MIGRATION_001_SQL } from "./schema.js";
 
-// Safe dynamic loader for node:sqlite to support both ESM, CJS, and TypeScript DTS generation
+// Safe dynamic loader for node:sqlite to support ESM, CJS, and prevent Webpack client bundler errors
 function loadSqliteDatabaseSync(): any {
+  if (typeof window !== "undefined") {
+    throw new Error("SqliteDatabaseAdapter cannot be run in the browser.");
+  }
+  const modName = ["node", "sqlite"].join(":");
   try {
-    const nodeRequire = createRequire(process.cwd() + "/package.json");
-    return nodeRequire("node:sqlite").DatabaseSync;
+    const dynamicRequire =
+      typeof __non_webpack_require__ !== "undefined"
+        ? __non_webpack_require__
+        : typeof require !== "undefined"
+        ? require
+        : eval("require");
+    return dynamicRequire(modName).DatabaseSync;
   } catch {
-    // Fallback for native CJS environments
-    const req = typeof require !== "undefined" ? require : null;
-    if (req) return req("node:sqlite").DatabaseSync;
-    throw new Error("Unable to load node:sqlite. Node.js >= 22.0.0 is required.");
+    try {
+      const modulePkg = ["node", "module"].join(":");
+      const nodeModule = (typeof require !== "undefined" ? require : eval("require"))(modulePkg);
+      const dynamicReq = nodeModule.createRequire(process.cwd() + "/package.json");
+      return dynamicReq(modName).DatabaseSync;
+    } catch {
+      throw new Error("Unable to load node:sqlite. Node.js >= 22.0.0 is required.");
+    }
   }
 }
 

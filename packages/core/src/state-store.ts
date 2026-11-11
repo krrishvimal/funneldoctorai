@@ -153,6 +153,14 @@ export class MemoryStateStore implements StateStore {
 let activeStateStore: StateStore = new MemoryStateStore();
 
 export function getStateStore(): StateStore {
+  // During build time (e.g. Next.js static collection / Vercel build phase), never fail the build
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.NEXT_PHASE?.includes("build")
+  ) {
+    return activeStateStore;
+  }
+
   if (
     process.env.NODE_ENV === "production" &&
     activeStateStore instanceof MemoryStateStore &&

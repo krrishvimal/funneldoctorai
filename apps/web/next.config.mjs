@@ -1,7 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@funneldoctor/core"],
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        module: false,
+        sqlite: false,
+        "node:sqlite": false,
+      };
+    }
+    return config;
+  },
   experimental: {
+    serverComponentsExternalPackages: ["node:sqlite"],
     serverActions: {
       bodySizeLimit: "10mb",
     },

@@ -1,7 +1,7 @@
 # FunnelDoctor AI: Consolidated Test Verification Report
 
-**Report Generated:** 2026-11-11T09:26:25.326Z
-**Execution Time:** 12.27s
+**Report Generated:** 2026-11-11T09:40:57.644Z
+**Execution Time:** 10.88s
 **Milestone Status:** Milestone 1: code complete, field verification pending.
 
 ## Summary
@@ -24,23 +24,23 @@
 *Status: PASS*
 
 ```
+✓ test/stats-engine.test.ts (16 tests) 47ms
+✓ test/tenant-registry.test.ts (5 tests) 16ms
+✓ test/state-store.test.ts (9 tests) 90ms
 ✓ test/experiment-runner.test.ts (3 tests) 12ms
-✓ test/stats-engine.test.ts (16 tests) 41ms
-✓ test/state-store.test.ts (9 tests) 86ms
-✓ test/tenant-registry.test.ts (5 tests) 20ms
-✓ test/database-schema.test.ts (3 tests) 17ms
-✓ test/tenant-isolation.test.ts (4 tests) 28ms
-✓ test/retention-engine.test.ts (3 tests) 20ms
-✓ test/backup-restore.test.ts (1 test) 11ms
-✓ test/delivery-id-store.test.ts (4 tests) 85ms
-✓ test/multi-stack-synthesizer.test.ts (1 test) 6ms
-✓ test/redis-state-store.test.ts (1 test) 9ms
-✓ test/funnel-parser.test.ts (3 tests) 7ms
-✓ test/crypto-vault.test.ts (3 tests) 13ms
-✓ test/shopify-config.test.ts (4 tests) 12ms
-✓ test/auditor.test.ts (1 test) 28ms
-✓ test/dom-inspector.test.ts (3 tests) 30ms
-✓ test/domain-auditor.test.ts (5 tests) 140ms
+✓ test/delivery-id-store.test.ts (4 tests) 78ms
+✓ test/database-schema.test.ts (3 tests) 19ms
+✓ test/tenant-isolation.test.ts (4 tests) 27ms
+✓ test/backup-restore.test.ts (1 test) 13ms
+✓ test/retention-engine.test.ts (3 tests) 21ms
+✓ test/multi-stack-synthesizer.test.ts (1 test) 7ms
+✓ test/redis-state-store.test.ts (1 test) 10ms
+✓ test/funnel-parser.test.ts (3 tests) 6ms
+✓ test/crypto-vault.test.ts (3 tests) 10ms
+✓ test/shopify-config.test.ts (4 tests) 9ms
+✓ test/auditor.test.ts (1 test) 46ms
+✓ test/dom-inspector.test.ts (3 tests) 46ms
+✓ test/domain-auditor.test.ts (5 tests) 184ms
 ```
 
 ### @funneldoctor/tracker (Vitest)
@@ -48,8 +48,8 @@
 
 ```
 ✓ test/resilience.test.ts (2 tests) 4ms
-✓ test/pii-masker.test.ts (8 tests) 7ms
-✓ test/field-allowlist.test.ts (33 tests) 6ms
+✓ test/pii-masker.test.ts (8 tests) 8ms
+✓ test/field-allowlist.test.ts (33 tests) 12ms
 ```
 
 ### SRI Immutability & Manifest Validator
