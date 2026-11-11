@@ -237,14 +237,24 @@ export function inspectD2CDom(html: string, url: string): D2CDOMInspectionResult
 }
 
 // Strict protocol allowlist: Only http: and https: are permitted. All others (file:, chrome:, data:, etc.) are rejected.
+export type DomainVerificationMethod = "dns_txt" | "file_token" | "meta_tag";
+
+export interface VerifiedDomainRecord {
+  domain: string;
+  isVerified: boolean;
+  method: DomainVerificationMethod;
+  verifiedAt: number;
+}
+
 const ALLOWED_CRAWLER_PROTOCOLS = new Set(["https:", "http:"]);
 
 /**
- * Crawler SSRF Architecture Notice: Basic pre-flight check active; full container/proxy isolation pending.
- * Enforces strict http/https protocol allowlist, blocks private/cloud-metadata subnets,
- * and validates domain ownership against verified merchant tenants when provided.
+ * Crawler SSRF Architecture Notice:
+ * - Scheme allowlist (http/https), per-hop redirect re-validation, and domain ownership enforcement active.
+ * - Full container isolation and egress proxy rules are scheduled for Infrastructure Milestone.
+ * - Never treats raw typed-in domains as verified without cryptographic/DNS proof (DNS TXT or file token).
  */
-function isDisallowedAuditorHost(targetUrl: string, allowedDomains?: string[]): boolean {
+export function isDisallowedAuditorHost(targetUrl: string, allowedDomains?: string[]): boolean {
   try {
     const parsed = new URL(targetUrl);
 
@@ -297,53 +307,78 @@ function isDisallowedAuditorHost(targetUrl: string, allowedDomains?: string[]): 
 }
 
 /**
- * Fetch a live e-commerce URL with mobile headers and inspect DOM
+ * Fetch a live e-commerce URL with mobile headers, safe redirect re-validation, and inspect DOM.
+ * Follows redirects manually (up to maxRedirects hops) to prevent redirect-based SSRF into private networks.
  */
 export async function fetchAndInspectDomain(
   targetUrl: string,
   timeoutMs = 6000,
-  allowedDomains?: string[]
+  allowedDomains?: string[],
+  maxRedirects = 5
 ): Promise<D2CDOMInspectionResult> {
-  let normalizedUrl = targetUrl.trim();
-  if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
-    normalizedUrl = `https://${normalizedUrl}`;
+  let currentUrl = targetUrl.trim();
+  if (!currentUrl.startsWith("http://") && !currentUrl.startsWith("https://")) {
+    currentUrl = `https://${currentUrl}`;
   }
 
-  // SSRF Protection: Enforce protocol allowlist, domain verification, and internal network blocking
-  if (isDisallowedAuditorHost(normalizedUrl, allowedDomains)) {
-    return generateUnreachableResult(
-      normalizedUrl,
-      "SSRF Blocked: Destination protocol, unverified merchant domain, or internal IP is prohibited."
-    );
-  }
+  let hopsRemaining = maxRedirects;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(normalizedUrl, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": MOBILE_USER_AGENT,
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-IN,en;q=0.9",
-        "Cache-Control": "no-cache",
-      },
-      redirect: "follow",
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      return generateUnreachableResult(normalizedUrl, `HTTP ${response.status} ${response.statusText}`);
+  while (hopsRemaining >= 0) {
+    // SSRF Protection: Re-validate protocol, domain allowlist, and subnet on EVERY hop
+    if (isDisallowedAuditorHost(currentUrl, allowedDomains)) {
+      return generateUnreachableResult(
+        currentUrl,
+        "SSRF Blocked: Destination protocol, unverified merchant domain, or internal IP is prohibited."
+      );
     }
 
-    const html = await response.text();
-    return inspectD2CDom(html, normalizedUrl);
-  } catch (err: any) {
-    clearTimeout(timeoutId);
-    return generateUnreachableResult(normalizedUrl, err.message || "Connection timeout or blocked");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(currentUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": MOBILE_USER_AGENT,
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-IN,en;q=0.9",
+          "Cache-Control": "no-cache",
+        },
+        redirect: "manual", // Do NOT follow redirects automatically to prevent unchecked SSRF bounce
+      });
+
+      clearTimeout(timeoutId);
+
+      // Handle redirect hops safely
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get("location");
+        if (!location) {
+          return generateUnreachableResult(currentUrl, `Redirect HTTP ${response.status} missing Location header.`);
+        }
+
+        hopsRemaining--;
+        if (hopsRemaining < 0) {
+          return generateUnreachableResult(currentUrl, "Too many redirects (max 5 allowed).");
+        }
+
+        // Resolve next destination against current hop URL
+        currentUrl = new URL(location, currentUrl).href;
+        continue;
+      }
+
+      if (!response.ok) {
+        return generateUnreachableResult(currentUrl, `HTTP ${response.status} ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      return inspectD2CDom(html, currentUrl);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      return generateUnreachableResult(currentUrl, err.message || "Connection timeout or blocked");
+    }
   }
+
+  return generateUnreachableResult(currentUrl, "Redirect chain exhausted without reaching terminal page.");
 }
 
 function generateUnreachableResult(url: string, reason: string): D2CDOMInspectionResult {

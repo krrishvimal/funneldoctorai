@@ -19,6 +19,7 @@
 
 import { NextResponse } from "next/server";
 import { scrubPiiText } from "@funneldoctor/tracker";
+import { getStateStore, tenantRegistry, TenantRecord } from "@funneldoctor/core";
 
 // In-Memory rolling telemetry store for live analytics (keyed by siteId/domain)
 interface SiteTelemetrySummary {
@@ -33,81 +34,8 @@ interface SiteTelemetrySummary {
 
 const rollingTelemetryStore = new Map<string, SiteTelemetrySummary>();
 
-/**
- * In-Memory sliding rate limiter (Instance-level guardrail).
- * NOTE: As noted in the enterprise architecture review, this in-memory store is ephemeral
- * per serverless instance. Production distributed rate limiting is scheduled for Milestone 2 (Redis StateStore).
- */
-const ingestRateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-/**
- * Registered Merchant Tenant Directory.
- * Maps site IDs and domains to their authorized registered origins and keys.
- */
-interface TenantRecord {
-  siteId: string;
-  domain: string;
-  allowedOrigins: string[];
-  publicKey: string;
-  status: "active" | "paused" | "revoked";
-}
-
-const TENANT_REGISTRY = new Map<string, TenantRecord>([
-  [
-    "example-store.com",
-    {
-      siteId: "example-store.com",
-      domain: "example-store.com",
-      allowedOrigins: ["https://example-store.com", "https://www.example-store.com"],
-      publicKey: "fd_pk_example_prod_89a3f",
-      status: "active",
-    },
-  ],
-  [
-    "demo-store.myshopify.com",
-    {
-      siteId: "demo-store.myshopify.com",
-      domain: "demo-store.myshopify.com",
-      allowedOrigins: ["https://demo-store.myshopify.com"],
-      publicKey: "fd_pk_demo_store_test_123",
-      status: "active",
-    },
-  ],
-  [
-    "funneldoctor.ai",
-    {
-      siteId: "funneldoctor.ai",
-      domain: "funneldoctor.ai",
-      allowedOrigins: ["https://funneldoctor.ai", "http://localhost:3000", "http://127.0.0.1:3000"],
-      publicKey: "fd_pk_internal_dashboard",
-      status: "active",
-    },
-  ],
-  [
-    "test-store.example.com",
-    {
-      siteId: "test-store.example.com",
-      domain: "test-store.example.com",
-      allowedOrigins: ["https://test-store.example.com", "http://localhost:3000"],
-      publicKey: "fd_pk_test_suite_key",
-      status: "active",
-    },
-  ],
-  // Legacy test alias
-  [
-    "snitch.co.in",
-    {
-      siteId: "snitch.co.in",
-      domain: "snitch.co.in",
-      allowedOrigins: ["https://snitch.co.in", "https://www.snitch.co.in"],
-      publicKey: "fd_pk_snitch_prod_test",
-      status: "active",
-    },
-  ],
-]);
-
 // CORS headers to allow browser scripts from external merchant stores
-const corsHeaders = {
+const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Merchant-Key",
@@ -132,7 +60,7 @@ function getTrustedClientIp(req: Request): string {
 }
 
 /**
- * Validates tenant registration and checks Origin/Referer against authorized domains.
+ * Validates tenant registration and checks Origin/Referer against authorized domains via TenantRegistryService.
  */
 function validateMerchantOrigin(
   siteId: string,
@@ -140,7 +68,7 @@ function validateMerchantOrigin(
   providedKey?: string | null
 ): { authorized: boolean; reason?: string; tenant?: TenantRecord; killSwitch?: boolean } {
   const cleanId = siteId.replace(/^https?:\/\//, "").replace(/\/.*$/, "").toLowerCase();
-  const tenant = TENANT_REGISTRY.get(cleanId);
+  const tenant = tenantRegistry.getTenant(cleanId);
 
   // Allow localhost, test environments, or registered tenants
   const isTestOrLocal =
@@ -156,7 +84,7 @@ function validateMerchantOrigin(
     };
   }
 
-  // Check remote kill-switch
+  // Check remote kill-switch (global env flag or tenant-level status)
   const globalKillSwitch = process.env.FUNNELDOCTOR_TRACKER_KILL_SWITCH === "true";
   if (globalKillSwitch || (tenant && tenant.status !== "active")) {
     return {
@@ -172,32 +100,16 @@ function validateMerchantOrigin(
   const callerUrl = origin || referer;
 
   if (callerUrl && tenant && tenant.allowedOrigins.length > 0) {
-    try {
-      const parsedCaller = new URL(callerUrl);
-      const isAllowed = tenant.allowedOrigins.some((allowed) => {
-        try {
-          const parsedAllowed = new URL(allowed);
-          return (
-            parsedCaller.hostname === parsedAllowed.hostname ||
-            parsedCaller.hostname.endsWith(`.${parsedAllowed.hostname}`)
-          );
-        } catch {
-          return false;
-        }
-      });
-
-      if (!isAllowed && !isTestOrLocal) {
-        return {
-          authorized: false,
-          reason: `Origin mismatch: Domain '${parsedCaller.hostname}' is not authorized for tenant '${siteId}'.`,
-        };
-      }
-    } catch {
-      // Malformed origin/referer
+    const isAllowed = tenantRegistry.isAuthorizedOrigin(cleanId, callerUrl);
+    if (!isAllowed && !isTestOrLocal) {
+      return {
+        authorized: false,
+        reason: `Origin mismatch: Caller origin '${callerUrl}' is not authorized for tenant '${siteId}'.`,
+      };
     }
   }
 
-  return { authorized: true, tenant };
+  return { authorized: true, tenant: tenant || undefined };
 }
 
 export async function OPTIONS() {
@@ -234,21 +146,23 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    // 1. IP-Based Sliding Rate Limiter (Instance-level guardrail)
+    // 1. IP-Based Sliding Rate Limiter via StateStore
     const clientIp = getTrustedClientIp(req);
-    const now = Date.now();
-    const rateWindow = ingestRateLimitMap.get(clientIp);
+    const rateResult = await getStateStore().rateLimit(`rate:ingest:${clientIp}`, 120, 60);
 
-    if (rateWindow && now < rateWindow.resetAt) {
-      if (rateWindow.count >= 120) {
-        return NextResponse.json(
-          { error: "Rate limit exceeded. Maximum 120 telemetry requests per minute per IP." },
-          { status: 429, headers: corsHeaders }
-        );
-      }
-      rateWindow.count += 1;
-    } else {
-      ingestRateLimitMap.set(clientIp, { count: 1, resetAt: now + 60000 });
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Maximum 120 telemetry requests per minute per IP." },
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "X-RateLimit-Limit": rateResult.totalLimit.toString(),
+            "X-RateLimit-Remaining": rateResult.remaining.toString(),
+            "X-RateLimit-Reset": Math.ceil(rateResult.resetAt / 1000).toString(),
+          },
+        }
+      );
     }
 
     // 2. Automated Bot / Crawler Filter
