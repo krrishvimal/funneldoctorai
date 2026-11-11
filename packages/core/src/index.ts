@@ -16,3 +16,4 @@ export * from "./tenant-registry.js";
 export * from "./delivery-id-store.js";
 export * from "./crypto-vault.js";
 export * from "./database/index.js";
+export * from "./aa-simulator.js";

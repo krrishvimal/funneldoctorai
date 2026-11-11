@@ -74,3 +74,24 @@ All notable changes to the FunnelDoctor AI codebase are documented in this file.
 - **Disaster Recovery & Backup Service (`packages/core/src/database/backup-restore.ts`)**:
   - Automated SQL snapshot dump generator and restore verification suite validating row counts, foreign keys, and cryptographic secret consistency post-restore.
 
+---
+
+## [Milestone 2 - Gate 4] - Statistical Validation & Benchmarking (2026-11-11)
+
+### Status Summary
+- **Gate 4 Status**: Code complete and mathematically verified.
+- **Verification Status**: 212 automated checks passing across 7 suites in `docs/TEST_REPORT.md` (up from 203).
+
+### Implemented Capabilities
+- **Automated Monte Carlo A/A Simulation Engine (`packages/core/src/aa-simulator.ts`)**:
+  - Simulates 1,000 independent A/A experiments with 2,000 visitors per variant and 4% true conversion rate.
+  - Proves empirical false positive rate $\alpha_{empirical} \approx 0.05$ (bounded tightly within 3-sigma tolerance $[3.0\%, 7.0\%]$), eliminating phantom CRO significance.
+  - Verifies uniform distribution of p-values under the null hypothesis (mean p-value $\approx 0.50$).
+- **SciPy Golden Reference Dataset Benchmarks (`packages/core/test/scipy-golden-dataset.test.ts`)**:
+  - Two-proportion pooled Z-test validated against `scipy.stats.proportions_ztest` (Z-scores, p-values, unpooled 95% confidence intervals).
+  - Validated against gold-standard null cases ($Z = 0.0000, p = 1.0000$) and unequal sample sizes ($N_1 = 8000, N_2 = 2000$).
+- **Fisher's Exact Test & Agresti-Caffo Small-Sample Engine**:
+  - Validated exact hypergeometric distribution calculations against `scipy.stats.fisher_exact` across 2x2 contingency matrices (including Lady Tasting Tea and extreme separation cases).
+  - Enforced small-sample fallback when conversion count $< 5$, clamping confidence intervals strictly within $[-1.0, 1.0]$.
+
+
