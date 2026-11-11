@@ -1,14 +1,14 @@
 # FunnelDoctor AI: Consolidated Test Verification Report
 
-**Report Generated:** 2026-11-11T09:10:19.597Z
-**Execution Time:** 9.65s
+**Report Generated:** 2026-11-11T09:26:25.326Z
+**Execution Time:** 12.27s
 **Milestone Status:** Milestone 1: code complete, field verification pending.
 
 ## Summary
 
 | Suite | Status | Tests Passed | Purpose |
 | :--- | :--- | :--- | :--- |
-| @funneldoctor/core (Vitest) | **PASS** | 58 | Stats engine, state store, tenant registry, delivery ID deduplication, heuristics, shopify config |
+| @funneldoctor/core (Vitest) | **PASS** | 69 | Stats engine, state store, tenant registry, delivery ID deduplication, heuristics, shopify config |
 | @funneldoctor/tracker (Vitest) | **PASS** | 43 | PII scrub, Indian postal PIN allowlist, credential deny-first classifier, safe boot |
 | SRI Immutability & Manifest Validator | **PASS** | 2 | Dynamic scan of public version directories (v1.0.3, v1.0.4) against sri-manifest.json |
 | Enterprise SSRF, Pinning, Anti-Replay & Permalinks | **PASS** | 30 | Subnet filtering, port 443 governance, Happy Eyeballs agent, DNS rebinding, HMAC anti-replay |
@@ -16,7 +16,7 @@
 | Phase 3: Statistical Engine & Cohort Safeguards | **PASS** | 18 | Pooled Z, Agresti-Caffo small sample, SRM detection, Simpson's Paradox, FDR q-values |
 | Phase 4 & 5: Multi-Stack Remediation & Incident Alerting | **PASS** | 19 | Liquid snippet synthesis, circuit breaker sub-50ms trip, Slack/Teams/PagerDuty dispatch |
 
-**Total Tests Verified:** 192 passed, 0 failed
+**Total Tests Verified:** 203 passed, 0 failed
 
 ## Detailed Suite Breakdown
 
@@ -24,28 +24,32 @@
 *Status: PASS*
 
 ```
-✓ test/state-store.test.ts (9 tests) 113ms
-✓ test/stats-engine.test.ts (16 tests) 45ms
-✓ test/tenant-registry.test.ts (5 tests) 18ms
+✓ test/experiment-runner.test.ts (3 tests) 12ms
+✓ test/stats-engine.test.ts (16 tests) 41ms
+✓ test/state-store.test.ts (9 tests) 86ms
+✓ test/tenant-registry.test.ts (5 tests) 20ms
+✓ test/database-schema.test.ts (3 tests) 17ms
+✓ test/tenant-isolation.test.ts (4 tests) 28ms
+✓ test/retention-engine.test.ts (3 tests) 20ms
+✓ test/backup-restore.test.ts (1 test) 11ms
+✓ test/delivery-id-store.test.ts (4 tests) 85ms
+✓ test/multi-stack-synthesizer.test.ts (1 test) 6ms
+✓ test/redis-state-store.test.ts (1 test) 9ms
+✓ test/funnel-parser.test.ts (3 tests) 7ms
 ✓ test/crypto-vault.test.ts (3 tests) 13ms
-✓ test/funnel-parser.test.ts (3 tests) 8ms
-✓ test/redis-state-store.test.ts (1 test) 10ms
-✓ test/multi-stack-synthesizer.test.ts (1 test) 8ms
-✓ test/experiment-runner.test.ts (3 tests) 11ms
-✓ test/delivery-id-store.test.ts (4 tests) 93ms
-✓ test/shopify-config.test.ts (4 tests) 4ms
-✓ test/auditor.test.ts (1 test) 18ms
-✓ test/dom-inspector.test.ts (3 tests) 15ms
-✓ test/domain-auditor.test.ts (5 tests) 77ms
+✓ test/shopify-config.test.ts (4 tests) 12ms
+✓ test/auditor.test.ts (1 test) 28ms
+✓ test/dom-inspector.test.ts (3 tests) 30ms
+✓ test/domain-auditor.test.ts (5 tests) 140ms
 ```
 
 ### @funneldoctor/tracker (Vitest)
 *Status: PASS*
 
 ```
-✓ test/resilience.test.ts (2 tests) 3ms
-✓ test/pii-masker.test.ts (8 tests) 6ms
-✓ test/field-allowlist.test.ts (33 tests) 7ms
+✓ test/resilience.test.ts (2 tests) 4ms
+✓ test/pii-masker.test.ts (8 tests) 7ms
+✓ test/field-allowlist.test.ts (33 tests) 6ms
 ```
 
 ### SRI Immutability & Manifest Validator

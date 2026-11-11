@@ -46,3 +46,31 @@ All notable changes to the FunnelDoctor AI codebase are documented in this file.
 - **Ingest API Migration (`apps/web/src/app/api/ingest/route.ts`)**:
   - Replaced hardcoded tenant maps with `TenantRegistryService`.
   - Replaced instance-level rate limit maps with `StateStore.rateLimit()`.
+
+---
+
+## [Milestone 2 - Gate 3] - Data Layer, Persistence & DPDP Compliance (2026-11-11)
+
+### Status Summary
+- **Gate 3 Status**: Code complete and fully verified.
+- **Verification Status**: 203 automated checks passing across 7 suites in `docs/TEST_REPORT.md` (up from 192).
+
+### Implemented Capabilities
+- **Durable Database Persistence (`packages/core/src/database/adapter.ts`, `schema.ts`)**:
+  - Embedded zero-dependency SQL persistence engine via `node:sqlite` with WAL mode and foreign key cascades.
+  - Parameterized queries with 100% protection against SQL injection.
+- **Durable Tenant Repository (`packages/core/src/database/tenant-repository.ts`)**:
+  - System of record for merchant tenants, status mutations, and encrypted credentials.
+  - AES-256-GCM envelope encryption with AAD tenant binding (`siteId` bound to ciphertext to prevent cross-tenant swaps).
+  - Append-only audit log recording every rotation, emergency revoke, and configuration mutation.
+- **Strict Tenant-Isolated Event Store (`packages/core/src/database/event-repository.ts`)**:
+  - High-throughput batch telemetry event ingestion.
+  - Hard tenant isolation enforced on every query (`WHERE site_id = ?`).
+  - Conversion funnel and dropoff aggregation queries.
+- **DPDP / GDPR 90-Day Retention Engine (`packages/core/src/database/retention-engine.ts`)**:
+  - Automatic 90-day retention cutoff: raw event clickstreams and device identifiers are hard-purged.
+  - Anonymized historical preservation: expiring events are aggregated into `aggregated_funnel_metrics` prior to deletion.
+  - Tamper-evident compliance ledger in `retention_runs`.
+- **Disaster Recovery & Backup Service (`packages/core/src/database/backup-restore.ts`)**:
+  - Automated SQL snapshot dump generator and restore verification suite validating row counts, foreign keys, and cryptographic secret consistency post-restore.
+

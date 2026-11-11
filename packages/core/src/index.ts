@@ -15,3 +15,4 @@ export * from "./redis-state-store.js";
 export * from "./tenant-registry.js";
 export * from "./delivery-id-store.js";
 export * from "./crypto-vault.js";
+export * from "./database/index.js";
