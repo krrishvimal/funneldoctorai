@@ -3,12 +3,18 @@
  * @description Autonomous A/B testing, deterministic traffic allocation, and 
  * safety circuit breaker engine for FunnelDoctor AI.
  *
- * Guarantees zero-risk experimentation:
+ * Enterprise Safeguards Embedded:
  * - Deterministic sticky traffic hashing (sessionId -> Variant A or B).
- * - Automated Safety Circuit Breaker: instantly rolls back to Control (Variant A)
- *   if JS runtime error rate exceeds 0.5% or conversion rate drops by >5%.
- * - Sub-5 millisecond automated rollback execution.
+ * - Statistically powered conversion drop check: requires N >= 250 sessions per variant
+ *   and p < 0.05 against concurrent Control before tripping (eliminates small-sample noise).
+ * - Differential Error Surge: Compares Treatment errors against concurrent Control baseline
+ *   (excess errors > 0.5%), preventing false alarms from pre-existing third-party tag errors.
+ * - Graceful Session Draining: Shoppers currently in-flight on checkout are never flipped
+ *   mid-checkout; new visitors route 100% to Control while active sessions finish.
+ * - Transparent MTTR telemetry: Tracks Time-to-Detect (TTD) and Time-to-Propagate (TTP).
  */
+
+import { calculateTwoProportionTest } from "./stats-engine.js";
 
 export type ExperimentVariant = "CONTROL" | "TREATMENT";
 
@@ -23,9 +29,10 @@ export interface ExperimentConfig {
   domain: string;
   mode: "CANARY" | "BALANCED_AB" | "FULL_ROLLOUT";
   canaryTreatmentPercentage?: number; // e.g. 10 for 10%
-  errorThresholdPercent?: number; // defaults to 0.5%
-  conversionDropThresholdPercent?: number; // defaults to 5.0%
-  minSampleBeforeDropCheck?: number; // defaults to 100 sessions
+  errorThresholdPercent?: number; // excess differential error limit (defaults to 0.5%)
+  conversionDropThresholdPercent?: number; // relative drop limit (defaults to 5.0%)
+  minSampleBeforeDropCheck?: number; // defaults to 250 sessions
+  sessionDrainTtlMinutes?: number; // defaults to 15 minutes
 }
 
 export interface ExperimentVariantMetrics {
@@ -39,18 +46,30 @@ export interface ExperimentVariantMetrics {
 export interface CircuitBreakerIncident {
   tripReason: string;
   timestamp: string;
+  timeToDetectSeconds: number;
+  estimatedTimeToPropagateSeconds: number;
   metricsAtTrip: {
     control: ExperimentVariantMetrics;
     treatment: ExperimentVariantMetrics;
+    differentialErrorRate: number;
+    statisticallySignificantDrop: boolean;
+    dropPValue?: number;
   };
-  revertedToVariant: "CONTROL";
+  revertedToVariantForNewSessions: "CONTROL";
+  inFlightSessionsDraining: number;
   rollbackLatencyMs: number;
+}
+
+export interface InFlightSession {
+  variant: ExperimentVariant;
+  startedAt: number;
 }
 
 export interface ExperimentState {
   config: ExperimentConfig;
   status: CircuitBreakerStatus;
   isCircuitBreakerActive: boolean;
+  circuitBreakerTrippedAt: number | null;
   metrics: {
     control: ExperimentVariantMetrics;
     treatment: ExperimentVariantMetrics;
@@ -74,6 +93,8 @@ export function hashVisitorSession(sessionId: string, experimentId: string): num
 
 export class ExperimentRunner {
   private state: ExperimentState;
+  private inFlightSessions: Map<string, InFlightSession>;
+  private firstTelemetryTimestamp: number;
 
   constructor(config: ExperimentConfig) {
     this.state = {
@@ -81,30 +102,48 @@ export class ExperimentRunner {
         canaryTreatmentPercentage: 10,
         errorThresholdPercent: 0.5,
         conversionDropThresholdPercent: 5.0,
-        minSampleBeforeDropCheck: 100,
+        minSampleBeforeDropCheck: 250, // Minimum 250 sessions per variant before evaluating conversion drops
+        sessionDrainTtlMinutes: 15,
         ...config,
       },
       status: "HEALTHY",
       isCircuitBreakerActive: false,
+      circuitBreakerTrippedAt: null,
       metrics: {
         control: { sessions: 0, conversions: 0, errors: 0, conversionRate: 0, errorRate: 0 },
         treatment: { sessions: 0, conversions: 0, errors: 0, conversionRate: 0, errorRate: 0 },
       },
       activeIncidents: [],
     };
+    this.inFlightSessions = new Map();
+    this.firstTelemetryTimestamp = Date.now();
   }
 
   /**
-   * Deterministically assigns a visitor session to Control or Treatment.
-   * If circuit breaker is tripped, ALWAYS forces 100% of traffic to Control.
+   * Deterministically assigns a visitor session to Control or Treatment with graceful draining.
+   *
+   * SAFEGUARD: If the circuit breaker trips, shoppers currently mid-checkout are NOT flipped;
+   * their session continues on their current variant until the TTL expires.
+   * All NEW incoming sessions are routed 100% to CONTROL.
    */
   public assignVariant(sessionId: string): ExperimentVariant {
-    // Safety check: if circuit breaker tripped, instantly force Control
+    const now = Date.now();
+    const ttlMs = (this.state.config.sessionDrainTtlMinutes || 15) * 60 * 1000;
+
+    // Check if session is already active in-flight
+    const existing = this.inFlightSessions.get(sessionId);
+    if (existing && (now - existing.startedAt) < ttlMs) {
+      return existing.variant;
+    }
+
+    // If circuit breaker is tripped, ALL NEW sessions are strictly forced to Control
     if (this.state.isCircuitBreakerActive) {
+      this.inFlightSessions.set(sessionId, { variant: "CONTROL", startedAt: now });
       return "CONTROL";
     }
 
     if (this.state.config.mode === "FULL_ROLLOUT") {
+      this.inFlightSessions.set(sessionId, { variant: "TREATMENT", startedAt: now });
       return "TREATMENT";
     }
 
@@ -114,7 +153,9 @@ export class ExperimentRunner {
         ? (this.state.config.canaryTreatmentPercentage || 10) 
         : 50; // 50/50 split for BALANCED_AB
 
-    return bucket < treatmentThreshold ? "TREATMENT" : "CONTROL";
+    const variant: ExperimentVariant = bucket < treatmentThreshold ? "TREATMENT" : "CONTROL";
+    this.inFlightSessions.set(sessionId, { variant, startedAt: now });
+    return variant;
   }
 
   /**
@@ -145,7 +186,10 @@ export class ExperimentRunner {
 
   /**
    * Evaluates runtime error thresholds and conversion drops.
-   * Trips circuit breaker immediately if safety bounds are breached.
+   *
+   * SAFEGUARDS:
+   * 1. Differential Error Surge: Checks excess errors over Control baseline (t.errorRate - c.errorRate > limit).
+   * 2. Statistically Powered Conversion Drop: Requires N >= minSample AND p < 0.05 against concurrent Control.
    */
   public evaluateSafetyRules(): { status: CircuitBreakerStatus; tripped: boolean } {
     if (this.state.isCircuitBreakerActive) {
@@ -155,51 +199,86 @@ export class ExperimentRunner {
     const t = this.state.metrics.treatment;
     const c = this.state.metrics.control;
     const errorLimit = this.state.config.errorThresholdPercent ?? 0.5;
-    const minSample = this.state.config.minSampleBeforeDropCheck ?? 100;
+    const minSample = this.state.config.minSampleBeforeDropCheck ?? 250;
     const maxDrop = this.state.config.conversionDropThresholdPercent ?? 5.0;
 
-    // Rule 1: JS Runtime Error Surge on Treatment (> 0.5%)
-    if (t.sessions >= 20 && t.errorRate > errorLimit) {
+    // Rule 1: Differential Error Surge on Treatment (> 0.5% higher than concurrent Control baseline)
+    const differentialErrorRate = Number(Math.max(0, t.errorRate - c.errorRate).toFixed(3));
+    if (t.sessions >= 20 && differentialErrorRate > errorLimit) {
       const startTime = Date.now();
       this.state.status = "TRIPPED_ERROR_SURGE";
       this.state.isCircuitBreakerActive = true;
+      this.state.circuitBreakerTrippedAt = Date.now();
       const latencyMs = Math.max(1, Date.now() - startTime);
 
+      const timeToDetectSeconds = Math.max(1, Math.round((Date.now() - this.firstTelemetryTimestamp) / 1000));
+      const inFlightCount = Array.from(this.inFlightSessions.values()).filter(
+        s => s.variant === "TREATMENT" && (Date.now() - s.startedAt) < (15 * 60 * 1000)
+      ).length;
+
       this.state.activeIncidents.push({
-        tripReason: `Treatment JS error rate (${t.errorRate}%) exceeded safety limit (${errorLimit}%)`,
+        tripReason: `Treatment differential error rate (+${differentialErrorRate}%) exceeded safety limit (+${errorLimit}%) above Control baseline (${c.errorRate}%)`,
         timestamp: new Date().toISOString(),
+        timeToDetectSeconds,
+        estimatedTimeToPropagateSeconds: 15,
         metricsAtTrip: {
           control: { ...c },
           treatment: { ...t },
+          differentialErrorRate,
+          statisticallySignificantDrop: false,
         },
-        revertedToVariant: "CONTROL",
+        revertedToVariantForNewSessions: "CONTROL",
+        inFlightSessionsDraining: inFlightCount,
         rollbackLatencyMs: latencyMs,
       });
 
       return { status: "TRIPPED_ERROR_SURGE", tripped: true };
     }
 
-    // Rule 2: Sudden Conversion Drop on Treatment (> 5% drop compared to Control)
+    // Rule 2: Sudden Conversion Drop on Treatment (requires N >= 250 and statistical significance vs concurrent Control)
     if (t.sessions >= minSample && c.sessions >= minSample && c.conversionRate > 0) {
       const relativeDrop = ((c.conversionRate - t.conversionRate) / c.conversionRate) * 100;
+      
       if (relativeDrop > maxDrop) {
-        const startTime = Date.now();
-        this.state.status = "TRIPPED_CONVERSION_DROP";
-        this.state.isCircuitBreakerActive = true;
-        const latencyMs = Math.max(1, Date.now() - startTime);
+        // Run rigorous two-proportion significance test against concurrent Control
+        const statTest = calculateTwoProportionTest(
+          { name: "Original Control", conversions: c.conversions, visitors: c.sessions },
+          { name: "Remediated Treatment", conversions: t.conversions, visitors: t.sessions },
+          0.05
+        );
 
-        this.state.activeIncidents.push({
-          tripReason: `Treatment conversion rate (${(t.conversionRate * 100).toFixed(1)}%) dropped ${relativeDrop.toFixed(1)}% below Control (${(c.conversionRate * 100).toFixed(1)}%)`,
-          timestamp: new Date().toISOString(),
-          metricsAtTrip: {
-            control: { ...c },
-            treatment: { ...t },
-          },
-          revertedToVariant: "CONTROL",
-          rollbackLatencyMs: latencyMs,
-        });
+        // Only trip if drop is statistically significant (p < 0.05), eliminating small-sample noise
+        if (statTest.pValue < 0.05) {
+          const startTime = Date.now();
+          this.state.status = "TRIPPED_CONVERSION_DROP";
+          this.state.isCircuitBreakerActive = true;
+          this.state.circuitBreakerTrippedAt = Date.now();
+          const latencyMs = Math.max(1, Date.now() - startTime);
 
-        return { status: "TRIPPED_CONVERSION_DROP", tripped: true };
+          const timeToDetectSeconds = Math.max(1, Math.round((Date.now() - this.firstTelemetryTimestamp) / 1000));
+          const inFlightCount = Array.from(this.inFlightSessions.values()).filter(
+            s => s.variant === "TREATMENT" && (Date.now() - s.startedAt) < (15 * 60 * 1000)
+          ).length;
+
+          this.state.activeIncidents.push({
+            tripReason: `Treatment conversion rate (${(t.conversionRate * 100).toFixed(1)}%) dropped ${relativeDrop.toFixed(1)}% below Control (${(c.conversionRate * 100).toFixed(1)}%) with high significance (p = ${statTest.pValue.toFixed(4)} < 0.05)`,
+            timestamp: new Date().toISOString(),
+            timeToDetectSeconds,
+            estimatedTimeToPropagateSeconds: 15,
+            metricsAtTrip: {
+              control: { ...c },
+              treatment: { ...t },
+              differentialErrorRate,
+              statisticallySignificantDrop: true,
+              dropPValue: statTest.pValue,
+            },
+            revertedToVariantForNewSessions: "CONTROL",
+            inFlightSessionsDraining: inFlightCount,
+            rollbackLatencyMs: latencyMs,
+          });
+
+          return { status: "TRIPPED_CONVERSION_DROP", tripped: true };
+        }
       }
     }
 
@@ -207,11 +286,12 @@ export class ExperimentRunner {
   }
 
   /**
-   * Resets the circuit breaker back to HEALTHY after an engineer has debugged the root cause.
+   * Resets the circuit breaker back to HEALTHY after an engineer has reviewed and resolved the root cause.
    */
   public resetCircuitBreaker(): void {
     this.state.status = "HEALTHY";
     this.state.isCircuitBreakerActive = false;
+    this.state.circuitBreakerTrippedAt = null;
   }
 
   /**

@@ -51,24 +51,30 @@ assert(
 );
 
 assert(
-  typeof multiStack.shopifyLiquid === 'string' && multiStack.shopifyLiquid.includes('cart.total_price | money_with_currency'),
+  typeof multiStack.shopifyLiquid === 'string' && 
+  multiStack.shopifyLiquid.includes('cart.total_price | divided_by: 100.0') &&
+  !multiStack.shopifyLiquid.includes('cart.total_price | money_with_currency'),
   2,
-  'Synthesizes Shopify Liquid Snippet (snippets/funneldoctor-1tap-checkout.liquid)',
-  'Found Shopify cart filters and dynamic UPI deep link triggers'
+  'Synthesizes Shopify Liquid Snippet with numeric divided_by: 100.0 (Bug #1 Fix)',
+  'Verified plain numeric amount without currency symbols for UPI intent'
 );
 
 assert(
-  typeof multiStack.vanillaJs === 'string' && multiStack.vanillaJs.includes('funneldoctor-checkout-mount'),
+  typeof multiStack.shopifyLiquid === 'string' &&
+  multiStack.placementGuide &&
+  multiStack.placementGuide.shopifyPlacement.includes('sections/cart-drawer.liquid'),
   3,
-  'Synthesizes Vanilla JS / HTML / CSS Embed for WooCommerce and legacy platforms',
-  'Found zero-dependency standalone DOM injector'
+  'Includes Snippet Placement Guide (Cart Drawer / Theme sections vs Plus Checkout)',
+  'Documented exact theme placement and Plus Checkout Extensibility boundary'
 );
 
 assert(
-  multiStack.abTestPlan.durationWeeks === 2 && multiStack.abTestPlan.canarySplitPercent === 10,
+  multiStack.abTestPlan.durationWeeks === 2 && 
+  multiStack.abTestPlan.rollbackCriteria.minSampleBeforeEvaluation === 250 &&
+  multiStack.abTestPlan.rollbackCriteria.differentialErrorThresholdPercent === 0.5,
   4,
-  'Generates concrete 2-week canary A/B experiment protocol',
-  `Duration: ${multiStack.abTestPlan.durationWeeks} weeks, Canary: ${multiStack.abTestPlan.canarySplitPercent}% traffic`
+  'Generates concrete canary A/B experiment protocol with N>=250 and differential error limits',
+  `Duration: ${multiStack.abTestPlan.durationWeeks} weeks, Min N: ${multiStack.abTestPlan.rollbackCriteria.minSampleBeforeEvaluation}`
 );
 
 // --------------------------------------------------------------------------
@@ -136,9 +142,9 @@ assert(
 );
 
 // --------------------------------------------------------------------------
-// 3. ENTERPRISE INCIDENT ALERTING (PHASE 5)
+// 3. ENTERPRISE INCIDENT ALERTING & SSRF SECURITY (PHASE 5)
 // --------------------------------------------------------------------------
-console.log('\n🚨 [3/4] TESTING ENTERPRISE INCIDENT ALERTING (SLACK, TEAMS, PAGERDUTY)');
+console.log('\n🚨 [3/4] TESTING ENTERPRISE INCIDENT ALERTING (SLACK, TEAMS, PAGERDUTY) & SSRF DEFENSE');
 
 const alertRoutePath = path.resolve('apps/web/src/app/api/alerts/route.ts');
 assert(
@@ -163,6 +169,24 @@ assert(
   'Verified circuit breaker and conversion crash alerts'
 );
 
+// SSRF Security & Governance checks
+assert(
+  alertContent.includes('validateWebhookUrl') && 
+  alertContent.includes('169.254.169.254') && 
+  alertContent.includes('X-FunnelDoctor-Signature'),
+  13,
+  'SSRF Defense & HMAC-SHA256 Request Signing: Blocks Cloud IMDS, Localhost, Private Subnets',
+  'Validated AWS IMDS 169.254.169.254, RFC 1918 blocks, and cryptographic signature headers'
+);
+
+assert(
+  alertContent.includes('PagerDuty is restricted strictly to SEVERITY_P1 incidents') &&
+  alertContent.includes('alertCooldownMap'),
+  14,
+  'PagerDuty P1 Restriction & 15-Minute Alert Debouncing',
+  'Suppressed non-critical PagerDuty alerts and de-duplicated repeat alert storms'
+);
+
 // --------------------------------------------------------------------------
 // 4. BOARDROOM EXECUTIVE C-SUITE REPORT GENERATOR (PHASE 5)
 // --------------------------------------------------------------------------
@@ -185,37 +209,42 @@ const executiveReport = generateExecutiveReportHtml({
 
 assert(
   typeof executiveReport === 'string' && executiveReport.includes('BOARDROOM CRO AUDIT: Snitch'),
-  13,
+  15,
   'Generates Boardroom Executive CRO Audit Document',
   'Header and target brand verified'
 );
 
 assert(
-  executiveReport.includes('Annualized Revenue Leak') && executiveReport.includes('Verified Realizable Lift'),
-  14,
-  'Calculates Annualized Financial Exposure and Recovery Metrics for CFO',
-  'Found annualized leak and lift figures'
+  executiveReport.includes('Annualized Financial Exposure') && 
+  executiveReport.includes('Projected Recoverable Lift (Annualized)') &&
+  executiveReport.includes('Festive Sales Seasonality'),
+  16,
+  'Calculates Annualized Financial Exposure as Range (40x - 56x) with Festive Seasonality',
+  'Found honest range bounds and seasonality variance disclosures'
 );
 
 assert(
-  executiveReport.includes('Net Projected ROI') && executiveReport.includes('Return'),
-  15,
-  'Calculates Net Return on Software Investment Multiple (ROI Multiple)',
-  'ROI benchmark calculation verified'
+  executiveReport.includes('Estimated Net ROI Potential') && 
+  executiveReport.includes('Pre-Experiment Projection'),
+  17,
+  'Presents Honest Projected ROI Range (Eliminating single-point 24.8x claims)',
+  'ROI potential verified with pre-experiment projection status'
 );
 
 assert(
   executiveReport.includes('Benjamini-Hochberg False Discovery Rate') && executiveReport.includes('Indian COD RTO Netting'),
-  16,
-  'Includes Senior Staff Analyst Statistical Integrity Certificate',
+  18,
+  'Diagnostic Statistical Audit Summary: FDR Monotonic q-values & Indian COD Netting',
   'Verified FDR control, COD RTO margin netting, and MDE sample power'
 );
 
 assert(
-  executiveReport.includes('DPDP Act 2023') && executiveReport.includes('GDPR Certified'),
-  17,
-  'Verifies DPDP Act 2023 and Zero-PII Compliance Endorsement',
-  'Privacy and compliance guarantee included'
+  executiveReport.includes('Engineered for Data Minimization · Client-Side PII Masking') &&
+  executiveReport.includes('Merchants must consult their legal counsel for statutory compliance verification') &&
+  !executiveReport.includes('DPDP Act 2023 zero-PII compliance guarantee'),
+  19,
+  'Softened Privacy & Compliance: Data minimization disclosure with legal disclaimer',
+  'Verified data minimization architecture without unverified statutory guarantees'
 );
 
 // --------------------------------------------------------------------------

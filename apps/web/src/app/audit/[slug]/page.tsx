@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { generateExecutiveReportHtml } from '@/lib/pdf-report';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -145,6 +146,12 @@ interface AuditData {
   domInspection?: AuditDomInspection;
   mobileScreenshotBase64?: string | null;
   statisticalBreakdown?: AuditStatisticalBreakdown;
+  placementGuide?: {
+    shopifyPlacement: string;
+    wooCommercePlacement: string;
+    customStackPlacement: string;
+    instagramFallbackStrategy: string;
+  };
 }
 
 export default function AuditReportPage() {
@@ -155,6 +162,7 @@ export default function AuditReportPage() {
   const [activeNode, setActiveNode] = useState<'ux' | 'latency' | 'telemetry' | 'cure'>('ux');
   const [activeTab, setActiveTab] = useState<'comparator' | 'code' | 'prd'>('comparator');
   const [activeCodeStack, setActiveCodeStack] = useState<'react' | 'shopify' | 'vanilla'>('react');
+  const [stagingStatus, setStagingStatus] = useState<'draft' | 'staging_preview' | 'approved_canary'>('draft');
   const [showPeekedValues, setShowPeekedValues] = useState(false);
   const [alertSending, setAlertSending] = useState(false);
   const [alertSent, setAlertSent] = useState(false);
@@ -286,76 +294,24 @@ export default function AuditReportPage() {
   // Handle Boardroom Report PDF / Print
   const handleDownloadBoardroomReport = () => {
     if (typeof window === 'undefined') return;
-    const annualLeaked = Number((audit.leakedMonthlyLakhs * 12).toFixed(1));
-    const annualRecoverable = Number((audit.recoverableMonthlyLakhs * 12).toFixed(1));
-    const roiMultiple = Number((annualRecoverable / 6.0).toFixed(1));
+    const html = generateExecutiveReportHtml({
+      brandName: audit.brandName,
+      domain: audit.domain,
+      category: audit.category,
+      visitors: audit.visitors,
+      dropoffRate: audit.dropoffRate,
+      aov: audit.aov,
+      leakedMonthlyLakhs: audit.leakedMonthlyLakhs,
+      recoverableMonthlyLakhs: audit.recoverableMonthlyLakhs,
+      worstStepName: audit.worstStepName,
+      cohortCount: audit.statisticalBreakdown?.cohorts?.length ?? 5,
+      requiredSampleSize: audit.statisticalBreakdown?.sampleSizeGuardrail?.totalRequiredVisitors ?? 9600,
+      circuitBreakerLatencyMs: 15,
+    });
 
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>Boardroom CRO Audit: ${audit.brandName}</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; padding: 32px; max-width: 800px; margin: 0 auto; color: #0f172a; line-height: 1.5; }
-    .header { border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-    .card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; background: #f8fafc; }
-    .card.high { border-color: #059669; background: #ecfdf5; }
-    .val { font-size: 24px; font-weight: 800; font-family: monospace; margin-top: 4px; }
-    .danger { color: #b91c1c; }
-    .success { color: #047857; }
-    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-    th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
-    th { background: #f1f5f9; font-family: monospace; }
-    .cert { border: 1.5px dashed #059669; background: #f0fdf4; border-radius: 12px; padding: 16px; margin-top: 24px; font-size: 12px; color: #065f46; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <h1 style="margin: 0; font-size: 22px;">BOARDROOM CRO AUDIT: ${audit.brandName}</h1>
-      <div style="font-family: monospace; font-size: 11px; color: #64748b; margin-top: 4px;">TARGET: ${audit.domain} · ARCHETYPE: ${audit.category}</div>
-    </div>
-    <div style="font-family: monospace; font-size: 11px; color: #64748b;">
-      CONFIDENTIAL & PROPRIETARY<br>
-      DATE: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}
-    </div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div style="font-family: monospace; font-size: 11px; text-transform: uppercase; color: #64748b;">Annualized Leakage</div>
-      <div class="val danger">₹${annualLeaked} L</div>
-      <div style="font-size: 11px; color: #64748b;">At ${audit.worstStepName}</div>
-    </div>
-    <div class="card high">
-      <div style="font-family: monospace; font-size: 11px; text-transform: uppercase; color: #047857;">Verified Lift</div>
-      <div class="val success">+₹${annualRecoverable} L</div>
-      <div style="font-size: 11px; color: #047857;">Via 1-Tap UPI Intent</div>
-    </div>
-    <div class="card high">
-      <div style="font-family: monospace; font-size: 11px; text-transform: uppercase; color: #047857;">Net Software ROI</div>
-      <div class="val success">${roiMultiple}x ROI</div>
-      <div style="font-size: 11px; color: #047857;">Realized Net Cash Flow</div>
-    </div>
-  </div>
-  <h2 style="font-size: 16px;">Statistical Integrity & Significance Certificate</h2>
-  <table>
-    <thead><tr><th>Safeguard Metric</th><th>Specification</th><th>Status</th></tr></thead>
-    <tbody>
-      <tr><td>Significance Engine</td><td>Pooled Z-test + Fisher's Exact Test</td><td><strong style="color:#059669">✓ Mathematically Sound</strong></td></tr>
-      <tr><td>Multiple Comparison Correction</td><td>Benjamini-Hochberg FDR (α = 0.05)</td><td><strong style="color:#059669">✓ Controlled False Alarms</strong></td></tr>
-      <tr><td>Indian COD RTO Netting</td><td>Deducts ~30% Return-to-Origin</td><td><strong style="color:#059669">✓ Net Revenue Realized</strong></td></tr>
-      <tr><td>Fixed-Horizon Sample Size</td><td>MDE 15% at 80% Power</td><td><strong style="color:#059669">✓ Guardrail Active</strong></td></tr>
-      <tr><td>Circuit Breaker Rollback</td><td>Instant rollback if JS errors > 0.5%</td><td><strong style="color:#059669">✓ Sub-50ms Fallback</strong></td></tr>
-    </tbody>
-  </table>
-  <div class="cert">
-    <strong>🛡️ Senior Staff Analyst Certification:</strong> Confirms zero peeking bias, DPDP Act 2023 zero-PII masking compliance, and FDR control across segmented cohorts.
-  </div>
-  <script>window.print();</script>
-</body>
-</html>`);
+    win.document.write(html);
     win.document.close();
   };
 
@@ -375,7 +331,7 @@ export default function AuditReportPage() {
           details: {
             weeklyRevenueLeakLakhs: Number((audit.leakedMonthlyLakhs / 4.3).toFixed(1)),
             revertedToVariant: 'CONTROL',
-            message: 'Canary split triggered circuit breaker due to detected payment intent exception. 100% traffic safely reverted to Control in 1ms.'
+            message: 'Canary split triggered circuit breaker due to detected differential error surge (+1.2% > +0.5%). In-flight checkouts draining gracefully while 100% of new sessions route to Control (TTD: 12s, TTP: 15s).'
           }
         })
       });
@@ -631,18 +587,18 @@ ${audit.prdMarkdown}
           <div className="p-6 bg-white border border-emerald-200 rounded-2xl shadow-xs bg-emerald-50/20 flex flex-col justify-between">
             <div>
               <div className="font-mono text-xs uppercase tracking-wider text-emerald-800 font-semibold mb-2 flex items-center justify-between">
-                <span>Recoverable Revenue</span>
+                <span>Recoverable Revenue (Projected Range)</span>
                 <Zap className="w-4 h-4 text-emerald-600 fill-emerald-600" />
               </div>
-              <div className="text-3xl sm:text-4xl font-bold font-mono text-emerald-700 tracking-tight">
-                +₹{audit.recoverableMonthlyLakhs} <span className="text-lg font-normal text-emerald-600">Lakhs</span>
+              <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-700 tracking-tight">
+                +₹{(audit.recoverableMonthlyLakhs * 0.75).toFixed(1)} – ₹{(audit.recoverableMonthlyLakhs * 1.15).toFixed(1)} <span className="text-lg font-normal text-emerald-600">L / mo</span>
               </div>
               <p className="text-xs text-neutral-700 mt-2">
-                Monthly revenue saved by fixing conversion friction.
+                Pre-experiment projection (+12% to +18% lift), subject to 2-week canary verification.
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-emerald-200/60 text-[11px] font-mono text-emerald-700 font-semibold">
-              Projected +18% conversion lift with 1-tap fix
+              Net COD RTO margin accounted for
             </div>
           </div>
         </section>
@@ -1548,6 +1504,100 @@ ${audit.prdMarkdown}
           {/* TAB 2: MULTI-STACK PRODUCTION CODE */}
           {activeTab === 'code' && (
             <div className="space-y-4">
+              {/* ENTERPRISE DEPLOYMENT GOVERNANCE & HUMAN APPROVAL */}
+              <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="font-bold text-xs text-neutral-900">Enterprise Deployment Governance:</span>
+                      <span className="text-xs text-neutral-600 ml-1.5">Human approval required prior to live canary activation</span>
+                    </div>
+                  </div>
+                  
+                  {/* Status Pills */}
+                  <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                    <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                      stagingStatus === 'draft' ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-600'
+                    }`}>
+                      1. Draft
+                    </span>
+                    <span className="text-neutral-400">➔</span>
+                    <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                      stagingStatus === 'staging_preview' ? 'bg-blue-600 text-white' : 'bg-neutral-200 text-neutral-600'
+                    }`}>
+                      2. Staging Sandbox
+                    </span>
+                    <span className="text-neutral-400">➔</span>
+                    <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                      stagingStatus === 'approved_canary' ? 'bg-emerald-600 text-white' : 'bg-neutral-200 text-neutral-600'
+                    }`}>
+                      3. Canary Live (10%)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-neutral-200/80 text-xs text-neutral-500">
+                  <span>
+                    {stagingStatus === 'draft' && 'Code generated and syntax-validated. Ready for staging preview inspection.'}
+                    {stagingStatus === 'staging_preview' && 'Staging preview simulated. Awaiting senior engineer or merchant sign-off.'}
+                    {stagingStatus === 'approved_canary' && 'Approved: Serving 10% canary traffic with active differential error circuit breaker.'}
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    {stagingStatus === 'draft' && (
+                      <button
+                        onClick={() => setStagingStatus('staging_preview')}
+                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-mono text-xs font-semibold rounded-lg transition cursor-pointer"
+                      >
+                        Deploy to Staging Preview
+                      </button>
+                    )}
+                    {stagingStatus === 'staging_preview' && (
+                      <button
+                        onClick={() => setStagingStatus('approved_canary')}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-semibold rounded-lg transition cursor-pointer"
+                      >
+                        Approve for Canary (10%)
+                      </button>
+                    )}
+                    {stagingStatus === 'approved_canary' && (
+                      <button
+                        onClick={() => setStagingStatus('draft')}
+                        className="px-3 py-1 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 font-mono text-xs font-semibold rounded-lg transition cursor-pointer"
+                      >
+                        Reset Governance
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* PLACEMENT GUIDE BANNER */}
+              {activeCodeStack === 'shopify' && (
+                <div className="p-3.5 bg-amber-500/10 border border-amber-300/80 rounded-xl flex items-start gap-2.5 text-xs text-amber-950">
+                  <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-semibold">Shopify Liquid Snippet Placement Guide:</strong>
+                    <p className="mt-0.5 text-amber-900 leading-relaxed">
+                      For Shopify Basic, Shopify, and Advanced stores, custom Liquid snippets cannot modify the native <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">/checkouts/</code> page. Paste this snippet into <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">sections/cart-drawer.liquid</code> or <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">sections/main-cart.liquid</code> as an Express 1-Tap checkout trigger. Stores on Shopify Plus can deploy into native checkout using a Checkout UI Extension.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {activeCodeStack === 'vanilla' && (
+                <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2.5 text-xs text-blue-950">
+                  <Info className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-semibold">WooCommerce & Custom Stack Placement:</strong>
+                    <p className="mt-0.5 text-blue-900 leading-relaxed">
+                      Insert <code className="bg-blue-100 px-1 py-0.5 rounded font-mono text-[11px]">&lt;div id=&quot;funneldoctor-checkout-mount&quot;&gt;&lt;/div&gt;</code> into your cart template or hook into <code className="bg-blue-100 px-1 py-0.5 rounded font-mono text-[11px]">woocommerce_after_cart_totals</code>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Stack Selector Pills */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-neutral-200">
                 <div className="flex items-center gap-1.5 p-1 bg-neutral-100 rounded-xl font-mono text-xs">
@@ -1601,7 +1651,7 @@ ${audit.prdMarkdown}
                       : 'public/funneldoctor-embed.html'}
                 </span>
                 <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-                  DPDP 2023 Masked · 1-Tap UPI Intent
+                  Data Minimization Masked · Dynamic Gateway Intent
                 </span>
               </div>
 
@@ -1995,6 +2045,12 @@ function normalizeAuditData(raw: any, defaultDomain: string, defaultBrand: strin
         networkDropRate: 18.2
       },
       causalAttributionWarning: "Attribution Warning: Before/after comparisons do not account for external shifts (marketing campaigns, festive sales, payment gateway server outages). An A/B test with canary traffic allocation is required for causal proof."
+    },
+    placementGuide: raw.placementGuide || {
+      shopifyPlacement: "For Shopify Basic/Shopify/Advanced: Add snippet to 'sections/cart-drawer.liquid' or 'sections/main-product.liquid' as an Express Checkout action. (Shopify Plus stores require a Shopify Checkout UI Extension).",
+      wooCommercePlacement: "Paste snippet into 'templates/cart/cart.php' or hook into 'woocommerce_after_cart_totals'.",
+      customStackPlacement: "Add '<div id=\"funneldoctor-checkout-mount\"></div>' at your checkout trigger element.",
+      instagramFallbackStrategy: "Tier 1: Android Intent URI scheme · Tier 2: Dynamic QR code · Tier 3: Copy VPA and open in external Safari/Chrome."
     }
   };
 }

@@ -2,6 +2,11 @@
  * @file executive-reporter.ts
  * @description Generates a C-Suite Boardroom Executive Audit Report.
  * Formatted for CFO review, investment committee presentations, and CRO governance.
+ *
+ * Enterprise Standards:
+ * - Honest ranges for Annualized Exposure and Projected Lift (accounting for seasonal variance).
+ * - Pre-experiment projection labeling (no unearned "certifications" or single-point ROI numbers).
+ * - Ethical data minimization disclosure (no statutory legal compliance claims).
  */
 
 export interface ExecutiveReportData {
@@ -20,12 +25,19 @@ export interface ExecutiveReportData {
 }
 
 export function generateExecutiveReportHtml(data: ExecutiveReportData): string {
-  const annualLeakedLakhs = Number((data.leakedMonthlyLakhs * 12).toFixed(1));
-  const annualRecoverableLakhs = Number((data.recoverableMonthlyLakhs * 12).toFixed(1));
+  // Annualized exposure range accounting for festive shopping seasonality (40 - 56 weeks equivalent)
+  const weeklyLeakLakhs = data.leakedMonthlyLakhs / 4.3;
+  const annualLeakedLowLakhs = Number((weeklyLeakLakhs * 40).toFixed(1));
+  const annualLeakedHighLakhs = Number((weeklyLeakLakhs * 56).toFixed(1));
+
+  const weeklyRecoverableLakhs = data.recoverableMonthlyLakhs / 4.3;
+  const annualRecoverableLowLakhs = Number((weeklyRecoverableLakhs * 40).toFixed(1));
+  const annualRecoverableHighLakhs = Number((weeklyRecoverableLakhs * 56).toFixed(1));
   
   // Software spend benchmark (e.g. ₹6 Lakhs/year enterprise subscription)
   const estimatedAnnualSoftwareSpendLakhs = 6.0;
-  const roiMultiple = Number((annualRecoverableLakhs / estimatedAnnualSoftwareSpendLakhs).toFixed(1));
+  const roiLow = Number((annualRecoverableLowLakhs / estimatedAnnualSoftwareSpendLakhs).toFixed(1));
+  const roiHigh = Number((annualRecoverableHighLakhs / estimatedAnnualSoftwareSpendLakhs).toFixed(1));
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -91,7 +103,7 @@ export function generateExecutiveReportHtml(data: ExecutiveReportData): string {
       color: #64748b;
     }
     .cfo-val {
-      font-size: 28px;
+      font-size: 22px;
       font-weight: 800;
       font-family: monospace;
       margin: 6px 0 2px;
@@ -172,39 +184,39 @@ export function generateExecutiveReportHtml(data: ExecutiveReportData): string {
 
   <div class="cfo-grid">
     <div class="cfo-card">
-      <div class="cfo-label">Annualized Revenue Leak</div>
-      <div class="cfo-val danger">₹${annualLeakedLakhs} <span style="font-size: 14px;">Lakhs</span></div>
-      <div class="cfo-sub">Dropoff at ${data.worstStepName}</div>
+      <div class="cfo-label">Annualized Financial Exposure</div>
+      <div class="cfo-val danger">₹${annualLeakedLowLakhs} – ₹${annualLeakedHighLakhs} <span style="font-size: 13px;">L</span></div>
+      <div class="cfo-sub">Dropoff at ${data.worstStepName} (40x – 56x with Festive Sales Seasonality)</div>
     </div>
     <div class="cfo-card highlight">
-      <div class="cfo-label">Verified Realizable Lift</div>
-      <div class="cfo-val highlight">+₹${annualRecoverableLakhs} <span style="font-size: 14px;">Lakhs</span></div>
-      <div class="cfo-sub">Via 1-Tap UPI Intent & Keypad Fix</div>
+      <div class="cfo-label">Projected Recoverable Lift (Annualized)</div>
+      <div class="cfo-val highlight">+₹${annualRecoverableLowLakhs} – ₹${annualRecoverableHighLakhs} <span style="font-size: 13px;">L</span></div>
+      <div class="cfo-sub">Pre-experiment projection (2-week canary verification)</div>
     </div>
     <div class="cfo-card highlight">
-      <div class="cfo-label">Net Projected ROI</div>
-      <div class="cfo-val highlight">${roiMultiple}x <span style="font-size: 14px;">Return</span></div>
-      <div class="cfo-sub">Based on verified conversion recovery</div>
+      <div class="cfo-label">Estimated Net ROI Potential</div>
+      <div class="cfo-val highlight">${roiLow}x – ${roiHigh}x <span style="font-size: 13px;">ROI</span></div>
+      <div class="cfo-sub">Projected gross margin recovery vs software spend</div>
     </div>
   </div>
 
-  <h2>1. Primary Forensic Bottleneck</h2>
+  <h2>1. Primary Forensic Bottleneck & Root Causes</h2>
   <p style="font-size: 13px; color: #334155;">
-    Auditing verified that <strong>${data.dropoffRate}%</strong> of shoppers reaching <strong>${data.worstStepName}</strong> abandon the funnel without purchasing. The primary friction root causes are:
+    Auditing diagnosed that <strong>${data.dropoffRate}%</strong> of shoppers reaching <strong>${data.worstStepName}</strong> abandon the funnel without purchasing. The primary friction root causes are:
   </p>
   <ul>
     <li style="font-size: 12px; color: #334155; margin-bottom: 4px;">
-      <strong>Missing 1-Tap UPI Intent:</strong> Shoppers in mobile WebViews (Instagram/Facebook) are forced to manually type UPI handles, triggering high dropoffs.
+      <strong>In-App Browser Deep-Link Sandbox:</strong> Shoppers inside Instagram and Facebook WebViews face blocked or delayed custom UPI app deep links.
     </li>
     <li style="font-size: 12px; color: #334155; margin-bottom: 4px;">
-      <strong>Surprise Shipping Surcharge:</strong> Concealed courier charges at the final gateway cause immediate cart abandonment.
+      <strong>Surprise Shipping Surcharge:</strong> Concealed courier charges revealed at the final gateway screen cause immediate cart abandonment.
     </li>
     <li style="font-size: 12px; color: #334155;">
-      <strong>QWERTY Keyboard on Numeric Fields:</strong> Forcing QWERTY keyboards instead of native phone number pads increases input friction.
+      <strong>QWERTY Keyboard on Numeric Inputs:</strong> Missing numeric input modes force users to manually toggle phone and OTP keypads.
     </li>
   </ul>
 
-  <h2>2. Statistical Integrity & Significance Certificate</h2>
+  <h2>2. Diagnostic Statistical Audit Summary (Pre-Experiment Projection)</h2>
   <table>
     <thead>
       <tr>
@@ -217,7 +229,7 @@ export function generateExecutiveReportHtml(data: ExecutiveReportData): string {
       <tr>
         <td>Hypothesis Testing Engine</td>
         <td>Pooled Z-test + Fisher's Exact Test for small cohorts</td>
-        <td><span style="color:#059669; font-weight:700;">✓ Verified Sound</span></td>
+        <td><span style="color:#059669; font-weight:700;">✓ Mathematically Sound</span></td>
       </tr>
       <tr>
         <td>Multiple Comparison Correction</td>
@@ -235,24 +247,25 @@ export function generateExecutiveReportHtml(data: ExecutiveReportData): string {
         <td><span style="color:#059669; font-weight:700;">✓ Target: ${data.requiredSampleSize.toLocaleString()} Visitors</span></td>
       </tr>
       <tr>
-        <td>Automated Safety Circuit Breaker</td>
-        <td>Instant rollback if JS errors > 0.5% or CR drops > 5%</td>
-        <td><span style="color:#059669; font-weight:700;">✓ Reversion Latency < ${data.circuitBreakerLatencyMs}ms</span></td>
+        <td>Differential Error Circuit Breaker</td>
+        <td>Excess errors > 0.5% over concurrent Control baseline</td>
+        <td><span style="color:#059669; font-weight:700;">✓ In-Flight Session Draining</span></td>
       </tr>
     </tbody>
   </table>
 
   <div class="certificate">
     <div class="certificate-title">
-      <span>🛡️ Senior Staff Analyst Statistical Certification</span>
+      <span>🛡️ Statistical Audit & Data Minimization Protocol</span>
     </div>
     <p style="margin: 0; color: #065f46; font-size: 11px;">
-      This audit confirms zero peeking bias, zero PII retention (DPDP Act 2023 compliant), and strict FDR control across ${data.cohortCount} segmented cohorts. Projected recovery numbers reflect net realizable cash flow after factoring Indian e-commerce operational overheads.
+      This diagnostic summary confirms fixed-horizon sample sizing, client-side cryptographic masking of PII attributes, and strict FDR control across ${data.cohortCount} segmented cohorts. Financial projections reflect net realizable cash flow after factoring Indian e-commerce COD RTO dynamics.
     </p>
   </div>
 
   <div class="footer">
-    FunnelDoctor AI Enterprise Edition · Cryptographically Masked Telemetry · DPDP Act 2023 & GDPR Certified
+    FunnelDoctor AI Enterprise Edition · Engineered for Data Minimization · Client-Side PII Masking<br>
+    <span style="font-size: 10px; color: #94a3b8;">Disclaimer: Technical data minimization controls are provided as safeguards. Merchants must consult their legal counsel for statutory compliance verification.</span>
   </div>
 </body>
 </html>`;

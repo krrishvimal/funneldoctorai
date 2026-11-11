@@ -64,6 +64,12 @@ export interface DomainAuditReport {
   reactCode: string;
   shopifyLiquidCode?: string;
   vanillaJsCode?: string;
+  placementGuide?: {
+    shopifyPlacement: string;
+    wooCommercePlacement: string;
+    customStackPlacement: string;
+    instagramFallbackStrategy: string;
+  };
   prdMarkdown: string;
   domInspection?: {
     isReachable: boolean;
@@ -837,6 +843,7 @@ export function enrichWithStatisticalBreakdown(report: DomainAuditReport): Domai
 
   report.shopifyLiquidCode = remediation.shopifyLiquid;
   report.vanillaJsCode = remediation.vanillaJs;
+  report.placementGuide = remediation.placementGuide;
   if (!report.reactCode || report.reactCode.includes("RemediatedStep")) {
     report.reactCode = remediation.reactCode;
   }
