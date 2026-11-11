@@ -31,12 +31,15 @@ export interface TelemetryBatch {
   viewport: TelemetryViewport;
   events: TelemetryEvent[];
   sentAt: number;
+  merchantKey?: string;
 }
 
 export interface FunnelDoctorTrackerOptions {
   siteId: string;
+  merchantKey?: string;
   endpoint?: string;
   batchIntervalMs?: number;
   maxBatchSize?: number;
   debug?: boolean;
+  onKillSwitch?: () => void;
 }

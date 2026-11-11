@@ -6,6 +6,7 @@ export class EventDispatcher {
   private options: FunnelDoctorTrackerOptions;
   private sessionId: string;
   private timer: any = null;
+  private isKilled = false;
 
   constructor(options: FunnelDoctorTrackerOptions, sessionId: string) {
     this.options = {
@@ -20,6 +21,7 @@ export class EventDispatcher {
   }
 
   public enqueue(event: TelemetryEvent) {
+    if (this.isKilled) return;
     this.queue.push(event);
 
     if (this.options.debug) {
@@ -32,7 +34,7 @@ export class EventDispatcher {
   }
 
   public flush() {
-    if (this.queue.length === 0) return;
+    if (this.isKilled || this.queue.length === 0) return;
 
     const eventsToSend = [...this.queue];
     this.queue = [];
@@ -46,6 +48,7 @@ export class EventDispatcher {
 
     const rawBatch: TelemetryBatch = {
       siteId: this.options.siteId,
+      merchantKey: this.options.merchantKey,
       sessionId: this.sessionId,
       url: typeof window !== "undefined" ? window.location.href : "",
       viewport,
@@ -53,29 +56,39 @@ export class EventDispatcher {
       sentAt: Date.now(),
     };
 
-    // Client-side Zero-Knowledge PII Masking BEFORE network dispatch
+    // Client-side PII Masking BEFORE network dispatch
     const cleanBatch = sanitizeTelemetryPayload(rawBatch);
     const payloadJson = JSON.stringify(cleanBatch);
     const endpoint = this.options.endpoint || "/api/ingest";
 
     try {
-      // 1. Prefer navigator.sendBeacon (zero-blocking, runs even if tab closes)
-      if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
-        const blob = new Blob([payloadJson], { type: "application/json" });
-        const enqueued = navigator.sendBeacon(endpoint, blob);
-        if (enqueued) return;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (this.options.merchantKey) {
+        headers["X-Merchant-Key"] = this.options.merchantKey;
       }
 
-      // 2. Fallback to fetch with keepalive: true
+      // Check fetch support
       if (typeof fetch === "function") {
         fetch(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: payloadJson,
           keepalive: true,
-        }).catch((err) => {
-          if (this.options.debug) console.warn("[FunnelDoctor] Dispatch error:", err);
-        });
+        })
+          .then(async (res) => {
+            if (res.status === 403) {
+              const body = await res.json().catch(() => ({}));
+              if (body?.killSwitch) {
+                this.engageKillSwitch();
+              }
+            }
+          })
+          .catch((err) => {
+            if (this.options.debug) console.warn("[FunnelDoctor] Dispatch error:", err);
+          });
+      } else if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+        const blob = new Blob([payloadJson], { type: "application/json" });
+        navigator.sendBeacon(endpoint, blob);
       }
     } catch (err) {
       if (this.options.debug) console.warn("[FunnelDoctor] Dispatch failed:", err);
@@ -90,6 +103,19 @@ export class EventDispatcher {
     this.flush();
   }
 
+  public engageKillSwitch() {
+    this.isKilled = true;
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.queue = [];
+    if (this.options.debug) {
+      console.warn("[FunnelDoctor] Remote kill-switch engaged. Telemetry halted.");
+    }
+    this.options.onKillSwitch?.();
+  }
+
   private startTimer() {
     if (typeof window === "undefined") return;
     this.timer = setInterval(() => {
@@ -98,10 +124,5 @@ export class EventDispatcher {
 
     // Flush automatically when user navigates away
     window.addEventListener("pagehide", () => this.flush());
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
-        this.flush();
-      }
-    });
   }
 }

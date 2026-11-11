@@ -9,9 +9,13 @@
  * Enterprise Safeguards Embedded:
  * - Proper numeric amount formatting (cart.total_price | divided_by: 100.0) avoiding text currency string crashes.
  * - Dynamic Payment Gateway (Razorpay/Cashfree) session support for automated webhook order reconciliation.
- * - Instagram & Meta In-App WebView 3-tier fallback hierarchy (Android Intent, Dynamic QR Modal, Copy UPI ID).
+ * - Mobile In-App Browser (Instagram/FB) Breakout:
+ *     * Android: Chrome Intent URI scheme (intent://...#Intent;scheme=https;package=com.android.chrome;end;)
+ *     * iOS: Visual step-by-step guidance to tap '•••' -> 'Open in Safari' with Shopify Cart Permalink persistence.
+ *     * Deprecated UPI Collect and manual VPA copying completely removed from mobile flows.
  * - Explicit placement guide: sections/cart-drawer.liquid for standard stores vs Shopify Plus Checkout UI Extensions.
- * - Ethical privacy disclosure: "Engineered for Data Minimization" (no legal compliance warranties).
+ * - Ethical privacy disclosure: "Designed to avoid capturing field contents; merchant PCI scope should be confirmed with their QSA."
+ * - Experimental feature flag disclosure requiring real physical device verification.
  */
 
 export interface MultiStackConfig {
@@ -34,6 +38,7 @@ export interface MultiStackRemediationResult {
     wooCommercePlacement: string;
     customStackPlacement: string;
     instagramFallbackStrategy: string;
+    experimentalFlagNotice: string;
   };
   abTestPlan: {
     durationWeeks: number;
@@ -65,41 +70,47 @@ export function synthesizeMultiStackRemediation(config: MultiStackConfig): Multi
 // Synthesized by FunnelDoctor AI · Production Ready
 // Target Friction: ${config.worstStepName} (-${config.dropoffRate}% dropoff)
 // Engineered for Data Minimization & Client-Side PII Masking
+// Designed to avoid capturing field contents; merchant PCI scope should be confirmed with their QSA.
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Zap, ShieldCheck, Check, ArrowRight, Truck, QrCode, Copy, ExternalLink, AlertCircle } from 'lucide-react';
+import { Zap, ShieldCheck, ArrowRight, ExternalLink, AlertCircle, Compass, Check } from 'lucide-react';
 
 interface CheckoutProps {
   orderAmount?: number;
   onSuccess?: (orderId: string) => void;
   createGatewayOrderEndpoint?: string; // e.g. '/api/checkout/create-order'
+  cartPermalink?: string; // Shopify cart permalink e.g. '/cart/41234567:1'
 }
 
 export default function FunnelDoctorOneTapCheckout({ 
   orderAmount = ${aov}, 
   onSuccess,
-  createGatewayOrderEndpoint = '/api/checkout/create-order'
+  createGatewayOrderEndpoint = '/api/checkout/create-order',
+  cartPermalink = '/cart'
 }: CheckoutProps) {
   const [selectedApp, setSelectedApp] = useState<'phonepe' | 'gpay' | 'paytm'>('phonepe');
   const [phone, setPhone] = useState('');
   const [pincode, setPincode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInstagramWebView, setIsInstagramWebView] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [showFallbackModal, setShowFallbackModal] = useState(false);
-  const [copiedVpa, setCopiedVpa] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  // Detect Instagram / Meta In-App WebView where custom URI schemes are frequently sandboxed
+  // Detect In-App WebView (Instagram / Meta) where custom URI schemes are frequently blocked
   useEffect(() => {
     if (typeof navigator !== 'undefined') {
       const ua = navigator.userAgent || '';
       const isIab = /Instagram|FB_IAB|FBAN|FBAV/i.test(ua);
+      const isAnd = /Android/i.test(ua);
       setIsInstagramWebView(isIab);
+      setIsAndroid(isAnd);
     }
   }, []);
 
-  // Transparent delivery calculation (eliminating surprise fees at final step)
+  // Transparent delivery calculation
   const isFreeDelivery = orderAmount >= ${freeShipping};
   const deliveryFee = isFreeDelivery ? 0 : 99;
   const grandTotal = orderAmount + deliveryFee;
@@ -109,8 +120,7 @@ export default function FunnelDoctorOneTapCheckout({
     setIsProcessing(true);
 
     try {
-      // 1. Dynamic Payment Gateway Session (Automated Order Reconciliation & Webhook Integrity)
-      // Calls merchant server to generate an authenticated order session rather than an unreconciled static P2P transfer
+      // 1. Dynamic Gateway Order Creation (Instant Webhook Reconciliation)
       let gatewayOrderId = 'ORD_' + Date.now().toString(36).toUpperCase();
       try {
         const res = await fetch(createGatewayOrderEndpoint, {
@@ -129,10 +139,10 @@ export default function FunnelDoctorOneTapCheckout({
           if (data.orderId) gatewayOrderId = data.orderId;
         }
       } catch (e) {
-        // Fallback to client order reference if gateway endpoint is not yet connected
+        // Fallback to client order ref if gateway endpoint is not yet connected
       }
 
-      // 2. Telemetry tracking (Client-Side Masked)
+      // 2. Client-Side Masked Telemetry
       if (typeof window !== 'undefined' && (window as any).FunnelDoctor) {
         (window as any).FunnelDoctor.track('1tap_checkout_initiated', {
           app: selectedApp,
@@ -142,24 +152,19 @@ export default function FunnelDoctorOneTapCheckout({
         });
       }
 
-      // 3. In-App WebView Safe Routing Hierarchy
+      // 3. Mobile In-App WebView Routing Hierarchy
       if (isInstagramWebView) {
-        // If Android inside Instagram: use Android Intent URI
-        const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
         if (isAndroid) {
-          const intentPkg = selectedApp === 'phonepe' 
-            ? 'com.phonepe.app' 
-            : selectedApp === 'gpay' 
-              ? 'com.google.android.apps.nbu.paisa.user' 
-              : 'net.one97.paytm';
-          const androidIntent = \`intent://pay?pa=\${encodeURIComponent(merchantVpa)}&pn=\${encodeURIComponent('${brand}')}&am=\${grandTotal.toFixed(2)}&cu=INR&tr=\${gatewayOrderId}#Intent;scheme=upi;package=\${intentPkg};end\`;
-          window.location.href = androidIntent;
+          // Android: Direct Chrome Intent with Cart Permalink to escape Instagram WebView
+          const host = window.location.host;
+          const chromeIntent = \`intent://\${host}\${cartPermalink}?checkout#Intent;scheme=https;package=com.android.chrome;end\`;
+          window.location.href = chromeIntent;
         } else {
-          // If iOS inside Instagram: open fallback UPI Collect / Browser breakout modal
+          // iOS: Programmatic breakout is blocked by WebKit. Open modal with guidance & cart permalink.
           setShowFallbackModal(true);
         }
       } else {
-        // Standard Browser: Native UPI Intent Deep-Link (NPCI UPI Spec v2.0)
+        // Standard Mobile Browser: Direct UPI Intent
         const standardIntent = \`upi://pay?pa=\${encodeURIComponent(merchantVpa)}&pn=\${encodeURIComponent('${brand}')}&am=\${grandTotal.toFixed(2)}&cu=INR&tr=\${gatewayOrderId}&tn=\${encodeURIComponent('Order #' + gatewayOrderId)}\`;
         window.location.href = standardIntent;
       }
@@ -174,10 +179,11 @@ export default function FunnelDoctorOneTapCheckout({
     }
   };
 
-  const copyVpa = () => {
-    navigator.clipboard?.writeText(merchantVpa);
-    setCopiedVpa(true);
-    setTimeout(() => setCopiedVpa(false), 2000);
+  const copyCartPermalink = () => {
+    const fullUrl = window.location.origin + cartPermalink;
+    navigator.clipboard?.writeText(fullUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   return (
@@ -207,12 +213,12 @@ export default function FunnelDoctorOneTapCheckout({
         <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="leading-snug">
-            <strong>In-App Browser Detected:</strong> Instagram sandboxes deep-links. We enable native intent and dynamic QR fallback to ensure zero checkout failures.
+            <strong>In-App Browser Detected:</strong> Instagram blocks direct UPI app switching. We use native browser breakout to ensure your cart and discount remain intact.
           </div>
         </div>
       )}
 
-      {/* 3. Streamlined Mobile Inputs (Native Numeric Keypad) */}
+      {/* 3. Streamlined Mobile Inputs */}
       <div className="space-y-3.5 my-5">
         <div>
           <label className="block text-xs font-semibold text-neutral-700 mb-1">
@@ -297,61 +303,55 @@ export default function FunnelDoctorOneTapCheckout({
         </button>
       </div>
 
-      {/* 6. Ethical Compliance Footer (Designed for Data Minimization) */}
+      {/* 6. Ethical Compliance Footer */}
       <div className="flex items-center justify-center gap-1.5 mt-3 text-[11px] font-mono text-neutral-400">
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-        <span>256-Bit SSL · Designed for Data Minimization · Client Masked</span>
+        <span>Designed to avoid capturing field contents · Merchant PCI scope confirmed with QSA</span>
       </div>
 
-      {/* 7. Instagram / In-App WebView Safe Fallback Modal */}
+      {/* 7. iOS In-App Browser Breakout Modal */}
       {showFallbackModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-xl">
-            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto text-emerald-600">
-              <ExternalLink className="w-6 h-6" />
+            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto text-amber-600">
+              <Compass className="w-6 h-6" />
             </div>
             <div>
               <h4 className="font-bold text-base text-neutral-900">In-App Browser Safe Pay</h4>
-              <p className="text-xs text-neutral-500 mt-1">
-                Instagram sandbox blocks direct app launches. Choose a safe payment method below:
+              <p className="text-xs text-neutral-600 mt-1.5 leading-relaxed">
+                Instagram blocks direct UPI payment apps. Open in Safari to finish your checkout safely:
               </p>
             </div>
 
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 text-left space-y-2">
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="text-neutral-500">Merchant VPA:</span>
-                <span className="font-bold text-neutral-900">{merchantVpa}</span>
+            <div className="p-3.5 bg-neutral-50 rounded-2xl border border-neutral-200 text-left space-y-2 text-xs">
+              <div className="flex items-start gap-2">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">1</span>
+                <span>Tap the <strong>•••</strong> (three dots) in top-right corner.</span>
               </div>
-              <div className="flex justify-between items-center text-xs font-mono">
-                <span className="text-neutral-500">Amount:</span>
-                <span className="font-bold text-emerald-700">₹{grandTotal.toLocaleString('en-IN')}</span>
+              <div className="flex items-start gap-2">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">2</span>
+                <span>Select <strong>Open in Safari / Default Browser</strong>.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">3</span>
+                <span>Your cart, items, and discounts are automatically saved.</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
               <button
-                onClick={() => {
-                  window.open(window.location.href, '_system');
-                }}
+                onClick={copyCartPermalink}
                 className="w-full py-2.5 bg-neutral-900 hover:bg-black text-white font-mono text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition shadow-xs"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open in Safari / Chrome (Recommended)</span>
-              </button>
-
-              <button
-                onClick={copyVpa}
-                className="w-full py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-mono text-xs font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition"
-              >
-                {copiedVpa ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedVpa ? 'UPI ID Copied to Clipboard!' : 'Copy UPI ID & Pay in Any App'}</span>
+                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <ExternalLink className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? 'Cart Link Copied!' : 'Copy Cart Link'}</span>
               </button>
 
               <button
                 onClick={() => setShowFallbackModal(false)}
                 className="text-xs text-neutral-400 hover:text-neutral-600 font-mono pt-1 cursor-pointer"
               >
-                Close Modal
+                Close
               </button>
             </div>
           </div>
@@ -371,14 +371,16 @@ export default function FunnelDoctorOneTapCheckout({
   PLACEMENT INSTRUCTIONS:
   ================================================================================
   1. Shopify Standard (Basic, Shopify, Advanced):
-     - Shopify locks down checkout.liquid.
-     - Place this snippet inside your Cart Drawer ('sections/cart-drawer.liquid')
-       or on your Product Page ('sections/main-product.liquid') as an Express Checkout button.
+     - Shopify restricts checkout.liquid on non-Plus plans.
+     - Render this snippet inside your Cart Drawer ('sections/cart-drawer.liquid')
+       or on your Product Page ('sections/main-product.liquid') as an Express Checkout action.
        Example: {% render 'funneldoctor-1tap-checkout' %}
   2. Shopify Plus:
-     - Checkout customization requires a Shopify Checkout UI Extension.
+     - Checkout customization uses Shopify Checkout UI Extensions.
   3. Dynamic Order Reconciliation:
-     - Automatically creates a draft order / payment session via your store gateway.
+     - Creates draft orders/sessions via payment gateway intent rather than unreconciled static VPAs.
+  4. Notice:
+     - Remediation code is experimental. Test payment fallback flows on physical Android/iOS devices.
 {% endcomment %}
 
 <div id="fd-1tap-container" class="fd-checkout-card">
@@ -401,7 +403,7 @@ export default function FunnelDoctorOneTapCheckout({
 
   <!-- In-App Browser Warning Banner -->
   <div id="fd-instagram-notice" class="fd-alert-notice" style="display:none;">
-    <span>⚠️ Instagram/Facebook in-app browser detected. Smart fallback intent enabled.</span>
+    <span>⚠️ In-app browser detected. Smart intent breakout enabled for UPI.</span>
   </div>
 
   <div class="fd-form-body">
@@ -449,7 +451,7 @@ export default function FunnelDoctorOneTapCheckout({
     </button>
 
     <div class="fd-footer-trust">
-      <span>🔒 256-Bit SSL · Designed for Data Minimization · Client Masked</span>
+      <span>🔒 Designed to avoid capturing field contents · Confirm scope with QSA</span>
     </div>
   </div>
 </div>
@@ -598,13 +600,12 @@ export default function FunnelDoctorOneTapCheckout({
 
 <script>
   (function() {
-    // FIX: Using divided_by: 100.0 outputs a clean numeric float (e.g. 499.00), preventing UPI text crashes
+    // Divided by 100.0 outputs a clean numeric float, preventing text currency crashes
     var totalAmountRupees = Number({{ cart.total_price | divided_by: 100.0 | json }});
     var merchantVpa = '${vpa}';
     var brandName = '${brand}';
     var selectedApp = 'phonepe';
 
-    // In-App browser check
     var ua = navigator.userAgent || '';
     var isInstagram = /Instagram|FB_IAB|FBAN|FBAV/i.test(ua);
     var isAndroid = /Android/i.test(ua);
@@ -628,22 +629,16 @@ export default function FunnelDoctorOneTapCheckout({
         return;
       }
 
-      // Generate unique transaction reference for order reconciliation
       var orderRef = 'SHOPIFY_' + Date.now().toString(36).toUpperCase();
 
       if (isInstagram && isAndroid) {
-        // Android Instagram WebView safe intent link
-        var pkg = selectedApp === 'phonepe' ? 'com.phonepe.app' : selectedApp === 'gpay' ? 'com.google.android.apps.nbu.paisa.user' : 'net.one97.paytm';
-        var intentUrl = 'intent://pay?pa=' + encodeURIComponent(merchantVpa) +
-                        '&pn=' + encodeURIComponent(brandName) +
-                        '&am=' + totalAmountRupees.toFixed(2) +
-                        '&cu=INR&tr=' + orderRef +
-                        '#Intent;scheme=upi;package=' + pkg + ';end';
+        // Android: Chrome Intent with Shopify Cart checkout link preserving items
+        var cartUrl = window.location.host + '/cart?checkout';
+        var intentUrl = 'intent://' + cartUrl + '#Intent;scheme=https;package=com.android.chrome;end';
         window.location.href = intentUrl;
       } else if (isInstagram && !isAndroid) {
-        // iOS Instagram: Copy UPI ID fallback
-        navigator.clipboard?.writeText(merchantVpa);
-        alert('Merchant UPI ID copied (' + merchantVpa + '). Please open your UPI App (GPay/PhonePe) to pay ₹' + totalAmountRupees.toFixed(2) + ' for Order #' + orderRef);
+        // iOS: Guidance to use Safari menu
+        alert('Instagram blocks UPI app switching. Please tap ••• in top-right > Open in Safari to complete your order with 1-Tap UPI.');
       } else {
         // Standard Browser UPI Intent
         var upiUrl = 'upi://pay?pa=' + encodeURIComponent(merchantVpa) +
@@ -693,7 +688,7 @@ export default function FunnelDoctorOneTapCheckout({
           '<div style="font-size:11px;color:' + (isFreeShipping ? '#059669' : '#d97706') + ';">' + (isFreeShipping ? '✓ Free Shipping' : '+₹99 Delivery') + '</div>' +
         '</div>' +
       '</div>' +
-      (isInstagram ? '<div style="margin-bottom:12px;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:11px;color:#92400e;">⚠️ Instagram In-App Browser detected. Intent fallback enabled.</div>' : '') +
+      (isInstagram ? '<div style="margin-bottom:12px;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:11px;color:#92400e;">⚠️ In-app browser detected. Smart intent breakout enabled.</div>' : '') +
       '<div style="margin-bottom:12px;">' +
         '<label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;">Mobile Number</label>' +
         '<input id="fd-v-phone" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:10px;font-size:14px;font-family:monospace;" />' +
@@ -705,7 +700,7 @@ export default function FunnelDoctorOneTapCheckout({
       '<button id="fd-v-submit" style="width:100%;padding:14px;background:#059669;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.04em;">' +
         'PAY ₹' + total.toLocaleString('en-IN') + ' VIA 1-TAP UPI' +
       '</button>' +
-      '<div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:10px;font-family:monospace;">🔒 Designed for Data Minimization · Client-Side Masked</div>' +
+      '<div style="text-align:center;font-size:11px;color:#94a3b8;margin-top:10px;font-family:monospace;">🔒 Designed for Data Minimization · Avoids Capturing Field Contents</div>' +
     '</div>';
 
   document.getElementById('fd-v-submit').addEventListener('click', function() {
@@ -716,14 +711,9 @@ export default function FunnelDoctorOneTapCheckout({
     }
     var txnId = 'V_TXN_' + Date.now().toString(36).toUpperCase();
     if (isInstagram && !isAndroid) {
-      navigator.clipboard?.writeText(config.merchantVpa);
-      alert('Merchant UPI ID copied (' + config.merchantVpa + '). Please open your UPI app to pay ₹' + total.toFixed(2));
+      alert('Instagram in-app browser blocks UPI intent. Please tap ••• in top-right > Open in Safari to finish checkout.');
     } else if (isInstagram && isAndroid) {
-      var intentUrl = 'intent://pay?pa=' + encodeURIComponent(config.merchantVpa) +
-                      '&pn=' + encodeURIComponent(config.brand) +
-                      '&am=' + total.toFixed(2) +
-                      '&cu=INR&tr=' + txnId +
-                      '#Intent;scheme=upi;package=com.phonepe.app;end';
+      var intentUrl = 'intent://' + window.location.host + '/checkout#Intent;scheme=https;package=com.android.chrome;end';
       window.location.href = intentUrl;
     } else {
       var intent = 'upi://pay?pa=' + encodeURIComponent(config.merchantVpa) +
@@ -742,7 +732,8 @@ export default function FunnelDoctorOneTapCheckout({
     shopifyPlacement: "For Shopify Basic/Shopify/Advanced: Add snippet to 'sections/cart-drawer.liquid' or 'sections/main-product.liquid' as an Express Checkout action. (Shopify Plus stores require a Shopify Checkout UI Extension).",
     wooCommercePlacement: "Paste snippet into 'templates/cart/cart.php' or hook into 'woocommerce_after_cart_totals'.",
     customStackPlacement: "Add '<div id=\"funneldoctor-checkout-mount\"></div>' at your checkout trigger element.",
-    instagramFallbackStrategy: "Tier 1: Android Intent URI scheme · Tier 2: Gateway UPI Collect push request · Tier 3: Copy VPA & Open in external Safari/Chrome breakout link.",
+    instagramFallbackStrategy: "Tier 1: Android Intent URI scheme (intent:// to Chrome with Cart Permalink) · Tier 2: iOS In-App Guidance (••• -> Open in Safari) with Cart Persistence · Tier 3: Gateway Hosted Fallback",
+    experimentalFlagNotice: "Experimental Feature: Generated checkout remediation snippets must be physically verified on real Android and iOS devices before production rollout.",
   };
 
   // 5. CANARY A/B TEST PLAN
@@ -761,7 +752,8 @@ export default function FunnelDoctorOneTapCheckout({
       "Canary Phase: 90% traffic on Control, 10% on Treatment for initial 24 hours.",
       "Excess Error Safeguard: Compares Treatment error rate against concurrent Control baseline.",
       "Graceful Session Draining: When circuit breaker trips, new visitors route to Control while active checkouts finish.",
-      "Fixed Horizon Rule: Do not declare early victory before reaching sample horizon."
+      "Fixed Horizon Rule: Do not declare early victory before reaching sample horizon.",
+      "Physical Device Testing Gate: Remediation code generator must remain behind staging review until payment intent is physically verified on Android and iOS devices."
     ]
   };
 

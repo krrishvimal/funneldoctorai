@@ -5,6 +5,34 @@ export interface DwellTrackerCallback {
   (event: TelemetryEvent): void;
 }
 
+/**
+ * Checks whether an element contains sensitive financial, authentication, or PII inputs.
+ * When true, the element is completely bypassed—neither dwell time, character length,
+ * validity status, nor abandonment telemetry is ever accessed, stored, or transmitted.
+ */
+export function isSensitiveElement(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  const tag = el.tagName?.toLowerCase();
+  if (tag !== "input" && tag !== "textarea") return false;
+
+  const input = el as HTMLInputElement;
+  if (input.type === "password") return true;
+
+  const combined = [
+    input.name,
+    input.id,
+    input.autocomplete,
+    input.getAttribute("data-sensitive"),
+    input.getAttribute("aria-label"),
+    input.placeholder,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return /(card|cc-|pan|cvv|cvc|exp|otp|pin|pass|ssn|aadhaar|vpa|secret)/i.test(combined);
+}
+
 export class DwellTracker {
   private activeElement: Element | null = null;
   private focusStartTime: number = 0;
@@ -42,7 +70,8 @@ export class DwellTracker {
 
   private handleFocusIn = (e: Event) => {
     const target = e.target as HTMLElement;
-    if (!this.isFormElement(target)) return;
+    // Completely bypass sensitive card, CVV, OTP, and password fields
+    if (!this.isFormElement(target) || isSensitiveElement(target)) return;
 
     this.activeElement = target;
     this.focusStartTime = typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -51,6 +80,12 @@ export class DwellTracker {
   private handleFocusOut = (e: Event) => {
     const target = e.target as HTMLElement;
     if (!this.isFormElement(target) || target !== this.activeElement) return;
+
+    // Redundant guard: never touch or measure sensitive fields
+    if (isSensitiveElement(target)) {
+      this.activeElement = null;
+      return;
+    }
 
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     const dwellMs = Math.round(now - this.focusStartTime);
@@ -62,7 +97,7 @@ export class DwellTracker {
       const charLength = isInput ? String(inputEl.value).length : 0;
       const isValid = typeof inputEl.checkValidity === "function" ? inputEl.checkValidity() : true;
 
-      // Metadata-Only Tracking: Never read or transmit raw input.value string
+      // Metadata-Only Tracking: Never stores or transmits field contents
       this.onEvent({
         type: "field_dwell",
         target: sanitizeElementTarget(target),
@@ -81,7 +116,7 @@ export class DwellTracker {
 
   private handleInvalid = (e: Event) => {
     const target = e.target as HTMLInputElement;
-    if (!target) return;
+    if (!target || isSensitiveElement(target)) return;
 
     // Categorical validity reason without touching typed sensitive text
     const validity = target.validity;
@@ -110,7 +145,7 @@ export class DwellTracker {
 
   private handleInput = (e: Event) => {
     const target = e.target as HTMLElement;
-    if (this.isFormElement(target)) {
+    if (this.isFormElement(target) && !isSensitiveElement(target)) {
       this.dirtyFields.add(target);
     }
   };
@@ -126,8 +161,13 @@ export class DwellTracker {
   };
 
   private flushAbandonment() {
-    // If user spent time on an un-submitted dirty field and abandoned
+    // If user spent time on an un-submitted non-sensitive dirty field and abandoned
     if (this.activeElement && this.dirtyFields.has(this.activeElement)) {
+      if (isSensitiveElement(this.activeElement as HTMLElement)) {
+        this.activeElement = null;
+        return;
+      }
+
       const now = typeof performance !== "undefined" ? performance.now() : Date.now();
       const dwellMs = Math.round(now - this.focusStartTime);
       const inputEl = this.activeElement as HTMLInputElement;

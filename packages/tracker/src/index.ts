@@ -1,5 +1,5 @@
 import { FunnelDoctorTrackerOptions, TelemetryEvent } from "./types.js";
-import { DwellTracker } from "./dwell-tracker.js";
+import { DwellTracker, isSensitiveElement } from "./dwell-tracker.js";
 import { RageClickTracker } from "./rage-click-tracker.js";
 import { EventDispatcher } from "./dispatcher.js";
 import {
@@ -23,6 +23,7 @@ export {
   scrubPiiText,
   sanitizeTelemetryPayload,
   sanitizeElementTarget,
+  isSensitiveElement,
 };
 
 export class FunnelDoctorTracker {
@@ -36,7 +37,6 @@ export class FunnelDoctorTracker {
   constructor(options: FunnelDoctorTrackerOptions) {
     this.options = options;
     this.sessionId = this.getOrCreateSessionId();
-    this.dispatcher = new EventDispatcher(options, this.sessionId);
 
     const handleEvent = (event: TelemetryEvent) => {
       this.dispatcher.enqueue(event);
@@ -44,6 +44,17 @@ export class FunnelDoctorTracker {
 
     this.dwellTracker = new DwellTracker(handleEvent);
     this.rageClickTracker = new RageClickTracker(handleEvent);
+
+    const originalKillSwitch = options.onKillSwitch;
+    const trackerOptions: FunnelDoctorTrackerOptions = {
+      ...options,
+      onKillSwitch: () => {
+        this.destroy();
+        originalKillSwitch?.();
+      },
+    };
+
+    this.dispatcher = new EventDispatcher(trackerOptions, this.sessionId);
   }
 
   public init() {
@@ -100,18 +111,9 @@ export class FunnelDoctorTracker {
         }
         return sid;
       }
-    } catch {
-      // Fallback if storage access is restricted
+    } catch (e) {
+      // Storage restricted / private mode
     }
-    return "fd_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    return "fd_fallback_" + Math.random().toString(36).slice(2, 10);
   }
-}
-
-/**
- * Convenience initializer for client applications
- */
-export function initFunnelDoctor(options: FunnelDoctorTrackerOptions): FunnelDoctorTracker {
-  const tracker = new FunnelDoctorTracker(options);
-  tracker.init();
-  return tracker;
 }

@@ -6,14 +6,22 @@
  *
  * Enterprise Safeguards Embedded:
  * 1. Strict SSRF Protection: Blocks private RFC 1918 subnets, localhost, and cloud metadata (AWS IMDS).
- * 2. Cryptographic HMAC-SHA256 Signing: Signs all outgoing webhook requests (X-FunnelDoctor-Signature).
+ * 2. Cryptographic HMAC-SHA256 Signing: Signs timestamp + raw body (X-FunnelDoctor-Signature).
  * 3. Alert Tiering & PagerDuty Demotion: Reserves PagerDuty strictly for P1 Critical incidents.
  * 4. Alert De-duplication / Debouncing: Suppresses duplicate alert floods within a 15-minute cooldown.
  * 5. Rate-limiting Guard: Limits test webhook dispatches to prevent notification spam.
+ * 6. True DNS Pinning: Forces socket connections directly to pre-validated IP to eliminate DNS rebinding.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "node:crypto";
+import {
+  validateAndPinDestination,
+  signWebhookPayload,
+  secureDispatchWebhook,
+} from "../../../lib/ssrf-guard";
+
+// Backward-compatible alias for SSRF validation: Blocks 169.254.169.254, RFC 1918, and pins DNS
+const validateWebhookUrl = validateAndPinDestination;
 
 export interface AlertPayload {
   service: "slack" | "teams" | "pagerduty";
@@ -37,80 +45,6 @@ const alertCooldownMap = new Map<string, number>();
 // In-memory rate limiter for test triggers (max 5 per 5 minutes per domain)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-/**
- * Helper to detect private, loopback, cloud metadata, or carrier-grade NAT IPs
- */
-function isPrivateOrReservedIp(ip: string): boolean {
-  // IPv4 checks
-  if (ip === "127.0.0.1" || ip === "0.0.0.0") return true;
-  if (ip.startsWith("127.")) return true;
-  if (ip === "169.254.169.254" || ip.startsWith("169.254.")) return true; // AWS / Cloud IMDS
-  if (/^10\./.test(ip) || /^192\.168\./.test(ip) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)) return true; // RFC 1918
-  if (ip.startsWith("100.64.") || /^100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\./.test(ip)) return true; // Carrier-Grade NAT RFC 6598 (100.64.0.0/10)
-
-  // IPv6 checks
-  const lower = ip.toLowerCase();
-  if (lower === "::1" || lower === "::" || lower.startsWith("fe80:") || lower.startsWith("fc00:") || lower.startsWith("fd00:")) return true;
-  if (lower.startsWith("::ffff:")) {
-    // IPv4-mapped IPv6
-    const mappedIpv4 = lower.replace("::ffff:", "");
-    return isPrivateOrReservedIp(mappedIpv4);
-  }
-
-  return false;
-}
-
-/**
- * Validates webhook destination against SSRF attacks (blocks localhost, cloud metadata, RFC 1918)
- * and resolves DNS to protect against DNS rebinding attacks.
- */
-async function validateWebhookUrl(rawUrl: string): Promise<{ valid: boolean; reason?: string }> {
-  try {
-    const parsed = new URL(rawUrl);
-
-    // Mock URLs permitted for automated testing and sandboxed verification
-    if (parsed.hostname.includes("example.com") || parsed.hostname.includes("mock") || parsed.pathname.includes("MOCK")) {
-      return { valid: true };
-    }
-
-    // 1. Enforce HTTPS strictly
-    if (parsed.protocol !== "https:") {
-      return { valid: false, reason: "Webhook URL must strictly use HTTPS protocol." };
-    }
-
-    const host = parsed.hostname.toLowerCase();
-
-    // 2. Prohibit Localhost & Loopback hostnames
-    if (host === "localhost" || host.endsWith(".internal") || host.endsWith(".local") || host.endsWith(".corp") || host.endsWith(".lan")) {
-      return { valid: false, reason: "Internal enterprise network destinations are prohibited (SSRF Protection)." };
-    }
-
-    if (isPrivateOrReservedIp(host)) {
-      return { valid: false, reason: `Target IP (${host}) is a private, loopback, or cloud metadata address (SSRF Protection).` };
-    }
-
-    // 3. DNS Resolution to Prevent DNS Rebinding
-    try {
-      const dns = await import("node:dns");
-      const lookups = await dns.promises.lookup(host, { all: true });
-      for (const item of lookups) {
-        if (isPrivateOrReservedIp(item.address)) {
-          return {
-            valid: false,
-            reason: `Resolved IP (${item.address}) belongs to private, loopback, or cloud metadata network (SSRF Protection).`,
-          };
-        }
-      }
-    } catch (dnsErr: any) {
-      // In offline sandboxes or test environments without external DNS
-    }
-
-    return { valid: true };
-  } catch (err: any) {
-    return { valid: false, reason: `Malformed webhook destination URL: ${err.message}` };
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body: AlertPayload = await req.json();
@@ -122,8 +56,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. SSRF URL VALIDATION (DNS-Pinned)
-    const ssrfCheck = await validateWebhookUrl(body.webhookUrl);
+    // 1. SSRF URL VALIDATION (DNS-Pinned, Port-Restricted, Subnet-Filtered)
+    const ssrfCheck = await validateAndPinDestination(body.webhookUrl);
     if (!ssrfCheck.valid) {
       return NextResponse.json(
         { success: false, error: `SSRF Validation Failed: ${ssrfCheck.reason}` },
@@ -137,9 +71,10 @@ export async function POST(req: NextRequest) {
     // PagerDuty wakes up on-call engineers. It must NEVER be triggered for test pings or non-critical info.
     if (service === "pagerduty" && alertType !== "CIRCUIT_BREAKER_TRIPPED") {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Alert Governance Rule: PagerDuty is restricted strictly to SEVERITY_P1 incidents (CIRCUIT_BREAKER_TRIPPED). Use Slack or Microsoft Teams for test alerts and informational notifications." 
+        {
+          success: false,
+          error:
+            "Alert Governance Rule: PagerDuty is restricted strictly to SEVERITY_P1 incidents (CIRCUIT_BREAKER_TRIPPED). Use Slack or Microsoft Teams for test alerts and informational notifications.",
         },
         { status: 400 }
       );
@@ -158,17 +93,17 @@ export async function POST(req: NextRequest) {
       }
       rateRecord.count += 1;
     } else {
-      rateLimitMap.set(clientKey, { count: 1, resetAt: now + (5 * 60 * 1000) });
+      rateLimitMap.set(clientKey, { count: 1, resetAt: now + 5 * 60 * 1000 });
     }
 
     // 4. ALERT DE-DUPLICATION / DEBOUNCING (15-Minute Cooldown)
     const alertDeduplicationKey = `${brandName}:${alertType}:${details.revertedToVariant || "default"}`;
     const lastAlertTime = alertCooldownMap.get(alertDeduplicationKey);
-    if (lastAlertTime && (now - lastAlertTime) < (15 * 60 * 1000) && alertType !== "TEST_PING") {
+    if (lastAlertTime && now - lastAlertTime < 15 * 60 * 1000 && alertType !== "TEST_PING") {
       return NextResponse.json({
         success: true,
         debounced: true,
-        cooldownRemainingSeconds: Math.round(((lastAlertTime + (15 * 60 * 1000)) - now) / 1000),
+        cooldownRemainingSeconds: Math.round((lastAlertTime + 15 * 60 * 1000 - now) / 1000),
         message: `Alert suppressed: Identical ${alertType} notification dispatched recently. Cooldown active to prevent alert fatigue.`,
       });
     }
@@ -252,12 +187,9 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // 6. CRYPTOGRAPHIC HMAC-SHA256 SIGNING
+    // 6. CRYPTOGRAPHIC HMAC-SHA256 SIGNING (Signs timestamp + body)
     const webhookSecret = process.env.FUNNELDOCTOR_WEBHOOK_SECRET || "fd_webhook_secret_default";
-    const signature = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(JSON.stringify(payload))
-      .digest("hex");
+    const { signature, timestamp } = signWebhookPayload(payload, webhookSecret);
 
     // In local sandbox / testing without live webhook network access, return validated success
     const isMock = webhookUrl.includes("example.com") || webhookUrl.includes("mock") || webhookUrl.includes("hooks.slack.com/services/MOCK");
@@ -267,38 +199,25 @@ export async function POST(req: NextRequest) {
         dispatched: true,
         service,
         simulated: true,
-        hmacSignature: `sha256=${signature}`,
+        pinnedIp: ssrfCheck.pinnedIp,
+        hmacSignature: signature,
+        timestamp,
         payloadSent: payload,
       });
     }
 
-    // Real dispatch with cryptographic signature headers
-    try {
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-FunnelDoctor-Signature": `sha256=${signature}`,
-          "X-FunnelDoctor-Timestamp": Date.now().toString(),
-        },
-        body: JSON.stringify(payload),
-      });
+    // Real dispatch with DNS-pinned socket connection and redirect re-validation
+    const dispatchResult = await secureDispatchWebhook(webhookUrl, payload, webhookSecret);
 
-      return NextResponse.json({
-        success: response.ok,
-        status: response.status,
-        service,
-        hmacSignature: `sha256=${signature}`,
-      });
-    } catch (networkErr: any) {
-      return NextResponse.json({
-        success: true,
-        dispatched: false,
-        sandboxNotice: "Network restricted in sandbox; alert payload and HMAC signature validated successfully.",
-        hmacSignature: `sha256=${signature}`,
-        payload,
-      });
-    }
+    return NextResponse.json({
+      success: dispatchResult.ok,
+      status: dispatchResult.status,
+      service,
+      pinnedIp: ssrfCheck.pinnedIp,
+      hmacSignature: signature,
+      timestamp,
+      error: dispatchResult.error,
+    });
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message || "Failed to process alert dispatch." },
